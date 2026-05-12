@@ -24,111 +24,141 @@ function formatIdr(n: number): string {
   }).format(n);
 }
 
+function DashboardSkeleton() {
+  return (
+    <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 animate-pulse">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 min-h-[160px]"
+        >
+          <div className="h-3 w-24 rounded bg-slate-200" />
+          <div className="mt-6 space-y-3">
+            <div className="h-4 w-full rounded bg-slate-100" />
+            <div className="h-4 w-[85%] rounded bg-slate-100" />
+            <div className="h-4 w-[60%] rounded bg-slate-100" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function OverviewCards({ data }: { data: AdminDashboardOverview }) {
+  const cardBase =
+    "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-shadow hover:shadow-md hover:ring-slate-900/10";
+
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      <section className="border rounded-xl p-6 bg-white shadow-sm">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <section className={`${cardBase} border-l-4 border-l-teal-500`}>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Pengguna
         </h2>
-        <dl className="mt-4 space-y-2 text-gray-900">
-          <div className="flex justify-between">
-            <dt>Total</dt>
-            <dd className="font-semibold">{data.users.total}</dd>
+        <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Total</dt>
+            <dd className="font-semibold tabular-nums">{data.users.total}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt>Pasien</dt>
-            <dd>{data.users.patients}</dd>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Pasien</dt>
+            <dd className="tabular-nums">{data.users.patients}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt>Fisioterapis</dt>
-            <dd>{data.users.physiotherapists}</dd>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Fisioterapis</dt>
+            <dd className="tabular-nums">{data.users.physiotherapists}</dd>
           </div>
         </dl>
       </section>
 
-      <section className="border rounded-xl p-6 bg-white shadow-sm">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <section className={`${cardBase} border-l-4 border-l-amber-400`}>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Verifikasi fisioterapis
         </h2>
-        <dl className="mt-4 space-y-2 text-gray-900">
-          <div className="flex justify-between">
-            <dt>Menunggu</dt>
-            <dd className="font-semibold text-amber-700">
+        <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Menunggu</dt>
+            <dd className="font-semibold tabular-nums text-amber-700">
               {data.physiotherapistVerification.pending}
             </dd>
           </div>
-          <div className="flex justify-between">
-            <dt>Disetujui</dt>
-            <dd className="text-green-700">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Disetujui</dt>
+            <dd className="tabular-nums text-emerald-700">
               {data.physiotherapistVerification.approved}
             </dd>
           </div>
         </dl>
         <Link
           href="/admin/physiotherapists"
-          className="mt-4 inline-block text-sm font-medium text-teal-700 hover:underline"
+          className="mt-5 inline-flex items-center text-sm font-medium text-teal-700 hover:text-teal-600"
         >
-          Kelola antrian verifikasi →
+          Kelola antrian verifikasi
+          <span aria-hidden className="ml-1">
+            →
+          </span>
         </Link>
       </section>
 
-      <section className="border rounded-xl p-6 bg-white shadow-sm">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <section className={`${cardBase} border-l-4 border-l-sky-500`}>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Booking
         </h2>
-        <p className="mt-4 text-3xl font-bold text-gray-900">{data.bookings.total}</p>
-        <p className="text-xs text-gray-500 mt-1">Total booking</p>
-        <ul className="mt-4 space-y-1 text-sm border-t pt-3">
+        <p className="mt-4 text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+          {data.bookings.total}
+        </p>
+        <p className="text-xs text-slate-500 mt-1">Total booking</p>
+        <ul className="mt-4 space-y-2 text-sm border-t border-slate-100 pt-4">
           {data.bookings.byStatus.map((row) => (
             <li key={row.status} className="flex justify-between gap-2">
-              <span className="text-gray-600">{row.status}</span>
-              <span>{row._count._all}</span>
+              <span className="text-slate-600">{row.status}</span>
+              <span className="tabular-nums font-medium">{row._count._all}</span>
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="border rounded-xl p-6 bg-white shadow-sm md:col-span-2 xl:col-span-2">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <section
+        className={`${cardBase} md:col-span-2 xl:col-span-2 border-l-4 border-l-emerald-500`}
+      >
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Transaksi
         </h2>
-        <div className="mt-4 grid sm:grid-cols-2 gap-4">
-          <div>
-            <p className="text-xs text-gray-500">Pendapatan (PAID)</p>
-            <p className="text-xl font-semibold text-teal-700">
+        <div className="mt-5 grid sm:grid-cols-2 gap-6">
+          <div className="rounded-xl bg-teal-50/80 px-4 py-3 ring-1 ring-teal-900/5">
+            <p className="text-xs font-medium text-slate-600">Pendapatan (PAID)</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-teal-800">
               {formatIdr(parseMoney(data.transactions.totalRevenuePaid))}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-gray-500">Total refund</p>
-            <p className="text-xl font-semibold text-red-700">
+          <div className="rounded-xl bg-red-50/80 px-4 py-3 ring-1 ring-red-900/5">
+            <p className="text-xs font-medium text-slate-600">Total refund</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-red-800">
               {formatIdr(parseMoney(data.transactions.totalRefundAmount))}
             </p>
           </div>
         </div>
-        <ul className="mt-4 space-y-1 text-sm border-t pt-3">
+        <ul className="mt-5 space-y-2 text-sm border-t border-slate-100 pt-4">
           {data.transactions.byStatus.map((row) => (
             <li key={row.status} className="flex justify-between gap-2">
-              <span className="text-gray-600">{row.status}</span>
-              <span>{row._count._all}</span>
+              <span className="text-slate-600">{row.status}</span>
+              <span className="tabular-nums font-medium">{row._count._all}</span>
             </li>
           ))}
         </ul>
       </section>
 
-      <section className="border rounded-xl p-6 bg-white shadow-sm">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+      <section className={`${cardBase} border-l-4 border-l-violet-500`}>
+        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
           Ulasan
         </h2>
-        <dl className="mt-4 space-y-2 text-gray-900">
-          <div className="flex justify-between">
-            <dt>Total</dt>
-            <dd className="font-semibold">{data.reviews.total}</dd>
+        <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Total</dt>
+            <dd className="font-semibold tabular-nums">{data.reviews.total}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt>Disembunyikan</dt>
-            <dd>{data.reviews.hidden}</dd>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Disembunyikan</dt>
+            <dd className="tabular-nums">{data.reviews.hidden}</dd>
           </div>
         </dl>
       </section>
@@ -167,7 +197,7 @@ export default function AdminDashboardPage() {
 
   if (!isReady) {
     return (
-      <main className="max-w-6xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
+      <main className="max-w-6xl mx-auto py-16 px-6 text-slate-600">Memuat…</main>
     );
   }
 
@@ -197,74 +227,80 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto py-12 px-6 space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-teal-700 font-medium">Admin</p>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">
-            Ringkasan analytics dari endpoint{" "}
-            <code className="text-xs bg-gray-100 px-1 rounded">
-              GET /admin/dashboard/overview
-            </code>
-          </p>
+    <main className="max-w-6xl mx-auto py-10 sm:py-12 px-6 space-y-8">
+      <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-white to-teal-50/40 p-6 sm:p-8 shadow-sm ring-1 ring-slate-900/5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+              Admin
+            </p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
+              Dashboard
+            </h1>
+            <p className="text-slate-600 mt-2 text-sm sm:text-base max-w-2xl">
+              Ringkasan dari{" "}
+              <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono text-slate-800">
+                GET /admin/dashboard/overview
+              </code>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 transition-colors"
+          >
+            {loading ? "Memuat…" : "Muat ulang"}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          disabled={loading}
-          className="text-sm border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-        >
-          Muat ulang
-        </button>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-900 text-sm">
           {error}
         </div>
       )}
 
       {loading && !data ? (
-        <p className="text-gray-600">Memuat data ringkasan…</p>
+        <DashboardSkeleton />
       ) : data ? (
         <>
           <OverviewCards data={data} />
-          <div className="flex flex-wrap gap-6 border-t border-gray-200 pt-8 text-sm">
+          <div className="flex flex-wrap gap-3 sm:gap-4 border-t border-slate-200 pt-8">
             <Link
               href="/admin/physiotherapists"
-              className="font-medium text-teal-700 hover:underline"
+              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
             >
               Verifikasi fisioterapis →
             </Link>
             <Link
               href="/admin/categories"
-              className="font-medium text-teal-700 hover:underline"
+              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
             >
               Kelola kategori →
             </Link>
             <Link
               href="/admin/reviews"
-              className="font-medium text-teal-700 hover:underline"
+              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
             >
               Moderasi ulasan →
             </Link>
             <Link
               href="/transactions"
-              className="font-medium text-teal-700 hover:underline"
+              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
             >
               Transaksi &amp; refund →
             </Link>
             <Link
               href="/admin/notifications"
-              className="font-medium text-teal-700 hover:underline"
+              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
             >
               Broadcast notifikasi →
             </Link>
           </div>
         </>
       ) : !error ? (
-        <p className="text-gray-600">Tidak ada data.</p>
+        <p className="text-slate-600">Tidak ada data.</p>
       ) : null}
     </main>
   );

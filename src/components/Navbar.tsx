@@ -1,99 +1,88 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import {
+  IconArrowRightEndOnRectangle,
+  IconArrowRightOnRectangle,
+  IconUserCircle,
+} from "@/components/nav-icons";
 import Link from "next/link";
+
+const navLink =
+  "text-sm font-medium text-slate-600 hover:text-teal-700 transition-colors";
+
+const iconBtn =
+  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 ring-1 ring-slate-200/90 bg-white hover:bg-teal-50 hover:text-teal-800 hover:ring-teal-200 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600";
+
+const iconBtnDanger =
+  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 ring-1 ring-slate-200/90 bg-white hover:bg-red-50 hover:text-red-700 hover:ring-red-200 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500";
 
 export default function Navbar() {
   const { user, isReady, logout } = useAuth();
 
   return (
-    <nav className="flex justify-between items-center px-8 py-4 shadow bg-white">
-      <h1 className="text-2xl font-bold text-teal-600">Kinova</h1>
-
-      <div className="flex gap-6 items-center flex-wrap justify-end">
-        <Link href="/">Beranda</Link>
-        <Link href="/services">Layanan</Link>
-        <Link href="/about">Tentang</Link>
-
-        {isReady && user ? (
-          <>
-            {user.role === "ADMIN" && (
-              <>
-                <Link
-                  href="/admin/dashboard"
-                  className="font-semibold text-teal-700"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/admin/physiotherapists"
-                  className="font-semibold text-teal-700"
-                >
-                  Verifikasi
-                </Link>
-                <Link
-                  href="/admin/categories"
-                  className="font-semibold text-teal-700"
-                >
-                  Kategori
-                </Link>
-                <Link
-                  href="/admin/reviews"
-                  className="font-semibold text-teal-700"
-                >
-                  Ulasan
-                </Link>
-                <Link
-                  href="/admin/notifications"
-                  className="font-semibold text-teal-700"
-                >
-                  Broadcast
-                </Link>
-              </>
-            )}
-            {(user.role === "PATIENT" || user.role === "ADMIN") && (
-              <Link href="/therapists">Fisioterapis</Link>
-            )}
-            {user.role === "PATIENT" && (
-              <Link href="/reviews/write">Ulasan</Link>
-            )}
-            {user.role === "PHYSIOTHERAPIST" && (
-              <>
-                <Link href="/physiotherapist/profile">Profil PT</Link>
-                <Link href="/physiotherapist/availability">Jadwal</Link>
-              </>
-            )}
-            <Link href="/consultations">Konsultasi</Link>
-            <Link href="/bookings">Booking</Link>
-            <Link href="/transactions">Transaksi</Link>
-            <Link href="/notifications">Notifikasi</Link>
-            <Link href="/chat">Chat</Link>
-            <Link href="/profile">Profil</Link>
-            <span className="text-sm text-gray-600 max-w-[140px] truncate">
-              {user.fullName}
-            </span>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="text-sm text-gray-700 underline"
-            >
-              Keluar
-            </button>
-          </>
-        ) : (
-          <>
-            <Link href="/login">Masuk</Link>
-            <Link href="/register">Daftar</Link>
-          </>
-        )}
-
+    <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-md shadow-sm shadow-slate-900/5">
+      <nav className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 sm:px-6 lg:px-8 py-3">
         <Link
-          href="/appointment"
-          className="bg-teal-500 text-white px-4 py-2 rounded-lg"
+          href="/"
+          className="text-xl font-bold tracking-tight text-teal-700 hover:text-teal-600 transition-colors shrink-0"
         >
-          Booking
+          Kinova
         </Link>
-      </div>
-    </nav>
+
+        <div className="flex flex-1 min-w-0 items-center justify-center gap-6 sm:gap-8">
+          <Link href="/" className={navLink}>
+            Beranda
+          </Link>
+          <Link href="/services" className={navLink}>
+            Layanan
+          </Link>
+          <Link href="/about" className={navLink}>
+            Tentang
+          </Link>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 shrink-0">
+          {!isReady ? (
+            <>
+              <span className="inline-flex h-10 w-10 rounded-xl bg-slate-100 animate-pulse" />
+              <span className="inline-flex h-10 w-10 rounded-xl bg-slate-100 animate-pulse" />
+            </>
+          ) : user ? (
+            <>
+              <Link
+                href="/profile"
+                className={iconBtn}
+                aria-label="Profil"
+                title="Profil"
+              >
+                <IconUserCircle />
+                <span className="sr-only">Profil</span>
+              </Link>
+              <button
+                type="button"
+                className={iconBtnDanger}
+                onClick={() => logout()}
+                aria-label="Keluar"
+                title="Keluar"
+              >
+                <IconArrowRightOnRectangle />
+                <span className="sr-only">Keluar</span>
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className={iconBtn}
+              aria-label="Masuk"
+              title="Masuk"
+            >
+              <IconArrowRightEndOnRectangle />
+              <span className="sr-only">Masuk</span>
+            </Link>
+          )}
+        </div>
+      </nav>
+    </header>
   );
 }

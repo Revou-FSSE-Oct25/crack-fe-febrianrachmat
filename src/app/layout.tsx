@@ -1,7 +1,15 @@
 import "./globals.css";
+import AppShortcutBar from "@/components/AppShortcutBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AuthProvider } from "@/contexts/auth-context";
+import { Plus_Jakarta_Sans } from "next/font/google";
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-kinova",
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -9,11 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      <body>
+    <html lang="id" className={plusJakarta.variable}>
+      <body
+        className={`${plusJakarta.className} min-h-screen flex flex-col bg-slate-50 text-slate-900`}
+      >
         <AuthProvider>
           <Navbar />
-          {children}
+          <AppShortcutBar />
+          <div className="flex-1 w-full">{children}</div>
           <Footer />
         </AuthProvider>
       </body>

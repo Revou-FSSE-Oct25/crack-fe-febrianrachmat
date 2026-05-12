@@ -1,40 +1,39 @@
-import Hero from "@/components/Hero"
-import ServiceCard from "@/components/ServiceCard"
+import Hero from "@/components/Hero";
+import ServiceCard from "@/components/ServiceCard";
 
 export default function Home() {
-
   return (
     <main>
-
       <Hero />
 
-      <section className="max-w-6xl mx-auto py-20 px-6">
-
-        <h2 className="text-3xl font-bold text-center mb-10">
-          Our Services
-        </h2>
-
-        <div className="grid md:grid-cols-3 gap-8">
-
-          <ServiceCard
-            title="Physiotherapy"
-            description="Restore movement and function"
-          />
-
-          <ServiceCard
-            title="Sports Massage"
-            description="Relieve muscle tension"
-          />
-
-          <ServiceCard
-            title="Performance Training"
-            description="Improve athletic performance"
-          />
-
+      <section className="max-w-6xl mx-auto py-16 sm:py-20 px-6">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Layanan kami
+          </h2>
+          <p className="mt-3 text-slate-600">
+            Pendekatan berbasis bukti untuk pemulihan cedera, manajemen nyeri,
+            dan peningkatan performa.
+          </p>
         </div>
 
-      </section>
+        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+          <ServiceCard
+            title="Fisioterapi"
+            description="Terapi gerak dan rehabilitasi untuk mengembalikan fungsi dan mobilitas."
+          />
 
+          <ServiceCard
+            title="Sports massage"
+            description="Pijat olahraga untuk mengurangi ketegangan otot dan pemulihan pasca aktivitas."
+          />
+
+          <ServiceCard
+            title="Performance training"
+            description="Program latihan bertahap agar Anda kembali beraktivitas dengan aman."
+          />
+        </div>
+      </section>
     </main>
-  )
+  );
 }
