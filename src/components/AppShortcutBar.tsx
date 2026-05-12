@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const pill =
@@ -32,8 +33,12 @@ function Section({
 
 export default function AppShortcutBar() {
   const { user, isReady } = useAuth();
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   if (!isReady) {
+    // Beranda tamu: tanpa skeleton agar hero bersih; pengguna login tetap dapat strip setelah ready.
+    if (isHome) return null;
     return (
       <div
         className="border-b border-slate-200 bg-white"
@@ -47,6 +52,8 @@ export default function AppShortcutBar() {
   }
 
   if (!user) {
+    // Strip CTA tamu: tidak ditampilkan di "/" supaya hero tidak tertutup (CTA ada di Hero).
+    if (isHome) return null;
     return (
       <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-teal-50/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
