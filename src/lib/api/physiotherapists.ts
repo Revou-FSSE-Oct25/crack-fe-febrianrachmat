@@ -1,0 +1,29 @@
+import type { PhysiotherapistBrowseItem, PaginationMeta } from "./types";
+import { apiFetchPaginated } from "./client";
+
+/** Query selaras `BrowsePhysiotherapistsQueryDto` */
+export type BrowsePhysiotherapistsParams = {
+  categoryId?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+};
+
+function toQuery(params: BrowsePhysiotherapistsParams): string {
+  const q = new URLSearchParams();
+  if (params.categoryId) q.set("categoryId", params.categoryId);
+  if (params.search) q.set("search", params.search);
+  if (params.page != null) q.set("page", String(params.page));
+  if (params.limit != null) q.set("limit", String(params.limit));
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
+export async function browsePhysiotherapists(
+  params: BrowsePhysiotherapistsParams = {},
+): Promise<{ items: PhysiotherapistBrowseItem[]; meta: PaginationMeta }> {
+  const { data, meta } = await apiFetchPaginated<PhysiotherapistBrowseItem>(
+    `/physiotherapists${toQuery(params)}`,
+  );
+  return { items: data, meta };
+}
