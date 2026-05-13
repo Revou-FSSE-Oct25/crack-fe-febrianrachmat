@@ -2,12 +2,24 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { createConsultation } from "@/lib/api/consultations";
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { listPublicReviewsForPhysiotherapist } from "@/lib/api/reviews";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+
+function formatRupiah(value: string | number | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
 
 type PublicReviewRow = {
   id: string;
@@ -36,6 +48,7 @@ function asPublicReviews(data: unknown): PublicReviewRow[] {
 
 export default function TherapistDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const profileId = params.profileId as string;
   const { user, isReady } = useAuth();
 
@@ -45,6 +58,9 @@ export default function TherapistDetailPage() {
   const [reviews, setReviews] = useState<PublicReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submittingConsult, setSubmittingConsult] = useState(false);
+  const [showConsultForm, setShowConsultForm] = useState(false);
+  const [complaint, setComplaint] = useState("");
 
   const load = useCallback(async () => {
     if (!profileId) return;
@@ -123,17 +139,95 @@ export default function TherapistDetailPage() {
             </p>
           )}
           <p className="text-sm text-gray-600">
-            Biaya konsultasi:{" "}
+            Biaya konsultasi online:{" "}
             <span className="font-medium">
-              {String(therapist.consultationFee ?? "—")}
+              {formatRupiah(therapist.consultationFee ?? null)}
             </span>
           </p>
-          <Link
-            href="/appointment"
-            className="inline-block mt-4 bg-teal-600 text-white px-5 py-2 rounded-lg"
-          >
-            Booking janji
-          </Link>
+
+          {user.role === "PATIENT" && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConsultForm((v) => !v)}
+                className="inline-flex items-center rounded-lg bg-teal-600 px-5 py-2 text-white hover:bg-teal-700 transition-colors"
+              >
+                Konsultasi online ({formatRupiah(therapist.consultationFee ?? null)})
+              </button>
+              <Link
+                href="/appointment"
+                className="inline-flex items-center rounded-lg border border-teal-200 bg-white px-5 py-2 text-teal-800 hover:bg-teal-50 transition-colors"
+              >
+                Booking visit fisik
+              </Link>
+            </div>
+          )}
+
+          {showConsultForm && user.role === "PATIENT" && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (complaint.trim().length < 10) {
+                  setError("Keluhan minimal 10 karakter.");
+                  return;
+                }
+                setError(null);
+                setSubmittingConsult(true);
+                try {
+                  await createConsultation({
+                    physiotherapistId: profileId,
+                    complaint: complaint.trim(),
+                  });
+                  router.push("/consultations");
+                } catch (err) {
+                  setError(
+                    err instanceof ApiRequestError
+                      ? err.message
+                      : "Gagal mengirim permintaan konsultasi.",
+                  );
+                } finally {
+                  setSubmittingConsult(false);
+                }
+              }}
+              className="mt-4 rounded-lg border border-teal-100 bg-teal-50/40 p-4 space-y-3"
+            >
+              <p className="text-sm text-slate-700">
+                Alur: kirim keluhan → terapis menerima → kamu bayar{" "}
+                <strong>{formatRupiah(therapist.consultationFee ?? null)}</strong>{" "}
+                → chat aktif setelah pembayaran dikonfirmasi.
+              </p>
+              <label className="block text-sm font-medium text-slate-800">
+                Keluhan (min. 10 karakter)
+                <textarea
+                  required
+                  minLength={10}
+                  value={complaint}
+                  onChange={(e) => setComplaint(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 min-h-[100px]"
+                  placeholder="Ceritakan keluhan kamu agar terapis bisa siap menerima sesi."
+                />
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={submittingConsult}
+                  className="inline-flex items-center rounded-lg bg-teal-600 px-5 py-2 text-white hover:bg-teal-700 transition-colors disabled:opacity-60"
+                >
+                  {submittingConsult ? "Mengirim…" : "Kirim permintaan"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowConsultForm(false);
+                    setComplaint("");
+                  }}
+                  className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-5 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Batal
+                </button>
+              </div>
+            </form>
+          )}
         </section>
       )}
 

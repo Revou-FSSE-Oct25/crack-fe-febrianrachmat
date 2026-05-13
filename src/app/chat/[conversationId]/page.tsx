@@ -70,6 +70,8 @@ export default function ChatConversationPage() {
     return () => clearInterval(t);
   }, [isReady, user, conversationId, load]);
 
+  const [locked, setLocked] = useState(false);
+
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = text.trim();
@@ -79,11 +81,18 @@ export default function ChatConversationPage() {
     try {
       await sendMessage(conversationId, { content: trimmed });
       setText("");
+      setLocked(false);
       await load({ silent: true });
     } catch (err) {
-      setError(
-        err instanceof ApiRequestError ? err.message : "Gagal mengirim pesan.",
-      );
+      const msg =
+        err instanceof ApiRequestError ? err.message : "Gagal mengirim pesan.";
+      // Phase 1 pay-first: backend returns 400 with "Chat is locked..." when
+      // the consultation is not IN_PROGRESS yet. Detect it so we can guide
+      // the user back to the consultation page to pay.
+      if (msg.toLowerCase().includes("chat is locked")) {
+        setLocked(true);
+      }
+      setError(msg);
     } finally {
       setSending(false);
     }
@@ -121,6 +130,16 @@ export default function ChatConversationPage() {
           {error}
         </p>
       )}
+      {locked && (
+        <p className="text-amber-900 text-sm bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+          Chat masih terkunci karena sesi belum aktif. Buka{" "}
+          <Link href="/consultations" className="underline font-medium">
+            halaman konsultasi
+          </Link>{" "}
+          untuk menyelesaikan pembayaran. Setelah admin mengkonfirmasi, chat
+          akan otomatis aktif.
+        </p>
+      )}
 
       <div className="flex-1 overflow-y-auto border rounded-lg p-4 space-y-4 bg-gray-50 mb-4 max-h-[50vh]">
         {loading ? (
@@ -143,14 +162,14 @@ export default function ChatConversationPage() {
       <form onSubmit={handleSend} className="flex gap-2">
         <input
           className="flex-1 border rounded px-3 py-2"
-          placeholder="Tulis pesan…"
+          placeholder={locked ? "Chat terkunci. Selesaikan pembayaran dulu." : "Tulis pesan…"}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          disabled={sending}
+          disabled={sending || locked}
         />
         <button
           type="submit"
-          disabled={sending || !text.trim()}
+          disabled={sending || locked || !text.trim()}
           className="bg-teal-500 text-white px-5 py-2 rounded disabled:opacity-50"
         >
           Kirim

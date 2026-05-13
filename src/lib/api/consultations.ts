@@ -6,12 +6,16 @@ export type CreateConsultationBody = {
   complaint: string;
 };
 
-/** Selaras `UpdateConsultationStatusDto` */
+/**
+ * Selaras `UpdateConsultationStatusDto`. Phase 1: `REJECTED` dipensiunkan
+ * (di-merge ke `CANCELLED`), dan `IN_PROGRESS` ditambah hanya untuk admin
+ * override — pasien/terapis tidak boleh set `IN_PROGRESS` lewat endpoint ini.
+ */
 export type UpdateConsultationStatusBody = {
   status:
     | "REQUESTED"
     | "ACCEPTED"
-    | "REJECTED"
+    | "IN_PROGRESS"
     | "COMPLETED"
     | "CANCELLED";
 };
