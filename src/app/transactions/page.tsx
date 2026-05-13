@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  AlertBanner,
+  btnDanger,
+  btnPrimary,
+  cardSurface,
+  EmptyState,
+  inputBase,
+  ListSkeleton,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyBookings } from "@/lib/api/bookings";
@@ -10,7 +23,6 @@ import {
   refundTransaction,
   type CreateTransactionBody,
 } from "@/lib/api/transactions";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 type TxRow = {
@@ -165,53 +177,58 @@ export default function TransactionsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk untuk melihat transaksi." />
     );
   }
 
   if (user.role === "PHYSIOTHERAPIST") {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6">
-        <h1 className="text-3xl font-bold mb-4">Transaksi</h1>
-        <p className="text-gray-700">
-          Daftar transaksi tersedia untuk peran Pasien dan Admin. Akun
-          fisioterapis tidak memakai endpoint ini.
-        </p>
+      <main className={`${pageShell} space-y-4`}>
+        <PageHeader
+          title="Transaksi"
+          description="Daftar transaksi tersedia untuk Pasien dan Admin. Akun fisioterapis tidak menggunakan halaman ini."
+        />
+        <div className={cardSurface}>
+          <p className="text-slate-700 text-sm leading-relaxed">
+            Gunakan pintasan di bawah navbar untuk konsultasi, booking, dan chat.
+            Pembayaran dilakukan oleh pasien melalui menu Transaksi di akun mereka.
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-16 px-6 space-y-8">
-      <h1 className="text-3xl font-bold">Transaksi</h1>
+    <main className={`${pageShell} space-y-8`}>
+      <PageHeader
+        title="Transaksi"
+        description={
+          user.role === "ADMIN"
+            ? "Konfirmasi pembayaran dummy dan refund untuk transaksi yang memenuhi syarat."
+            : "Buat permintaan pembayaran untuk booking Anda. Konfirmasi lunas dilakukan oleh admin."
+        }
+      />
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {user.role === "PATIENT" && (
-        <section className="border rounded-lg p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Buat transaksi (dummy)</h2>
+        <section className={`${cardSurface} space-y-4`}>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Buat transaksi (dummy)
+          </h2>
           <form onSubmit={handleCreate} className="space-y-3 max-w-md">
             <div>
-              <label className="block text-sm font-medium mb-1">Booking</label>
+              <label className="block text-sm font-medium mb-1 text-slate-700">
+                Booking
+              </label>
               <select
                 required
-                className="border rounded w-full p-3"
+                className={inputBase}
                 value={bookingId}
                 onChange={(e) => setBookingId(e.target.value)}
               >
@@ -224,23 +241,25 @@ export default function TransactionsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Jumlah</label>
+              <label className="block text-sm font-medium mb-1 text-slate-700">
+                Jumlah
+              </label>
               <input
                 type="number"
                 min={0}
                 step="0.01"
                 required
-                className="border rounded w-full p-3"
+                className={inputBase}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-slate-700">
                 Metode bayar
               </label>
               <select
-                className="border rounded w-full p-3"
+                className={inputBase}
                 value={paymentMethod}
                 onChange={(e) =>
                   setPaymentMethod(
@@ -257,12 +276,12 @@ export default function TransactionsPage() {
             <button
               type="submit"
               disabled={creating}
-              className="bg-teal-500 text-white px-6 py-2 rounded disabled:opacity-60"
+              className={btnPrimary}
             >
               {creating ? "Menyimpan…" : "Buat transaksi"}
             </button>
           </form>
-          <p className="text-sm text-gray-600 max-w-md">
+          <p className="text-sm text-slate-600 max-w-md leading-relaxed">
             Setelah transaksi berstatus <strong>PENDING</strong>, konfirmasi
             pembayaran dilakukan oleh <strong>admin</strong> (bukan dari akun
             pasien). Silakan tunggu atau hubungi admin.
@@ -270,56 +289,61 @@ export default function TransactionsPage() {
         </section>
       )}
 
-      <section>
-        <h2 className="text-lg font-semibold mb-4">Daftar transaksi</h2>
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Daftar transaksi
+        </h2>
         {user.role === "ADMIN" && (
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-slate-600 leading-relaxed">
             Transaksi <strong>PENDING</strong>: konfirmasi pembayaran dummy
             lewat tombol di bawah (
-            <code className="bg-gray-100 px-1 rounded text-xs">
+            <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono">
               PATCH /admin/transactions/:transactionId/pay
             </code>
             ). Transaksi <strong>PAID</strong>: refund dummy lewat{" "}
-            <code className="bg-gray-100 px-1 rounded text-xs">
+            <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono">
               PATCH /admin/transactions/:transactionId/refund
             </code>{" "}
             (alasan min. 5 karakter).
           </p>
         )}
         {loading ? (
-          <p className="text-gray-600">Memuat…</p>
+          <ListSkeleton rows={3} />
         ) : rows.length === 0 ? (
-          <p className="text-gray-600">Belum ada transaksi.</p>
+          <EmptyState
+            title="Belum ada transaksi"
+            hint="Buat transaksi dari booking yang sudah ada (pasien), atau tunggu data masuk (admin)."
+          />
         ) : (
           <ul className="space-y-4">
             {rows.map((t) => (
-              <li key={t.id} className="border rounded-lg p-4 space-y-3">
+              <li key={t.id} className={`${cardSurface} space-y-3`}>
                 <div className="flex flex-wrap justify-between gap-3 items-start">
                   <div>
-                    <p className="font-medium">{t.status}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-semibold text-slate-900">{t.status}</p>
+                    <p className="text-sm text-slate-600">
                       {t.paymentMethod} ·{" "}
                       {typeof t.amount === "string"
                         ? t.amount
                         : t.amount.toFixed?.(2) ?? t.amount}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1 font-mono">
+                    <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                       {t.id}
                     </p>
                   </div>
                   {user.role === "PATIENT" && t.status === "PENDING" && (
-                    <span className="text-sm text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded shrink-0 max-w-xs">
+                    <span className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl shrink-0 max-w-xs">
                       Menunggu konfirmasi pembayaran dari admin
                     </span>
                   )}
                 </div>
                 {user.role === "ADMIN" && t.status === "PENDING" && (
-                  <div className="border-t pt-3">
+                  <div className="border-t border-slate-100 pt-3">
                     <button
                       type="button"
                       disabled={confirmingPayId === t.id}
                       onClick={() => void confirmPaymentAsAdmin(t.id)}
-                      className="bg-teal-600 text-white text-sm px-4 py-2 rounded disabled:opacity-50"
+                      className={`${btnPrimary} text-sm`}
                     >
                       {confirmingPayId === t.id
                         ? "Memproses…"
@@ -328,12 +352,12 @@ export default function TransactionsPage() {
                   </div>
                 )}
                 {user.role === "ADMIN" && t.status === "PAID" && (
-                  <div className="border-t pt-3 space-y-2">
-                    <label className="block text-sm text-gray-700">
+                  <div className="border-t border-slate-100 pt-3 space-y-2">
+                    <label className="block text-sm text-slate-700">
                       Alasan refund (min. 5 karakter)
                     </label>
                     <textarea
-                      className="w-full border rounded-lg p-3 text-sm min-h-[72px]"
+                      className={`${inputBase} min-h-[72px]`}
                       placeholder="Contoh: Permintaan pembatalan dari pasien."
                       value={refundReasonById[t.id] ?? ""}
                       onChange={(e) =>
@@ -347,7 +371,7 @@ export default function TransactionsPage() {
                       type="button"
                       disabled={refundingId === t.id}
                       onClick={() => void refund(t.id)}
-                      className="bg-red-700 text-white text-sm px-4 py-2 rounded disabled:opacity-50"
+                      className={`${btnDanger} text-sm`}
                     >
                       {refundingId === t.id ? "Memproses…" : "Refund (dummy)"}
                     </button>

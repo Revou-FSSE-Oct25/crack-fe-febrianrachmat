@@ -1,5 +1,16 @@
 "use client";
 
+import {
+  AlertBanner,
+  btnOutline,
+  cardSurface,
+  EmptyState,
+  ListSkeleton,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -7,7 +18,6 @@ import {
   updateBookingStatus,
   type UpdateBookingStatusBody,
 } from "@/lib/api/bookings";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 type BookingRow = {
@@ -69,56 +79,61 @@ export default function BookingsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk untuk melihat booking.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk untuk melihat booking Anda." />
     );
   }
 
   const terminal = new Set(["COMPLETED", "CANCELLED"]);
 
   return (
-    <main className="max-w-4xl mx-auto py-16 px-6 space-y-6">
-      <h1 className="text-3xl font-bold">Booking</h1>
+    <main className={`${pageShell} space-y-6`}>
+      <PageHeader
+        title="Booking"
+        description="Kelola janji temu Anda. Pasien dapat membatalkan sebelum selesai; fisioterapis memperbarui alur sesi."
+      />
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <ListSkeleton rows={4} />
       ) : rows.length === 0 ? (
-        <p className="text-gray-600">Belum ada booking.</p>
+        <EmptyState
+          title="Belum ada booking"
+          hint={
+            user.role === "PATIENT" ? (
+              <>
+                Buat janji dari menu{" "}
+                <span className="font-medium text-slate-800">Booking</span> di
+                pintasan atau halaman janji temu.
+              </>
+            ) : (
+              "Booking baru akan muncul ketika pasien menyelesaikan alur janji temu."
+            )
+          }
+        />
       ) : (
         <ul className="space-y-4">
           {rows.map((b) => (
-            <li key={b.id} className="border rounded-lg p-4 space-y-2">
-              <div className="flex flex-wrap justify-between gap-2">
-                <span className="font-medium">{b.status}</span>
-                <span className="text-sm text-gray-600">
-                  {new Date(b.appointmentDate).toLocaleString()}
+            <li key={b.id} className={`${cardSurface} space-y-3`}>
+              <div className="flex flex-wrap justify-between gap-2 items-start">
+                <span className="font-semibold text-slate-900">{b.status}</span>
+                <span className="text-sm text-slate-600 tabular-nums">
+                  {new Date(b.appointmentDate).toLocaleString("id-ID")}
                 </span>
               </div>
-              <p className="text-sm text-gray-700">{b.appointmentType}</p>
-              <p className="text-xs text-gray-500 font-mono">{b.id}</p>
-              <div className="flex flex-wrap gap-2 pt-2">
+              <p className="text-sm text-slate-700">{b.appointmentType}</p>
+              <p className="text-xs text-slate-500 font-mono break-all">{b.id}</p>
+              <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100">
                 {user.role === "PATIENT" && !terminal.has(b.status) && (
                   <button
                     type="button"
                     onClick={() => void patchStatus(b.id, "CANCELLED")}
-                    className="text-sm border px-3 py-1.5 rounded"
+                    className={btnOutline}
                   >
                     Batalkan booking
                   </button>
@@ -127,7 +142,7 @@ export default function BookingsPage() {
                   <button
                     type="button"
                     onClick={() => void patchStatus(b.id, "CONFIRMED")}
-                    className="text-sm bg-teal-50 text-teal-800 px-3 py-1.5 rounded border border-teal-200"
+                    className="inline-flex items-center rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-sm font-medium text-teal-900 hover:bg-teal-100/80 transition-colors"
                   >
                     Konfirmasi
                   </button>
@@ -137,7 +152,7 @@ export default function BookingsPage() {
                     <button
                       type="button"
                       onClick={() => void patchStatus(b.id, "IN_PROGRESS")}
-                      className="text-sm bg-blue-50 px-3 py-1.5 rounded border border-blue-200"
+                      className="inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 hover:bg-sky-100/80 transition-colors"
                     >
                       Mulai sesi
                     </button>
@@ -147,7 +162,7 @@ export default function BookingsPage() {
                     <button
                       type="button"
                       onClick={() => void patchStatus(b.id, "COMPLETED")}
-                      className="text-sm bg-gray-100 px-3 py-1.5 rounded border"
+                      className={`${btnOutline} bg-slate-50`}
                     >
                       Selesai
                     </button>

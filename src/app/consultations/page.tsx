@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  AlertBanner,
+  btnOutline,
+  btnPrimary,
+  cardSurface,
+  EmptyState,
+  inputBase,
+  ListSkeleton,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -11,7 +24,6 @@ import {
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { createOrGetConversation } from "@/lib/api/chat";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -126,43 +138,37 @@ export default function ConsultationsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk untuk melihat konsultasi.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk untuk melihat konsultasi." />
     );
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-16 px-6 space-y-10">
-      <h1 className="text-3xl font-bold">Konsultasi</h1>
+    <main className={`${pageShell} space-y-10`}>
+      <PageHeader
+        title="Konsultasi"
+        description="Ajukan keluhan awal, pantau status, dan lanjut ke chat dengan fisioterapis."
+      />
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {user.role === "PATIENT" && (
-        <section className="border rounded-lg p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Ajukan konsultasi baru</h2>
+        <section className={`${cardSurface} space-y-4`}>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Ajukan konsultasi baru
+          </h2>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-slate-700">
                 Fisioterapis
               </label>
               <select
                 required
-                className="border rounded w-full p-3"
+                className={inputBase}
                 value={physiotherapistId}
                 onChange={(e) => setPhysiotherapistId(e.target.value)}
               >
@@ -175,13 +181,13 @@ export default function ConsultationsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label className="block text-sm font-medium mb-1 text-slate-700">
                 Keluhan (min. 10 karakter)
               </label>
               <textarea
                 required
                 minLength={10}
-                className="border rounded w-full p-3 min-h-[120px]"
+                className={`${inputBase} min-h-[120px]`}
                 value={complaint}
                 onChange={(e) => setComplaint(e.target.value)}
               />
@@ -189,7 +195,7 @@ export default function ConsultationsPage() {
             <button
               type="submit"
               disabled={submitting || loading}
-              className="bg-teal-500 text-white px-6 py-2 rounded disabled:opacity-60"
+              className={btnPrimary}
             >
               {submitting ? "Mengirim…" : "Kirim"}
             </button>
@@ -197,33 +203,44 @@ export default function ConsultationsPage() {
         </section>
       )}
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Daftar konsultasi</h2>
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900">
+          Daftar konsultasi
+        </h2>
         {loading ? (
-          <p className="text-gray-600">Memuat…</p>
+          <ListSkeleton rows={3} />
         ) : rows.length === 0 ? (
-          <p className="text-gray-600">Belum ada konsultasi.</p>
+          <EmptyState
+            title="Belum ada konsultasi"
+            hint={
+              user.role === "PATIENT"
+                ? "Ajukan konsultasi baru dengan form di atas."
+                : "Permintaan dari pasien akan muncul di sini."
+            }
+          />
         ) : (
           <ul className="space-y-4">
             {rows.map((c) => (
               <li
                 key={c.id}
-                className="border rounded-lg p-4 flex flex-col gap-3 md:flex-row md:justify-between md:items-start"
+                className={`${cardSurface} flex flex-col gap-3 md:flex-row md:justify-between md:items-start`}
               >
-                <div>
-                  <p className="text-sm text-gray-500">
-                    {new Date(c.createdAt).toLocaleString()} ·{" "}
-                    <span className="font-medium text-gray-800">{c.status}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-slate-500">
+                    {new Date(c.createdAt).toLocaleString("id-ID")} ·{" "}
+                    <span className="font-semibold text-slate-900">
+                      {c.status}
+                    </span>
                   </p>
-                  <p className="mt-2 text-gray-800 whitespace-pre-wrap">
+                  <p className="mt-2 text-slate-800 whitespace-pre-wrap leading-relaxed">
                     {c.complaint}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2 shrink-0">
+                <div className="flex flex-wrap gap-2 shrink-0 md:justify-end">
                   <button
                     type="button"
                     onClick={() => void openChat(c.id)}
-                    className="text-sm bg-teal-50 text-teal-800 px-3 py-1.5 rounded border border-teal-200"
+                    className="inline-flex items-center rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-sm font-medium text-teal-900 hover:bg-teal-100/80 transition-colors"
                   >
                     Chat
                   </button>
@@ -236,7 +253,7 @@ export default function ConsultationsPage() {
                         onClick={() =>
                           void patchStatus(c.id, "CANCELLED")
                         }
-                        className="text-sm border px-3 py-1.5 rounded"
+                        className={btnOutline}
                       >
                         Batalkan
                       </button>
@@ -246,14 +263,14 @@ export default function ConsultationsPage() {
                       <button
                         type="button"
                         onClick={() => void patchStatus(c.id, "ACCEPTED")}
-                        className="text-sm bg-green-50 text-green-800 px-3 py-1.5 rounded border border-green-200"
+                        className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-900 hover:bg-emerald-100/80 transition-colors"
                       >
                         Terima
                       </button>
                       <button
                         type="button"
                         onClick={() => void patchStatus(c.id, "REJECTED")}
-                        className="text-sm bg-red-50 text-red-800 px-3 py-1.5 rounded border border-red-200"
+                        className="inline-flex items-center rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-900 hover:bg-red-100/80 transition-colors"
                       >
                         Tolak
                       </button>
@@ -264,7 +281,7 @@ export default function ConsultationsPage() {
                       <button
                         type="button"
                         onClick={() => void patchStatus(c.id, "COMPLETED")}
-                        className="text-sm bg-gray-100 px-3 py-1.5 rounded border"
+                        className={`${btnOutline} bg-slate-50`}
                       >
                         Selesai
                       </button>

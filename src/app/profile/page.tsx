@@ -1,11 +1,34 @@
 "use client";
 
+import {
+  AlertBanner,
+  btnPrimary,
+  btnSecondary,
+  cardSurface,
+  inputBase,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import type { UserProfile } from "@/lib/api/types";
 import { getMyProfile, updateMyProfile } from "@/lib/api/users";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+
+function roleLabel(role: string): string {
+  switch (role) {
+    case "ADMIN":
+      return "Admin";
+    case "PATIENT":
+      return "Pasien";
+    case "PHYSIOTHERAPIST":
+      return "Fisioterapis";
+    default:
+      return role;
+  }
+}
 
 export default function ProfilePage() {
   const { user, isReady, logout } = useAuth();
@@ -48,22 +71,11 @@ export default function ProfilePage() {
   }, [isReady, user]);
 
   if (!isReady) {
-    return (
-      <main className="max-w-4xl mx-auto py-20 px-6 text-center text-gray-600">
-        Memuat…
-      </main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
-    return (
-      <main className="max-w-4xl mx-auto py-20 px-6 text-center space-y-4">
-        <p className="text-gray-700">Anda belum masuk.</p>
-        <Link href="/login" className="text-teal-600 font-medium underline">
-          Masuk
-        </Link>
-      </main>
-    );
+    return <SignInRequired message="Anda belum masuk." />;
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -88,65 +100,89 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-20 px-6">
-      <h1 className="text-4xl font-bold mb-2">Profil</h1>
-      <p className="text-gray-600 mb-6">
-        {profile?.email ?? user.email} · {user.role}
-      </p>
+    <main className={`${pageShell} space-y-8`}>
+      <PageHeader
+        eyebrow="Akun"
+        title="Profil"
+        description={
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-slate-600">
+              {profile?.email ?? user.email}
+            </span>
+            <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-900 ring-1 ring-teal-100">
+              {roleLabel(user.role)}
+            </span>
+          </span>
+        }
+      />
 
-      {loading && <p className="text-gray-600">Memuat data profil…</p>}
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3 mb-4">
-          {error}
-        </p>
-      )}
-      {savedMsg && (
-        <p className="text-green-700 text-sm bg-green-50 border border-green-100 rounded p-3 mb-4">
-          {savedMsg}
-        </p>
-      )}
+      {loading && !profile ? (
+        <div className={`${cardSurface} animate-pulse space-y-4 max-w-lg`}>
+          <div className="h-4 w-40 rounded bg-slate-200" />
+          <div className="h-10 rounded-xl bg-slate-100" />
+          <div className="h-10 rounded-xl bg-slate-100" />
+        </div>
+      ) : (
+        <>
+          {error ? (
+            <AlertBanner variant="error" className="max-w-lg">
+              {error}
+            </AlertBanner>
+          ) : null}
+          {savedMsg ? (
+            <AlertBanner variant="success" className="max-w-lg">
+              {savedMsg}
+            </AlertBanner>
+          ) : null}
 
-      <form onSubmit={handleSave} className="max-w-lg space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Nama lengkap</label>
-          <input
-            required
-            minLength={3}
-            className="border rounded w-full p-3"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            disabled={loading}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Nomor telepon
-          </label>
-          <input
-            className="border rounded w-full p-3"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="Opsional"
-            disabled={loading}
-          />
-        </div>
-        <div className="flex gap-3 flex-wrap">
-          <button
-            type="submit"
-            disabled={saving || loading}
-            className="bg-teal-500 text-white px-6 py-3 rounded disabled:opacity-60"
+          <form
+            onSubmit={handleSave}
+            className={`${cardSurface} max-w-lg space-y-4`}
           >
-            {saving ? "Menyimpan…" : "Simpan perubahan"}
-          </button>
-          <button
-            type="button"
-            onClick={() => logout()}
-            className="border border-gray-300 px-6 py-3 rounded"
-          >
-            Keluar
-          </button>
-        </div>
-      </form>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-slate-700">
+                Nama lengkap
+              </label>
+              <input
+                required
+                minLength={3}
+                className={inputBase}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={loading}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-slate-700">
+                Nomor telepon
+              </label>
+              <input
+                className={inputBase}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Opsional"
+                disabled={loading}
+              />
+            </div>
+            <div className="flex gap-3 flex-wrap pt-2">
+              <button
+                type="submit"
+                disabled={saving || loading}
+                className={btnPrimary}
+              >
+                {saving ? "Menyimpan…" : "Simpan perubahan"}
+              </button>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className={btnSecondary}
+              >
+                Keluar
+              </button>
+            </div>
+          </form>
+        </>
+      )}
     </main>
   );
 }
