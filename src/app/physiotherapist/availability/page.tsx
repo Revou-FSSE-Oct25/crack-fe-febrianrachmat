@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   createMyAvailabilitySlot,
@@ -29,6 +30,10 @@ export default function PhysiotherapistAvailabilityPage() {
   const [slotDate, setSlotDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
+
+  useTherapistOnlineHeartbeat(
+    Boolean(isReady && user?.role === "PHYSIOTHERAPIST"),
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -139,6 +144,11 @@ export default function PhysiotherapistAvailabilityPage() {
         <h1 className="text-3xl font-bold mt-2">Slot ketersediaan</h1>
         <p className="text-sm text-gray-600 mt-1">
           POST/GET/DELETE /physiotherapists/me/availability-slots
+        </p>
+        <p className="text-xs text-teal-900 mt-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
+          Selama halaman ini terbuka, status &quot;online&quot; dikirim otomatis
+          setiap menit (POST /physiotherapists/me/online) agar pasien bisa
+          memfilter terapis yang sedang aktif di aplikasi.
         </p>
       </div>
 

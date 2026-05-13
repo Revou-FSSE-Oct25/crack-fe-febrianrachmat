@@ -8,11 +8,17 @@ import type { Category, PhysiotherapistBrowseItem } from "@/lib/api/types";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+function isTherapistOnlineNow(t: PhysiotherapistBrowseItem): boolean {
+  if (!t.onlineUntil) return false;
+  return new Date(t.onlineUntil) > new Date();
+}
+
 export default function TherapistsBrowsePage() {
   const { user, isReady } = useAuth();
   const [items, setItems] = useState<PhysiotherapistBrowseItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState("");
+  const [onlineOnly, setOnlineOnly] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,6 +32,7 @@ export default function TherapistsBrowsePage() {
         browsePhysiotherapists({
           categoryId: categoryId || undefined,
           search: searchInput.trim() || undefined,
+          onlineNow: onlineOnly ? true : undefined,
           limit: 30,
           page: 1,
         }),
@@ -40,14 +47,14 @@ export default function TherapistsBrowsePage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryId, searchInput]);
+  }, [categoryId, searchInput, onlineOnly]);
 
   useEffect(() => {
     if (!isReady || !user) return;
     void load();
     // Hanya muat ulang otomatis saat kategori/login berubah; pencarian lewat tombol Terapkan.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, user, categoryId]);
+  }, [isReady, user, categoryId, onlineOnly]);
 
   if (!isReady) {
     return (
@@ -70,7 +77,9 @@ export default function TherapistsBrowsePage() {
     <main className="max-w-5xl mx-auto py-12 px-6 space-y-8">
       <h1 className="text-3xl font-bold">Cari fisioterapis</h1>
       <p className="text-sm text-gray-600">
-        GET /physiotherapists — hanya profil APPROVED.
+        GET /physiotherapists — hanya profil APPROVED. Centang &quot;Hanya
+        online&quot; untuk terapis yang baru saja membuka dashboard (heartbeat
+        ~5 menit).
       </p>
 
       <div className="flex flex-wrap gap-4 items-end">
@@ -105,6 +114,15 @@ export default function TherapistsBrowsePage() {
         >
           Terapkan
         </button>
+        <label className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={onlineOnly}
+            onChange={(e) => setOnlineOnly(e.target.checked)}
+            className="rounded border-gray-300"
+          />
+          Hanya terapis online sekarang
+        </label>
       </div>
 
       {error && (
@@ -121,7 +139,15 @@ export default function TherapistsBrowsePage() {
         <ul className="grid gap-6 sm:grid-cols-2">
           {items.map((t) => (
             <li key={t.id} className="border rounded-xl p-5 shadow-sm bg-white">
-              <h2 className="text-lg font-semibold">{t.user.fullName}</h2>
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <h2 className="text-lg font-semibold">{t.user.fullName}</h2>
+                {isTherapistOnlineNow(t) ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 border border-emerald-200">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Online
+                  </span>
+                ) : null}
+              </div>
               {t.category && (
                 <p className="text-sm text-teal-700">{t.category.name}</p>
               )}

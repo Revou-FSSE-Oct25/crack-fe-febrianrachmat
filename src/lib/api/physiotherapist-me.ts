@@ -24,3 +24,10 @@ export async function updateMyPhysiotherapistProfile(
     body: JSON.stringify(body),
   });
 }
+
+/** Heartbeat: marks therapist as "online" for browse filter (~5 min TTL). */
+export async function postPhysiotherapistOnlineHeartbeat(): Promise<unknown> {
+  return apiFetch<unknown>("/physiotherapists/me/online", {
+    method: "POST",
+  });
+}

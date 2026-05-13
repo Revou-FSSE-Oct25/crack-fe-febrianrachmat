@@ -58,6 +58,8 @@ export type PhysiotherapistBrowseItem = {
   bio: string | null;
   clinicAddress: string | null;
   consultationFee: string | number | null;
+  /** ISO timestamp; if in the future, therapist recently sent a dashboard heartbeat. */
+  onlineUntil?: string | null;
   user: {
     id: string;
     fullName: string;

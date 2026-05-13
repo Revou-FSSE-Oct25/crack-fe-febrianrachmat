@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
 import { listCategories } from "@/lib/api/categories";
 import type { Category } from "@/lib/api/types";
@@ -28,6 +29,10 @@ export default function PhysiotherapistProfilePage() {
   const [licenseNumber, setLicenseNumber] = useState("");
   const [consultationFee, setConsultationFee] = useState("");
   const [clinicAddress, setClinicAddress] = useState("");
+
+  useTherapistOnlineHeartbeat(
+    Boolean(isReady && user?.role === "PHYSIOTHERAPIST"),
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -150,6 +155,10 @@ export default function PhysiotherapistProfilePage() {
         <p className="text-sm text-gray-600 mt-1">
           PATCH /physiotherapists/me — isi sesuai validasi DTO (min. panjang
           teks, dll.)
+        </p>
+        <p className="text-xs text-teal-900 mt-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
+          Tab ini juga menjaga status &quot;online&quot; untuk pasien (ping
+          otomatis setiap menit).
         </p>
       </div>
 
