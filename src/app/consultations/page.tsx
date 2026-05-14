@@ -35,12 +35,15 @@ type ConsultationStatus =
   | "COMPLETED"
   | "CANCELLED";
 
+type ConsultationSlaTierUi = "STANDARD" | "FAST_ONLINE";
+
 type ConsultationRow = {
   id: string;
   complaint: string;
   status: ConsultationStatus;
   createdAt: string;
   feeSnapshot: string | null;
+  slaTier: ConsultationSlaTierUi;
 };
 
 function asConsultationRows(data: unknown): ConsultationRow[] {
@@ -56,6 +59,8 @@ function asConsultationRows(data: unknown): ConsultationRow[] {
         r.feeSnapshot != null && r.feeSnapshot !== ""
           ? String(r.feeSnapshot)
           : null,
+      slaTier:
+        r.slaTier === "FAST_ONLINE" ? "FAST_ONLINE" : "STANDARD",
     };
   });
 }
@@ -102,6 +107,7 @@ export default function ConsultationsPage() {
 
   const [physiotherapistId, setPhysiotherapistId] = useState("");
   const [complaint, setComplaint] = useState("");
+  const [slaTier, setSlaTier] = useState<ConsultationSlaTierUi>("STANDARD");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,6 +139,21 @@ export default function ConsultationsPage() {
       setError("Keluhan minimal 10 karakter.");
       return;
     }
+    if (!physiotherapistId) {
+      setError("Pilih fisioterapis.");
+      return;
+    }
+    if (slaTier === "FAST_ONLINE") {
+      const t = therapists.find((x) => x.id === physiotherapistId);
+      const online =
+        t?.onlineUntil != null && new Date(String(t.onlineUntil)) > new Date();
+      if (!online) {
+        setError(
+          "Respons cepat (10 menit) hanya jika terapis sedang online. Pilih Standar atau pilih terapis dari daftar yang punya badge Online.",
+        );
+        return;
+      }
+    }
     setSubmitting(true);
     setError(null);
     setInfo(null);
@@ -140,8 +161,10 @@ export default function ConsultationsPage() {
       await createConsultation({
         physiotherapistId,
         complaint: complaint.trim(),
+        slaTier: slaTier === "FAST_ONLINE" ? "FAST_ONLINE" : undefined,
       });
       setComplaint("");
+      setSlaTier("STANDARD");
       setInfo(
         "Permintaan konsultasi terkirim. Tunggu terapis menerima, lalu kamu akan diminta membayar.",
       );
@@ -266,6 +289,38 @@ export default function ConsultationsPage() {
                 ))}
               </select>
             </div>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium text-slate-700">
+                Batas waktu balasan terapis setelah bayar
+              </legend>
+              <label className="flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="slaTier"
+                  checked={slaTier === "STANDARD"}
+                  onChange={() => setSlaTier("STANDARD")}
+                  className="mt-1"
+                />
+                <span>
+                  <strong>Standar (24 jam)</strong> — cocok jika kamu memilih
+                  terapis tertentu; balasan bisa lebih lama.
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="radio"
+                  name="slaTier"
+                  checked={slaTier === "FAST_ONLINE"}
+                  onChange={() => setSlaTier("FAST_ONLINE")}
+                  className="mt-1"
+                />
+                <span>
+                  <strong>Respons cepat (~10 menit)</strong> — hanya jika terapis
+                  sedang <em>online</em> (badge Online). Jika tidak ada balasan,
+                  pembayaran dikembalikan otomatis oleh sistem.
+                </span>
+              </label>
+            </fieldset>
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
                 Keluhan (min. 10 karakter)
@@ -340,6 +395,13 @@ export default function ConsultationsPage() {
                       <span className="text-xs text-slate-500">·</span>
                       <span className="text-xs text-slate-700">
                         Biaya: <strong>{formatRupiah(c.feeSnapshot)}</strong>
+                      </span>
+                      <span className="text-xs text-slate-500">·</span>
+                      <span className="text-xs text-slate-600">
+                        SLA:{" "}
+                        {c.slaTier === "FAST_ONLINE"
+                          ? "cepat (~10 min)"
+                          : "standar (~24 jam)"}
                       </span>
                     </div>
                     <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">

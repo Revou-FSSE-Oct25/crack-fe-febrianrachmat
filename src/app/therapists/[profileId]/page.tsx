@@ -61,6 +61,9 @@ export default function TherapistDetailPage() {
   const [submittingConsult, setSubmittingConsult] = useState(false);
   const [showConsultForm, setShowConsultForm] = useState(false);
   const [complaint, setComplaint] = useState("");
+  const [consultSla, setConsultSla] = useState<"STANDARD" | "FAST_ONLINE">(
+    "STANDARD",
+  );
 
   const load = useCallback(async () => {
     if (!profileId) return;
@@ -143,6 +146,12 @@ export default function TherapistDetailPage() {
             <span className="font-medium">
               {formatRupiah(therapist.consultationFee ?? null)}
             </span>
+            {therapist.onlineUntil &&
+            new Date(String(therapist.onlineUntil)) > new Date() ? (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 border border-emerald-200">
+                Online
+              </span>
+            ) : null}
           </p>
 
           {user.role === "PATIENT" && (
@@ -171,12 +180,25 @@ export default function TherapistDetailPage() {
                   setError("Keluhan minimal 10 karakter.");
                   return;
                 }
+                const therapistOnline =
+                  therapist.onlineUntil != null &&
+                  new Date(String(therapist.onlineUntil)) > new Date();
+                if (consultSla === "FAST_ONLINE" && !therapistOnline) {
+                  setError(
+                    "Respons cepat hanya saat terapis sedang online. Pilih Standar atau tunggu badge Online.",
+                  );
+                  return;
+                }
                 setError(null);
                 setSubmittingConsult(true);
                 try {
                   await createConsultation({
                     physiotherapistId: profileId,
                     complaint: complaint.trim(),
+                    slaTier:
+                      consultSla === "FAST_ONLINE"
+                        ? "FAST_ONLINE"
+                        : undefined,
                   });
                   router.push("/consultations");
                 } catch (err) {
@@ -196,6 +218,34 @@ export default function TherapistDetailPage() {
                 <strong>{formatRupiah(therapist.consultationFee ?? null)}</strong>{" "}
                 → chat aktif setelah pembayaran dikonfirmasi.
               </p>
+              <fieldset className="space-y-2 text-sm text-slate-700">
+                <legend className="font-medium text-slate-800">
+                  Batas balasan terapis setelah bayar
+                </legend>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="consultSla"
+                    checked={consultSla === "STANDARD"}
+                    onChange={() => setConsultSla("STANDARD")}
+                    className="mt-1"
+                  />
+                  <span>Standar (~24 jam)</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="consultSla"
+                    checked={consultSla === "FAST_ONLINE"}
+                    onChange={() => setConsultSla("FAST_ONLINE")}
+                    className="mt-1"
+                  />
+                  <span>
+                    Respons cepat (~10 menit) — hanya jika badge{" "}
+                    <strong>Online</strong> tampil.
+                  </span>
+                </label>
+              </fieldset>
               <label className="block text-sm font-medium text-slate-800">
                 Keluhan (min. 10 karakter)
                 <textarea
@@ -220,6 +270,7 @@ export default function TherapistDetailPage() {
                   onClick={() => {
                     setShowConsultForm(false);
                     setComplaint("");
+                    setConsultSla("STANDARD");
                   }}
                   className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-5 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
                 >

@@ -4,6 +4,8 @@ import { apiFetch } from "./client";
 export type CreateConsultationBody = {
   physiotherapistId: string;
   complaint: string;
+  /** STANDARD = 24h first reply SLA; FAST_ONLINE = 10 min, requires therapist online at create. */
+  slaTier?: "STANDARD" | "FAST_ONLINE";
 };
 
 /**
