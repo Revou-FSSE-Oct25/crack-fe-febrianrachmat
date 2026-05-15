@@ -341,7 +341,7 @@ export default function BookingForm() {
             Memuat slot…
           </p>
         ) : slotsError ? (
-          <p className="text-sm text-red-700">{slotsError}</p>
+          <AlertBanner variant="error">{slotsError}</AlertBanner>
         ) : (
           <select
             className={inputBase}

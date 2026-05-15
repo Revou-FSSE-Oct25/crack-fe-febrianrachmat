@@ -259,34 +259,19 @@ export default function AdminDashboardPage() {
         <>
           <OverviewCards data={data} />
           <div className="flex flex-wrap gap-3 sm:gap-4 border-t border-slate-200 pt-8">
-            <Link
-              href="/admin/physiotherapists"
-              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
-            >
+            <Link href="/admin/physiotherapists" className={btnOutline}>
               Verifikasi fisioterapis →
             </Link>
-            <Link
-              href="/admin/categories"
-              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
-            >
+            <Link href="/admin/categories" className={btnOutline}>
               Kelola kategori →
             </Link>
-            <Link
-              href="/admin/reviews"
-              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
-            >
+            <Link href="/admin/reviews" className={btnOutline}>
               Moderasi ulasan →
             </Link>
-            <Link
-              href="/transactions"
-              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
-            >
+            <Link href="/transactions" className={btnOutline}>
               Transaksi &amp; refund →
             </Link>
-            <Link
-              href="/admin/notifications"
-              className="inline-flex items-center rounded-lg bg-white px-3 py-2 text-sm font-medium text-teal-800 ring-1 ring-slate-200 hover:bg-teal-50 hover:ring-teal-200 transition-colors"
-            >
+            <Link href="/admin/notifications" className={btnOutline}>
               Broadcast notifikasi →
             </Link>
           </div>
