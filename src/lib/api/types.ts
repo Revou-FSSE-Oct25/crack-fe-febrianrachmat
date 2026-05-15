@@ -56,11 +56,44 @@ export type UserProfile = {
   fullName: string;
   email: string;
   phoneNumber: string | null;
+  avatarUrl?: string | null;
   role: UserRole;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };
+
+/** GET /users/me/activity-summary */
+export type UserActivitySummary =
+  | {
+      role: "PATIENT";
+      bookings: { total: number; pending: number; completed: number };
+      consultations: {
+        total: number;
+        active: number;
+        completed: number;
+      };
+      transactionsPending: number;
+      reviews: number;
+      lastActivityAt: string | null;
+    }
+  | {
+      role: "PHYSIOTHERAPIST";
+      bookings: { total: number; pending: number; completed: number };
+      consultations: {
+        total: number;
+        active: number;
+        completed: number;
+      };
+      reviews: number;
+      lastActivityAt: string | null;
+    }
+  | {
+      role: "ADMIN";
+      pendingVerifications: number;
+      transactionsPending: number;
+      consultationsActive: number;
+    };
 
 /** Category dari GET /categories */
 export type Category = {

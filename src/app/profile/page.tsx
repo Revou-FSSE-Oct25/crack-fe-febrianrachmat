@@ -1,7 +1,9 @@
 "use client";
 
-import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { PatientMedicalCard } from "@/components/profile/PatientMedicalCard";
+import { ProfileActivitySummary } from "@/components/profile/ProfileActivitySummary";
+import { ProfileAvatarUpload } from "@/components/profile/ProfileAvatarUpload";
+import { ProfileDangerZone } from "@/components/profile/ProfileDangerZone";
 import {
   AlertBanner,
   btnOutline,
@@ -297,7 +299,14 @@ export default function ProfilePage() {
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
           {profile ? (
-            <ProfileAvatar fullName={displayName} size="lg" />
+            <ProfileAvatarUpload
+              profile={profile}
+              displayName={displayName}
+              onUpdated={(updated) => {
+                setProfile(updated);
+                syncUserFromProfile(updated);
+              }}
+            />
           ) : (
             <div
               className="h-16 w-16 shrink-0 animate-pulse rounded-2xl bg-slate-200"
@@ -363,6 +372,8 @@ export default function ProfilePage() {
           ) : null}
 
           <RoleHubCard role={user.role} ptSummary={ptSummary} />
+
+          <ProfileActivitySummary enabled={Boolean(profile)} />
 
           <PatientMedicalCard enabled={user.role === "PATIENT"} />
 
@@ -523,6 +534,12 @@ export default function ProfilePage() {
               </button>
             </div>
           </form>
+
+          <ProfileDangerZone
+            enabled={
+              user.role === "PATIENT" || user.role === "PHYSIOTHERAPIST"
+            }
+          />
         </>
       )}
     </main>
