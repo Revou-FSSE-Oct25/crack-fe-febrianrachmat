@@ -246,7 +246,7 @@ export default function TransactionsPage() {
 
   if (user.role === "PHYSIOTHERAPIST") {
     return (
-      <main className={`${pageShell} space-y-4`}>
+      <main className={`${pageShell} space-y-4 pb-16`}>
         <PageHeader
           title="Transaksi"
           description="Daftar transaksi tersedia untuk Pasien dan Admin. Akun fisioterapis tidak menggunakan halaman ini."
@@ -262,7 +262,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-8`}>
+    <main className={`${pageShell} space-y-8 pb-16`}>
       <PageHeader
         title="Transaksi"
         description={

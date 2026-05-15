@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  adminPageShell,
+  AlertBanner,
+  btnPrimary,
+  cardSurface,
+  inputBase,
+  PageHeader,
+  PageLoading,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -84,68 +94,64 @@ export default function AdminNotificationsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading label="Memuat…" />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk sebagai admin.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk sebagai admin untuk mengirim notifikasi." />
     );
   }
 
   if (user.role !== "ADMIN") {
     return (
-      <main className="max-w-3xl mx-auto py-16 px-6 space-y-4">
-        <h1 className="text-2xl font-bold">Akses ditolak</h1>
-        <p className="text-gray-700">Hanya untuk admin.</p>
-        <Link href="/" className="text-teal-600 underline">
-          Beranda
-        </Link>
+      <main className={adminPageShell}>
+        <div className={`${cardSurface} max-w-lg space-y-4`}>
+          <PageHeader
+            eyebrow="Admin"
+            title="Akses ditolak"
+            description="Hanya admin yang dapat membuka halaman ini."
+          />
+          <Link
+            href="/"
+            className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+          >
+            Kembali ke beranda
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-3xl mx-auto py-12 px-6 space-y-8">
-      <div>
-        <Link
-          href="/admin/dashboard"
-          className="text-sm text-teal-700 hover:underline"
-        >
-          ← Dashboard
-        </Link>
-        <h1 className="text-3xl font-bold mt-2">Notifikasi admin</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          Endpoint: <code className="text-xs bg-gray-100 px-1 rounded">POST /admin/notifications/users/:userId</code> dan{" "}
-          <code className="text-xs bg-gray-100 px-1 rounded">POST /admin/notifications/broadcast</code>.
-        </p>
-      </div>
+    <main className={adminPageShell}>
+      <Link
+        href="/admin/dashboard"
+        className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
+      >
+        ← Dashboard
+      </Link>
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
-      {success && (
-        <p className="text-green-800 text-sm bg-green-50 border border-green-100 rounded p-3">
-          {success}
-        </p>
-      )}
+      <PageHeader
+        eyebrow="Admin"
+        title="Notifikasi"
+        description="Kirim broadcast ke semua pengguna aktif, atau kirim pesan sistem ke satu pengguna lewat ID penggunanya."
+      />
 
-      <section className="border rounded-xl p-6 bg-white shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold">Broadcast ke semua user aktif</h2>
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {success ? <AlertBanner variant="success">{success}</AlertBanner> : null}
+
+      <section className={`${cardSurface} space-y-4`}>
+        <h2 className="text-lg font-semibold text-slate-900">
+          Broadcast ke semua user aktif
+        </h2>
         <form onSubmit={handleBroadcast} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">Judul</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Judul
+            </label>
             <input
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={broadcastTitle}
               onChange={(e) => setBroadcastTitle(e.target.value)}
               minLength={3}
@@ -153,9 +159,11 @@ export default function AdminNotificationsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Isi</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Isi
+            </label>
             <textarea
-              className="border rounded-lg w-full p-3 min-h-[90px]"
+              className={`${inputBase} min-h-[90px] resize-y`}
               value={broadcastBody}
               onChange={(e) => setBroadcastBody(e.target.value)}
               minLength={3}
@@ -165,20 +173,24 @@ export default function AdminNotificationsPage() {
           <button
             type="submit"
             disabled={broadcastLoading}
-            className="bg-teal-600 text-white px-5 py-2 rounded-lg disabled:opacity-50"
+            className={btnPrimary}
           >
             {broadcastLoading ? "Mengirim…" : "Kirim broadcast"}
           </button>
         </form>
       </section>
 
-      <section className="border rounded-xl p-6 bg-white shadow-sm space-y-4">
-        <h2 className="text-lg font-semibold">Kirim ke user tertentu</h2>
+      <section className={`${cardSurface} space-y-4`}>
+        <h2 className="text-lg font-semibold text-slate-900">
+          Kirim ke user tertentu
+        </h2>
         <form onSubmit={handleSendToUser} className="space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1">User ID</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              User ID
+            </label>
             <input
-              className="border rounded-lg w-full p-3 font-mono text-sm"
+              className={`${inputBase} font-mono text-xs`}
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
               placeholder="UUID user target"
@@ -186,9 +198,11 @@ export default function AdminNotificationsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Judul</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Judul
+            </label>
             <input
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={userTitle}
               onChange={(e) => setUserTitle(e.target.value)}
               minLength={3}
@@ -196,20 +210,18 @@ export default function AdminNotificationsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Isi</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Isi
+            </label>
             <textarea
-              className="border rounded-lg w-full p-3 min-h-[90px]"
+              className={`${inputBase} min-h-[90px] resize-y`}
               value={userBody}
               onChange={(e) => setUserBody(e.target.value)}
               minLength={3}
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={sendLoading}
-            className="bg-teal-600 text-white px-5 py-2 rounded-lg disabled:opacity-50"
-          >
+          <button type="submit" disabled={sendLoading} className={btnPrimary}>
             {sendLoading ? "Mengirim…" : "Kirim ke user"}
           </button>
         </form>

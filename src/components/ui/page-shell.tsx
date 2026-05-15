@@ -5,6 +5,10 @@ import type { ReactNode } from "react";
 export const pageShell =
   "max-w-4xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8";
 
+/** Lebar admin (ringkasan, verifikasi, moderasi); padding selaras `pageShell`. */
+export const adminPageShell =
+  "max-w-6xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
+
 export const cardSurface =
   "rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm p-6 shadow-[0_1px_2px_rgb(15_23_42_/_0.04),0_8px_24px_rgb(15_23_42_/_0.06)] ring-1 ring-slate-900/[0.04] transition-shadow duration-200";
 

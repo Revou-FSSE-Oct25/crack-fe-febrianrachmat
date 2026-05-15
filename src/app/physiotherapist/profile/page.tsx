@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  AlertBanner,
+  btnPrimary,
+  cardSurface,
+  inputBase,
+  PageHeader,
+  PageLoading,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
@@ -12,6 +21,9 @@ import {
 } from "@/lib/api/physiotherapist-me";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+
+const therapistShell =
+  "max-w-2xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-6 pb-16";
 
 export default function PhysiotherapistProfilePage() {
   const { user, isReady } = useAuth();
@@ -108,7 +120,9 @@ export default function PhysiotherapistProfilePage() {
     setSaving(true);
     try {
       await updateMyPhysiotherapistProfile(body);
-      setSuccess("Profil disimpan. Status verifikasi dapat kembali ke menunggu review admin.");
+      setSuccess(
+        "Profil disimpan. Status verifikasi dapat kembali menunggu tinjauan admin.",
+      );
       await load();
     } catch (err) {
       setError(
@@ -120,71 +134,76 @@ export default function PhysiotherapistProfilePage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-2xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
-    return (
-      <main className="max-w-2xl mx-auto py-16 px-6 text-center">
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
-    );
+    return <SignInRequired message="Silakan masuk untuk mengelola profil fisioterapis." />;
   }
 
   if (user.role !== "PHYSIOTHERAPIST") {
     return (
-      <main className="max-w-2xl mx-auto py-16 px-6">
-        <p>Halaman ini untuk akun fisioterapis.</p>
-        <Link href="/" className="text-teal-600 underline">
-          Beranda
-        </Link>
+      <main className={therapistShell}>
+        <div className={`${cardSurface} space-y-4`}>
+          <PageHeader
+            eyebrow="Profil"
+            title="Akses terbatas"
+            description="Halaman ini hanya untuk akun fisioterapis."
+          />
+          <Link
+            href="/"
+            className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+          >
+            Kembali ke beranda
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-2xl mx-auto py-12 px-6 space-y-6">
-      <div>
+    <main className={therapistShell}>
+      <div className="flex flex-col gap-2">
         <Link
           href="/physiotherapist/availability"
-          className="text-sm text-teal-700 hover:underline"
+          className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800 self-start"
         >
           Kelola slot jadwal →
         </Link>
-        <h1 className="text-3xl font-bold mt-2">Profil fisioterapis</h1>
-        <p className="text-sm text-gray-600 mt-1">
-          PATCH /physiotherapists/me — isi sesuai validasi DTO (min. panjang
-          teks, dll.)
-        </p>
-        <p className="text-xs text-teal-900 mt-2 rounded-lg border border-teal-100 bg-teal-50 px-3 py-2">
-          Tab ini juga menjaga status &quot;online&quot; untuk pasien (ping
-          otomatis setiap menit).
-        </p>
+        <PageHeader
+          eyebrow="Fisioterapis"
+          title="Profil"
+          description="Perbarui bio, tarif, dan data profesional. Isi hanya field yang ingin diubah; validasi panjang minimum tetap berlaku."
+        />
       </div>
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
-      {success && (
-        <p className="text-green-800 text-sm bg-green-50 border border-green-100 rounded p-3">
-          {success}
-        </p>
-      )}
+      <div
+        className="rounded-xl border border-teal-100 bg-teal-50/80 px-4 py-3 text-xs text-teal-950 shadow-sm ring-1 ring-teal-900/5"
+        role="note"
+      >
+        Tab ini juga menjaga status &quot;online&quot; untuk pasien (ping
+        otomatis setiap menit).
+      </div>
+
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {success ? <AlertBanner variant="success">{success}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+            aria-hidden
+          />
+          Memuat…
+        </p>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className={`${cardSurface} space-y-4`}>
           <div>
-            <label className="block text-sm font-medium mb-1">Kategori</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Kategori
+            </label>
             <select
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
             >
@@ -197,99 +216,95 @@ export default function PhysiotherapistProfilePage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Bio (min. 10 karakter jika diisi)
             </label>
             <textarea
-              className="border rounded-lg w-full p-3 min-h-[100px]"
+              className={`${inputBase} min-h-[100px] resize-y`}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Pendidikan (min. 5 karakter jika diisi)
             </label>
             <textarea
-              className="border rounded-lg w-full p-3 min-h-[80px]"
+              className={`${inputBase} min-h-[80px] resize-y`}
               value={education}
               onChange={(e) => setEducation(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Tahun pengalaman (0–60)
             </label>
             <input
               type="number"
               min={0}
               max={60}
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={experienceYears}
               onChange={(e) => setExperienceYears(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               URL sertifikasi
             </label>
             <input
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={certificationUrl}
               onChange={(e) => setCertificationUrl(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Nomor lisensi (min. 5 karakter jika diisi)
             </label>
             <input
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={licenseNumber}
               onChange={(e) => setLicenseNumber(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Biaya konsultasi online
             </label>
             <input
               type="number"
               min={0}
               step="0.01"
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={consultationFee}
               onChange={(e) => setConsultationFee(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Biaya visit (klinik / kunjungan rumah)
             </label>
             <input
               type="number"
               min={0}
               step="0.01"
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={visitFee}
               onChange={(e) => setVisitFee(e.target.value)}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Alamat klinik (min. 10 karakter jika diisi)
             </label>
             <textarea
-              className="border rounded-lg w-full p-3 min-h-[88px]"
+              className={`${inputBase} min-h-[88px] resize-y`}
               value={clinicAddress}
               onChange={(e) => setClinicAddress(e.target.value)}
             />
           </div>
-          <button
-            type="submit"
-            disabled={saving}
-            className="bg-teal-600 text-white px-6 py-3 rounded-lg disabled:opacity-50"
-          >
+          <button type="submit" disabled={saving} className={btnPrimary}>
             {saving ? "Menyimpan…" : "Simpan profil"}
           </button>
         </form>

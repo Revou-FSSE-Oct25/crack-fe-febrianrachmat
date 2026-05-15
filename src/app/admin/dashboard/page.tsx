@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
+  adminPageShell,
   AlertBanner,
   btnOutline,
   cardSurface,
@@ -16,9 +17,6 @@ import {
 } from "@/lib/api/admin-dashboard";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-
-const adminShell =
-  "max-w-6xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
 
 function parseMoney(v: string | number): number {
   if (typeof v === "number") return v;
@@ -218,7 +216,7 @@ export default function AdminDashboardPage() {
 
   if (user.role !== "ADMIN") {
     return (
-      <main className={adminShell}>
+      <main className={adminPageShell}>
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             eyebrow="Admin"
@@ -234,7 +232,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <main className={adminShell}>
+    <main className={adminPageShell}>
       <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-white to-teal-50/40 p-6 sm:p-8 shadow-sm ring-1 ring-slate-900/5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <PageHeader

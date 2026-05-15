@@ -100,7 +100,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-8`}>
+    <main className={`${pageShell} space-y-8 pb-16`}>
       <PageHeader
         eyebrow="Akun"
         title="Profil"

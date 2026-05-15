@@ -282,7 +282,7 @@ export default function ConsultationsPage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-10`}>
+    <main className={`${pageShell} space-y-10 pb-16`}>
       <PageHeader
         title="Konsultasi"
         description="Ajukan keluhan awal, bayar setelah terapis menerima, lalu mulai sesi chat profesional."

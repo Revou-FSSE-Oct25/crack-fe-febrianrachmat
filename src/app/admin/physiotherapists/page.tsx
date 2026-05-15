@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  adminPageShell,
+  AlertBanner,
+  btnOutline,
+  btnPrimary,
+  cardSurface,
+  EmptyState,
+  inputBase,
+  ListSkeleton,
+  PageHeader,
+  PageLoading,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -44,6 +57,9 @@ function asPendingRows(data: unknown): PendingRow[] {
     };
   });
 }
+
+const rejectBtn =
+  "inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-800 shadow-sm hover:bg-red-50 active:scale-[0.98] disabled:opacity-50 transition-[transform,colors] duration-150";
 
 export default function AdminPhysiotherapistsPage() {
   const { user, isReady } = useAuth();
@@ -118,148 +134,141 @@ export default function AdminPhysiotherapistsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading label="Memuat antrian verifikasi…" />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk sebagai admin.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk sebagai admin untuk memverifikasi fisioterapis." />
     );
   }
 
   if (user.role !== "ADMIN") {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 space-y-4">
-        <h1 className="text-2xl font-bold">Akses ditolak</h1>
-        <p className="text-gray-700">Hanya untuk admin.</p>
-        <Link href="/" className="text-teal-600 underline">
-          Beranda
-        </Link>
+      <main className={adminPageShell}>
+        <div className={`${cardSurface} max-w-lg space-y-4`}>
+          <PageHeader
+            eyebrow="Admin"
+            title="Akses ditolak"
+            description="Hanya admin yang dapat membuka halaman ini."
+          />
+          <Link
+            href="/"
+            className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+          >
+            Kembali ke beranda
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-12 px-6 space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+    <main className={adminPageShell}>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-2 min-w-0">
           <Link
             href="/admin/dashboard"
-            className="text-sm text-teal-700 hover:underline"
+            className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
           >
             ← Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mt-2">
-            Verifikasi fisioterapis
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm">
-            Daftar dari{" "}
-            <code className="bg-gray-100 px-1 rounded text-xs">
-              GET /admin/physiotherapists/pending
-            </code>
-          </p>
+          <PageHeader
+            eyebrow="Admin"
+            title="Verifikasi fisioterapis"
+            description="Tinjau profil yang menunggu persetujuan, lalu setujui atau tolak dengan alasan yang jelas."
+          />
         </div>
         <button
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="text-sm border px-4 py-2 rounded-lg disabled:opacity-50"
+          className={btnOutline}
         >
           Muat ulang
         </button>
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">
-          {error}
-        </div>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <ListSkeleton rows={2} />
       ) : rows.length === 0 ? (
-        <p className="text-gray-600 border rounded-lg p-8 text-center bg-gray-50">
-          Tidak ada profil dengan status PENDING.
-        </p>
+        <EmptyState
+          title="Tidak ada profil PENDING"
+          hint="Semua permohonan verifikasi sudah diproses, atau belum ada pendaftar baru."
+        />
       ) : (
-        <ul className="space-y-8">
+        <ul className="space-y-6">
           {rows.map((row) => (
-            <li
-              key={row.id}
-              className="border rounded-xl p-6 bg-white shadow-sm space-y-4"
-            >
+            <li key={row.id} className={`${cardSurface} space-y-4`}>
               <div className="flex flex-wrap justify-between gap-2">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-slate-900">
                     {row.user.fullName}
                   </h2>
-                  <p className="text-sm text-gray-600">{row.user.email}</p>
-                  {row.user.phoneNumber && (
-                    <p className="text-sm text-gray-600">{row.user.phoneNumber}</p>
-                  )}
-                  {row.category && (
-                    <p className="text-sm mt-1">
+                  <p className="text-sm text-slate-600">{row.user.email}</p>
+                  {row.user.phoneNumber ? (
+                    <p className="text-sm text-slate-600">{row.user.phoneNumber}</p>
+                  ) : null}
+                  {row.category ? (
+                    <p className="text-sm mt-1 text-slate-700">
                       Kategori:{" "}
                       <span className="font-medium">{row.category.name}</span>
                     </p>
-                  )}
+                  ) : null}
                 </div>
-                <span className="text-xs font-mono text-gray-400">{row.id}</span>
+                <span className="text-xs font-mono text-slate-400 break-all">
+                  {row.id}
+                </span>
               </div>
 
-              {row.bio && (
-                <p className="text-sm text-gray-800 whitespace-pre-wrap border-l-2 border-teal-200 pl-3">
+              {row.bio ? (
+                <p className="text-sm text-slate-800 whitespace-pre-wrap border-l-2 border-teal-200 pl-3 leading-relaxed">
                   {row.bio}
                 </p>
-              )}
+              ) : null}
               <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                {row.licenseNumber && (
+                {row.licenseNumber ? (
                   <div>
-                    <dt className="text-gray-500">Nomor lisensi</dt>
-                    <dd>{row.licenseNumber}</dd>
+                    <dt className="text-slate-500">Nomor lisensi</dt>
+                    <dd className="text-slate-900">{row.licenseNumber}</dd>
                   </div>
-                )}
-                {row.certificationUrl && (
+                ) : null}
+                {row.certificationUrl ? (
                   <div className="sm:col-span-2">
-                    <dt className="text-gray-500">Sertifikasi</dt>
+                    <dt className="text-slate-500">Sertifikasi</dt>
                     <dd>
                       <a
                         href={row.certificationUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-teal-700 underline break-all"
+                        className="text-teal-700 font-medium underline break-all"
                       >
                         {row.certificationUrl}
                       </a>
                     </dd>
                   </div>
-                )}
+                ) : null}
               </dl>
 
-              <div className="flex flex-col gap-4 pt-2 border-t">
+              <div className="flex flex-col gap-4 pt-2 border-t border-slate-100">
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
                     disabled={actionId === row.id}
                     onClick={() => void approve(row.id)}
-                    className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+                    className={btnPrimary}
                   >
                     Setujui
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-slate-800">
                     Tolak — alasan (min. 5 karakter)
                   </label>
                   <textarea
-                    className="w-full border rounded-lg p-3 text-sm min-h-[80px]"
+                    className={`${inputBase} min-h-[80px] resize-y`}
                     placeholder="Contoh: Dokumen tidak lengkap."
                     value={rejectReason[row.id] ?? ""}
                     onChange={(e) =>
@@ -273,7 +282,7 @@ export default function AdminPhysiotherapistsPage() {
                     type="button"
                     disabled={actionId === row.id}
                     onClick={() => void reject(row.id)}
-                    className="border border-red-300 text-red-800 px-4 py-2 rounded-lg text-sm hover:bg-red-50 disabled:opacity-50"
+                    className={rejectBtn}
                   >
                     Tolak
                   </button>

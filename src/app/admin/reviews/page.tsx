@@ -1,5 +1,18 @@
 "use client";
 
+import {
+  adminPageShell,
+  AlertBanner,
+  btnOutline,
+  btnPrimary,
+  cardSurface,
+  EmptyState,
+  inputBase,
+  ListSkeleton,
+  PageHeader,
+  PageLoading,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyReviews, moderateReview } from "@/lib/api/reviews";
@@ -31,6 +44,9 @@ function asReviewRows(data: unknown): ReviewRow[] {
     };
   });
 }
+
+const hideBtn =
+  "inline-flex items-center justify-center rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 transition-[transform,colors] duration-150";
 
 export default function AdminReviewsPage() {
   const { user, isReady } = useAuth();
@@ -96,137 +112,122 @@ export default function AdminReviewsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading label="Memuat ulasan…" />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk sebagai admin.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk sebagai admin untuk moderasi ulasan." />
     );
   }
 
   if (user.role !== "ADMIN") {
     return (
-      <main className="max-w-4xl mx-auto py-16 px-6 space-y-4">
-        <h1 className="text-2xl font-bold">Akses ditolak</h1>
-        <p className="text-gray-700">Hanya untuk admin.</p>
-        <Link href="/" className="text-teal-600 underline">
-          Beranda
-        </Link>
+      <main className={adminPageShell}>
+        <div className={`${cardSurface} max-w-lg space-y-4`}>
+          <PageHeader
+            eyebrow="Admin"
+            title="Akses ditolak"
+            description="Hanya admin yang dapat membuka halaman ini."
+          />
+          <Link
+            href="/"
+            className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+          >
+            Kembali ke beranda
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-4xl mx-auto py-12 px-6 space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
+    <main className={adminPageShell}>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-2 min-w-0">
           <Link
             href="/admin/dashboard"
-            className="text-sm text-teal-700 hover:underline"
+            className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
           >
             ← Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mt-2">
-            Moderasi ulasan
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm">
-            Daftar:{" "}
-            <code className="bg-gray-100 px-1 rounded text-xs">GET /reviews/me</code>{" "}
-            · aksi:{" "}
-            <code className="bg-gray-100 px-1 rounded text-xs">
-              PATCH /admin/reviews/:reviewId/moderate
-            </code>{" "}
-            (
-            <code className="text-xs">ModerateReviewDto</code>:{" "}
-            <code className="text-xs">isHidden</code>,{" "}
-            <code className="text-xs">moderationNote?</code>)
-          </p>
+          <PageHeader
+            eyebrow="Admin"
+            title="Moderasi ulasan"
+            description="Sembunyikan ulasan yang melanggar kebijakan atau tampilkan kembali setelah koreksi. Catatan moderasi opsional namun disarankan saat menyembunyikan."
+          />
         </div>
         <button
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="text-sm border px-4 py-2 rounded-lg disabled:opacity-50"
+          className={btnOutline}
         >
           Muat ulang
         </button>
       </div>
 
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 text-sm">
-          {error}
-        </div>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <ListSkeleton rows={2} />
       ) : rows.length === 0 ? (
-        <p className="text-gray-600 border rounded-lg p-8 text-center bg-gray-50">
-          Belum ada ulasan.
-        </p>
+        <EmptyState
+          title="Belum ada ulasan"
+          hint="Ulasan dari pasien akan muncul di sini setelah booking selesai dan ulasan dikirim."
+        />
       ) : (
         <ul className="space-y-6">
           {rows.map((rev) => (
-            <li
-              key={rev.id}
-              className="border rounded-xl p-6 bg-white shadow-sm space-y-4"
-            >
+            <li key={rev.id} className={`${cardSurface} space-y-4`}>
               <div className="flex flex-wrap justify-between gap-2 items-start">
                 <div>
-                  <p className="text-amber-600 font-semibold">
+                  <p className="text-amber-700 font-semibold">
                     Rating: {rev.rating}/5
                   </p>
-                  <p className="text-xs text-gray-500 mt-1 font-mono">
+                  <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                     {rev.id}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Booking: <span className="font-mono">{rev.bookingId}</span>
+                  <p className="text-xs text-slate-500">
+                    Booking:{" "}
+                    <span className="font-mono break-all">{rev.bookingId}</span>
                   </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(rev.createdAt).toLocaleString()}
+                  <p className="text-xs text-slate-500">
+                    {new Date(rev.createdAt).toLocaleString("id-ID")}
                   </p>
                 </div>
                 <span
-                  className={`text-xs font-medium px-2 py-1 rounded ${
+                  className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
                     rev.isHidden
-                      ? "bg-gray-200 text-gray-800"
-                      : "bg-green-100 text-green-800"
+                      ? "bg-slate-200 text-slate-800"
+                      : "bg-emerald-100 text-emerald-900"
                   }`}
                 >
                   {rev.isHidden ? "Disembunyikan" : "Tampil publik"}
                 </span>
               </div>
 
-              {rev.comment && (
-                <blockquote className="text-gray-800 border-l-4 border-teal-200 pl-4 whitespace-pre-wrap">
+              {rev.comment ? (
+                <blockquote className="text-slate-800 border-l-4 border-teal-200 pl-4 whitespace-pre-wrap text-sm leading-relaxed">
                   {rev.comment}
                 </blockquote>
-              )}
+              ) : null}
 
-              {rev.moderationNote && (
-                <p className="text-sm text-gray-600 bg-gray-50 rounded p-3">
-                  <span className="font-medium text-gray-700">
+              {rev.moderationNote ? (
+                <p className="text-sm text-slate-700 bg-slate-50 rounded-xl p-3 ring-1 ring-slate-100">
+                  <span className="font-medium text-slate-800">
                     Catatan moderasi:{" "}
                   </span>
                   {rev.moderationNote}
                 </p>
-              )}
+              ) : null}
 
-              <div className="space-y-2 pt-2 border-t">
-                <label className="block text-sm text-gray-700">
-                  Catatan moderasi (opsional, min. 3 karakter jika diisi — mis.
-                  saat menyembunyikan)
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <label className="block text-sm font-medium text-slate-800">
+                  Catatan moderasi (opsional, min. 3 karakter jika diisi)
                 </label>
                 <textarea
-                  className="w-full border rounded-lg p-3 text-sm min-h-[72px]"
+                  className={`${inputBase} min-h-[72px] resize-y`}
                   placeholder="Contoh: Mengandung bahasa tidak pantas."
                   value={noteById[rev.id] ?? ""}
                   onChange={(e) =>
@@ -248,7 +249,7 @@ export default function AdminReviewsPage() {
                           noteById[rev.id] ?? "",
                         )
                       }
-                      className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+                      className={hideBtn}
                     >
                       Sembunyikan
                     </button>
@@ -256,10 +257,8 @@ export default function AdminReviewsPage() {
                     <button
                       type="button"
                       disabled={actionId === rev.id}
-                      onClick={() =>
-                        void applyModeration(rev.id, false, "")
-                      }
-                      className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50"
+                      onClick={() => void applyModeration(rev.id, false, "")}
+                      className={btnPrimary}
                     >
                       Tampilkan lagi
                     </button>
