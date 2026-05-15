@@ -1,6 +1,7 @@
 "use client";
 
 import { ProfileAvatar } from "@/components/ProfileAvatar";
+import { PatientMedicalCard } from "@/components/profile/PatientMedicalCard";
 import {
   AlertBanner,
   btnOutline,
@@ -68,23 +69,6 @@ function RoleHubCard({
   role: string;
   ptSummary: PtSummary | null;
 }) {
-  if (role === "PATIENT") {
-    return (
-      <div className={`${cardSurface} mx-auto max-w-lg space-y-3`}>
-        <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-          Data medis
-        </h2>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Riwayat kesehatan, alergi, dan catatan medis akan tersedia di sini.
-          Fitur ini direncanakan pada pembaruan berikutnya.
-        </p>
-        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
-          Segera hadir
-        </p>
-      </div>
-    );
-  }
-
   if (role === "PHYSIOTHERAPIST") {
     const verification = ptSummary?.verificationStatus;
     const vMeta = verification
@@ -379,6 +363,8 @@ export default function ProfilePage() {
           ) : null}
 
           <RoleHubCard role={user.role} ptSummary={ptSummary} />
+
+          <PatientMedicalCard enabled={user.role === "PATIENT"} />
 
           {profile ? (
             <div className={`${cardSurface} mx-auto max-w-lg`}>

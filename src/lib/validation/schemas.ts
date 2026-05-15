@@ -59,6 +59,47 @@ export function validateRegister(input: {
   return { ok: true };
 }
 
+export function validatePatientProfileUpdate(input: {
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+}): ValidationResult {
+  const fieldErrors: FieldErrors = {};
+  const dob = input.dateOfBirth?.trim();
+  if (dob) {
+    const parsed = new Date(`${dob}T00:00:00`);
+    if (Number.isNaN(parsed.getTime())) {
+      fieldErrors.dateOfBirth = "Tanggal lahir tidak valid.";
+    } else if (parsed > new Date()) {
+      fieldErrors.dateOfBirth = "Tanggal lahir tidak boleh di masa depan.";
+    }
+  }
+  const gender = input.gender?.trim();
+  if (gender && !["M", "F", "OTHER"].includes(gender)) {
+    fieldErrors.gender = "Pilih jenis kelamin yang valid.";
+  }
+  const address = input.address?.trim();
+  if (address && address.length < 5) {
+    fieldErrors.address = "Alamat minimal 5 karakter.";
+  }
+  const emergencyName = input.emergencyContactName?.trim();
+  if (emergencyName && emergencyName.length < 3) {
+    fieldErrors.emergencyContactName =
+      "Nama kontak darurat minimal 3 karakter.";
+  }
+  const emergencyPhone = input.emergencyContactPhone?.trim();
+  if (emergencyPhone && emergencyPhone.length < 8) {
+    fieldErrors.emergencyContactPhone =
+      "Telepon kontak darurat minimal 8 digit.";
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return validationFailed("Periksa data medis.", fieldErrors);
+  }
+  return { ok: true };
+}
+
 export function validateProfileUpdate(input: {
   fullName: string;
   phoneNumber?: string;

@@ -9,6 +9,7 @@ export {
   validateComplaint,
   validateDirectNotification,
   validateLogin,
+  validatePatientProfileUpdate,
   validatePaymentProof,
   validateProfileUpdate,
   validateRefundReason,

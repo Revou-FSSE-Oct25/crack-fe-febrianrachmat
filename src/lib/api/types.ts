@@ -31,6 +31,25 @@ export type PaginationMeta = {
   totalPages: number;
 };
 
+/** GET /patients/me */
+export type PatientProfile = {
+  id: string;
+  userId: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+  address: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    fullName: string;
+    email: string;
+    phoneNumber: string | null;
+  };
+};
+
 /** GET /users/me */
 export type UserProfile = {
   id: string;
