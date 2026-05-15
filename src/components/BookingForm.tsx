@@ -16,6 +16,11 @@ import type {
 } from "@/lib/api/types";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import {
+  AlertBanner,
+  btnPrimary,
+  inputBase,
+} from "@/components/ui/page-shell";
 
 function todayISODate(): string {
   const d = new Date();
@@ -142,16 +147,24 @@ export default function BookingForm() {
   }, [appointmentType, selectedTherapist]);
 
   if (!isReady) {
-    return <p className="text-gray-600 text-center py-8">Memuat…</p>;
+    return (
+      <div className="flex items-center justify-center gap-3 py-12 text-slate-600">
+        <span
+          className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+          aria-hidden
+        />
+        <span className="text-sm font-medium">Memuat…</span>
+      </div>
+    );
   }
 
   if (!user) {
     return (
-      <div className="text-center space-y-4">
-        <p className="text-gray-700">
-          Silakan masuk sebagai pasien untuk membuat booking.
+      <div className="text-center space-y-5 py-4">
+        <p className="text-slate-700 leading-relaxed">
+          Silakan masuk sebagai <strong>pasien</strong> untuk membuat booking.
         </p>
-        <Link href="/login" className="text-teal-600 font-medium underline">
+        <Link href="/login" className={`${btnPrimary} inline-flex`}>
           Masuk
         </Link>
       </div>
@@ -160,9 +173,9 @@ export default function BookingForm() {
 
   if (user.role !== "PATIENT") {
     return (
-      <p className="text-center text-gray-700">
+      <AlertBanner variant="error">
         Hanya akun pasien yang dapat membuat booking melalui halaman ini.
-      </p>
+      </AlertBanner>
     );
   }
 
@@ -238,29 +251,21 @@ export default function BookingForm() {
   }
 
   return (
-    <form className="max-w-xl mx-auto space-y-4" onSubmit={handleSubmit}>
-      {listError && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {listError}
-        </p>
-      )}
-      {submitError && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {submitError}
-        </p>
-      )}
-      {submitSuccess && (
-        <p className="text-green-700 text-sm bg-green-50 border border-green-100 rounded p-3">
-          {submitSuccess}
-        </p>
-      )}
+    <form className="max-w-xl mx-auto space-y-5" onSubmit={handleSubmit}>
+      {listError ? <AlertBanner variant="error">{listError}</AlertBanner> : null}
+      {submitError ? (
+        <AlertBanner variant="error">{submitError}</AlertBanner>
+      ) : null}
+      {submitSuccess ? (
+        <AlertBanner variant="success">{submitSuccess}</AlertBanner>
+      ) : null}
 
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           Filter kategori
         </label>
         <select
-          className="border p-3 w-full rounded"
+          className={inputBase}
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
           disabled={listLoading}
@@ -275,12 +280,12 @@ export default function BookingForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           Fisioterapis
         </label>
         <select
           required
-          className="border p-3 w-full rounded"
+          className={inputBase}
           value={physiotherapistId}
           onChange={(e) => {
             setPhysiotherapistId(e.target.value);
@@ -299,18 +304,20 @@ export default function BookingForm() {
       </div>
 
       {selectedTherapist ? (
-        <p className="text-sm text-gray-700 rounded-lg border border-teal-100 bg-teal-50/50 px-3 py-2">
-          <span className="font-medium">Tarif terapis ini:</span> konsultasi
-          online {formatVisitRupiah(selectedTherapist.consultationFee)} · visit{" "}
-          {formatVisitRupiah(selectedTherapist.visitFee)} (dibekukan pada saat
-          booking dibuat).
+        <p className="text-sm text-slate-700 rounded-xl border border-teal-100 bg-teal-50/70 px-4 py-3 leading-relaxed">
+          <span className="font-semibold text-teal-900">Tarif terapis ini:</span>{" "}
+          konsultasi online {formatVisitRupiah(selectedTherapist.consultationFee)}{" "}
+          · visit {formatVisitRupiah(selectedTherapist.visitFee)} (dibekukan pada
+          saat booking dibuat).
         </p>
       ) : null}
 
       <div>
-        <label className="block text-sm font-medium mb-1">Tipe janji</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Tipe janji
+        </label>
         <select
-          className="border p-3 w-full rounded"
+          className={inputBase}
           value={appointmentType}
           onChange={(e) =>
             setAppointmentType(e.target.value as AppointmentType)
@@ -322,16 +329,22 @@ export default function BookingForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           Slot tersedia (opsional)
         </label>
         {slotsLoading ? (
-          <p className="text-sm text-gray-600">Memuat slot…</p>
+          <p className="text-sm text-slate-500 flex items-center gap-2 py-2">
+            <span
+              className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+              aria-hidden
+            />
+            Memuat slot…
+          </p>
         ) : slotsError ? (
-          <p className="text-sm text-red-600">{slotsError}</p>
+          <p className="text-sm text-red-700">{slotsError}</p>
         ) : (
           <select
-            className="border p-3 w-full rounded"
+            className={inputBase}
             value={slotId}
             onChange={(e) => setSlotId(e.target.value)}
           >
@@ -347,12 +360,12 @@ export default function BookingForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
           Waktu janji (wajib jika tidak memilih slot)
         </label>
         <input
           type="datetime-local"
-          className="border p-3 w-full rounded"
+          className={inputBase}
           value={appointmentDateLocal}
           onChange={(e) => setAppointmentDateLocal(e.target.value)}
           disabled={Boolean(slotId)}
@@ -361,12 +374,12 @@ export default function BookingForm() {
 
       {appointmentType === "CLINIC_VISIT" && (
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Alamat klinik (min. 10 karakter)
           </label>
           <textarea
             required
-            className="border p-3 w-full rounded min-h-[88px]"
+            className={`${inputBase} min-h-[88px]`}
             value={clinicAddress}
             onChange={(e) => setClinicAddress(e.target.value)}
           />
@@ -375,12 +388,12 @@ export default function BookingForm() {
 
       {appointmentType === "HOME_VISIT" && (
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Alamat kunjungan rumah (min. 10 karakter)
           </label>
           <textarea
             required
-            className="border p-3 w-full rounded min-h-[88px]"
+            className={`${inputBase} min-h-[88px]`}
             value={homeVisitAddress}
             onChange={(e) => setHomeVisitAddress(e.target.value)}
           />
@@ -388,9 +401,11 @@ export default function BookingForm() {
       )}
 
       <div>
-        <label className="block text-sm font-medium mb-1">Catatan</label>
+        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          Catatan
+        </label>
         <textarea
-          className="border p-3 w-full rounded min-h-[80px]"
+          className={`${inputBase} min-h-[80px]`}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
@@ -399,7 +414,7 @@ export default function BookingForm() {
       <button
         type="submit"
         disabled={submitLoading || listLoading}
-        className="bg-teal-500 text-white px-6 py-3 rounded w-full disabled:opacity-60"
+        className={`${btnPrimary} w-full py-3`}
       >
         {submitLoading ? "Mengirim…" : "Buat booking"}
       </button>
