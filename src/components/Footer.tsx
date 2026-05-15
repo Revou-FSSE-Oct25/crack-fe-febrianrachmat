@@ -21,6 +21,9 @@ export default function Footer() {
             <Link href="/appointment" className="text-teal-100 hover:text-white transition-colors">
               Janji temu
             </Link>
+            <Link href="/kebijakan" className="text-teal-100 hover:text-white transition-colors">
+              Kebijakan
+            </Link>
             <Link href="/login" className="text-teal-100 hover:text-white transition-colors">
               Masuk
             </Link>

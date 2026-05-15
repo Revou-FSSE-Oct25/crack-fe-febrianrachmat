@@ -1,4 +1,11 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) frontend for **Kinova** — a demo physiotherapy booking & online consultation app (Revou / Crack capstone). It talks to the NestJS backend via `NEXT_PUBLIC_API_URL`.
+
+## Product policy & demo limits
+
+- **In-app summary:** run the app and open **`/kebijakan`**.
+- **Full policy (Bahasa Indonesia):** [`product-policy.md`](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/product-policy.md) in the backend repository (`crack-be-febrianrachmat`).
+
+---
 
 ## Environment Variables
 
