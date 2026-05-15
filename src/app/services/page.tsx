@@ -2,28 +2,38 @@ import Link from "next/link";
 import ServiceCard from "@/components/ServiceCard";
 import {
   btnPrimary,
+  btnSecondary,
+  cardSurface,
   PageHeader,
-  pageShell,
+  widePageShell,
 } from "@/components/ui/page-shell";
 
 export default function ServicesPage() {
   return (
-    <main className={`${pageShell} space-y-12 pb-16`}>
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+    <main className={`${widePageShell} space-y-12 pb-16`}>
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
           eyebrow="Layanan"
           title="Solusi gerak & pemulihan"
           description="Pilih layanan yang sesuai fase pemulihan Anda. Tarif visit dan konsultasi online mengikuti profil fisioterapis dan dicatat saat booking dibuat."
         />
-        <Link
-          href="/appointment"
-          className={`${btnPrimary} shrink-0 self-start lg:self-auto`}
-        >
-          Booking sekarang
-        </Link>
+        <div className="flex shrink-0 flex-col gap-3 self-stretch sm:flex-row sm:items-center lg:self-auto">
+          <Link
+            href="/therapists"
+            className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+          >
+            Cari fisioterapis
+          </Link>
+          <Link
+            href="/appointment"
+            className={`${btnPrimary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+          >
+            Booking sekarang
+          </Link>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid gap-6 md:grid-cols-3 md:gap-8">
         <ServiceCard
           title="Fisioterapi"
           description="Terapi gerak dan rehabilitasi untuk mengembalikan fungsi dan mobilitas setelah cedera atau operasi."
@@ -38,13 +48,39 @@ export default function ServicesPage() {
         />
       </div>
 
-      <p className="text-center text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">
-        Ingin diskusi singkat sebelum janji? Gunakan menu{" "}
-        <Link href="/consultations" className="text-teal-700 font-medium hover:underline">
-          Konsultasi
-        </Link>{" "}
-        setelah masuk sebagai pasien.
-      </p>
+      <div className="mx-auto max-w-3xl">
+        <div className={`${cardSurface} p-6 sm:p-8`}>
+          <h3 className="text-center text-lg font-semibold tracking-tight text-slate-900 sm:text-left">
+            Setelah memilih layanan
+          </h3>
+          <p className="mt-2 text-center text-sm leading-relaxed text-slate-600 sm:text-left">
+            Ingin diskusi singkat sebelum janji? Setelah masuk sebagai pasien,
+            buka menu{" "}
+            <Link
+              href="/consultations"
+              className="font-semibold text-teal-700 underline-offset-2 hover:underline"
+            >
+              Konsultasi
+            </Link>{" "}
+            di pintasan atas. Atau lanjut ke booking untuk memilih slot dan
+            terapis.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+            <Link
+              href="/appointment"
+              className={`${btnPrimary} min-h-[44px] flex-1 justify-center text-center sm:flex-none sm:px-8`}
+            >
+              Buat janji temu
+            </Link>
+            <Link
+              href="/consultations"
+              className={`${btnSecondary} min-h-[44px] flex-1 justify-center text-center sm:flex-none sm:px-8`}
+            >
+              Menuju konsultasi
+            </Link>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

@@ -11,13 +11,11 @@ import {
   PageHeader,
   PageLoading,
   SignInRequired,
+  widePageShell,
 } from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-
-const chatShell =
-  "max-w-2xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 flex flex-col pb-16 min-h-[calc(100vh-10rem)]";
 
 type MsgRow = {
   id: string;
@@ -119,8 +117,11 @@ export default function ChatConversationPage() {
   }
 
   return (
-    <main className={chatShell}>
-      <Link
+    <main
+      className={`${widePageShell} flex min-h-[calc(100vh-10rem)] flex-col pb-16`}
+    >
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col min-h-0">
+        <Link
         href="/chat"
         className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800 mb-2"
       >
@@ -220,11 +221,12 @@ export default function ChatConversationPage() {
           <button
             type="submit"
             disabled={sending || locked || !text.trim()}
-            className={`${btnPrimary} shrink-0 px-5`}
+            className={`${btnPrimary} min-h-[44px] shrink-0 px-5`}
           >
             Kirim
           </button>
         </form>
+      </div>
       </div>
     </main>
   );

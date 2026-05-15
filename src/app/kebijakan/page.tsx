@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   cardSurface,
   PageHeader,
-  pageShell,
+  widePageShell,
 } from "@/components/ui/page-shell";
 
 const BACKEND_POLICY_DOC =
@@ -10,7 +10,7 @@ const BACKEND_POLICY_DOC =
 
 export default function KebijakanPage() {
   return (
-    <main className={`${pageShell} space-y-8 pb-16`}>
+    <main className={`${widePageShell} space-y-8 pb-16`}>
       <PageHeader
         eyebrow="Informasi"
         title="Kebijakan produk & demo"

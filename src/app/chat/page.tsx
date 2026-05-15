@@ -5,12 +5,13 @@ import { ApiRequestError } from "@/lib/api/client";
 import { listMyConversations } from "@/lib/api/chat";
 import {
   AlertBanner,
+  btnOutline,
   cardSurface,
   EmptyState,
   ListSkeleton,
   PageHeader,
   PageLoading,
-  pageShell,
+  widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
 import Link from "next/link";
@@ -67,12 +68,20 @@ export default function ChatListPage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-8 pb-16`}>
-      <PageHeader
-        eyebrow="Pesan"
-        title="Chat"
-        description="Buka percakapan dari halaman Konsultasi (tombol Buka chat). Di bawah ini daftar percakapan yang pernah dibuat untuk akun Anda."
-      />
+    <main className={`${widePageShell} space-y-8 pb-16`}>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <PageHeader
+          eyebrow="Pesan"
+          title="Chat"
+          description="Buka percakapan dari halaman Konsultasi (tombol Buka chat). Di bawah ini daftar percakapan yang pernah dibuat untuk akun Anda."
+        />
+        <Link
+          href="/consultations"
+          className={`${btnOutline} min-h-[44px] shrink-0 justify-center self-start text-center sm:self-auto sm:min-w-[11rem]`}
+        >
+          Halaman konsultasi
+        </Link>
+      </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
@@ -81,7 +90,15 @@ export default function ChatListPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Belum ada percakapan"
-          hint="Setelah konsultasi aktif, gunakan tombol chat di halaman Konsultasi untuk memulai obrolan."
+          hint="Chat terbuka setelah konsultasi aktif dan pembayaran dikonfirmasi."
+          actions={[
+            { href: "/consultations", label: "Ke halaman konsultasi" },
+            {
+              href: "/therapists",
+              label: "Cari fisioterapis",
+              variant: "secondary",
+            },
+          ]}
         />
       ) : (
         <ul className={`${cardSurface} divide-y divide-slate-100 p-0 overflow-hidden`}>
@@ -89,7 +106,7 @@ export default function ChatListPage() {
             <li key={c.id}>
               <Link
                 href={`/chat/${c.id}`}
-                className="block px-5 py-4 hover:bg-teal-50/40 transition-colors"
+                className="flex min-h-[52px] flex-col justify-center px-5 py-4 transition-colors hover:bg-teal-50/40"
               >
                 <span className="font-mono text-xs text-slate-500 break-all">
                   {c.id}

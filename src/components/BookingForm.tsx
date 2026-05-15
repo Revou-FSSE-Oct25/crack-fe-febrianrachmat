@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   listAvailabilitySlotsForProfile,
@@ -19,6 +20,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   AlertBanner,
   btnPrimary,
+  btnSecondary,
   inputBase,
 } from "@/components/ui/page-shell";
 
@@ -43,6 +45,7 @@ function formatVisitRupiah(value: string | number | null | undefined): string {
 
 export default function BookingForm() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [therapists, setTherapists] = useState<PhysiotherapistBrowseItem[]>(
@@ -56,7 +59,6 @@ export default function BookingForm() {
   const [listError, setListError] = useState<string | null>(null);
   const [slotsError, setSlotsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   const [categoryId, setCategoryId] = useState("");
   const [physiotherapistId, setPhysiotherapistId] = useState("");
@@ -164,7 +166,10 @@ export default function BookingForm() {
         <p className="text-slate-700 leading-relaxed">
           Silakan masuk sebagai <strong>pasien</strong> untuk membuat booking.
         </p>
-        <Link href="/login" className={`${btnPrimary} inline-flex`}>
+        <Link
+          href="/login"
+          className={`${btnPrimary} inline-flex min-h-[44px] items-center justify-center px-6`}
+        >
           Masuk
         </Link>
       </div>
@@ -182,7 +187,6 @@ export default function BookingForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitError(null);
-    setSubmitSuccess(null);
 
     if (!physiotherapistId) {
       setSubmitError("Pilih fisioterapis.");
@@ -237,7 +241,7 @@ export default function BookingForm() {
           appointmentType === "HOME_VISIT" ? home : undefined,
         notes: notes.trim() || undefined,
       });
-      setSubmitSuccess("Booking berhasil dibuat.");
+      toast.success("Booking berhasil dibuat.");
       setSlotId("");
       setAppointmentDateLocal("");
       setNotes("");
@@ -251,20 +255,35 @@ export default function BookingForm() {
   }
 
   return (
-    <form className="max-w-xl mx-auto space-y-5" onSubmit={handleSubmit}>
-      {listError ? <AlertBanner variant="error">{listError}</AlertBanner> : null}
-      {submitError ? (
-        <AlertBanner variant="error">{submitError}</AlertBanner>
-      ) : null}
-      {submitSuccess ? (
-        <AlertBanner variant="success">{submitSuccess}</AlertBanner>
-      ) : null}
+    <form
+      className="w-full space-y-8"
+      onSubmit={handleSubmit}
+      aria-label="Form booking janji temu"
+    >
+      <div className="space-y-3" aria-live="polite">
+        {listError ? <AlertBanner variant="error">{listError}</AlertBanner> : null}
+        {submitError ? (
+          <AlertBanner variant="error">{submitError}</AlertBanner>
+        ) : null}
+      </div>
 
+      <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5 space-y-4">
+        <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+          Pilih fisioterapis
+        </h2>
+        <p className="text-xs text-slate-500 leading-relaxed">
+          Saring kategori lalu pilih terapis. Tarif di bawah mengikuti snapshot
+          profil saat ini.
+        </p>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label
+          htmlFor="booking-filter-category"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
           Filter kategori
         </label>
         <select
+          id="booking-filter-category"
           className={inputBase}
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
@@ -280,10 +299,14 @@ export default function BookingForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label
+          htmlFor="booking-physiotherapist"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
           Fisioterapis
         </label>
         <select
+          id="booking-physiotherapist"
           required
           className={inputBase}
           value={physiotherapistId}
@@ -311,12 +334,21 @@ export default function BookingForm() {
           saat booking dibuat).
         </p>
       ) : null}
+      </div>
 
+      <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5 space-y-4">
+        <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+          Jadwal kunjungan
+        </h2>
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label
+          htmlFor="booking-appointment-type"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
           Tipe janji
         </label>
         <select
+          id="booking-appointment-type"
           className={inputBase}
           value={appointmentType}
           onChange={(e) =>
@@ -329,7 +361,10 @@ export default function BookingForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label
+          htmlFor="booking-slot"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
           Slot tersedia (opsional)
         </label>
         {slotsLoading ? (
@@ -344,6 +379,7 @@ export default function BookingForm() {
           <AlertBanner variant="error">{slotsError}</AlertBanner>
         ) : (
           <select
+            id="booking-slot"
             className={inputBase}
             value={slotId}
             onChange={(e) => setSlotId(e.target.value)}
@@ -360,10 +396,14 @@ export default function BookingForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label
+          htmlFor="booking-appointment-datetime"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
           Waktu janji (wajib jika tidak memilih slot)
         </label>
         <input
+          id="booking-appointment-datetime"
           type="datetime-local"
           className={inputBase}
           value={appointmentDateLocal}
@@ -371,13 +411,23 @@ export default function BookingForm() {
           disabled={Boolean(slotId)}
         />
       </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5 space-y-4">
+        <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+          Lokasi &amp; catatan
+        </h2>
 
       {appointmentType === "CLINIC_VISIT" && (
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label
+            htmlFor="booking-clinic-address"
+            className="block text-sm font-medium text-slate-700 mb-1.5"
+          >
             Alamat klinik (min. 10 karakter)
           </label>
           <textarea
+            id="booking-clinic-address"
             required
             className={`${inputBase} min-h-[88px]`}
             value={clinicAddress}
@@ -388,10 +438,14 @@ export default function BookingForm() {
 
       {appointmentType === "HOME_VISIT" && (
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
+          <label
+            htmlFor="booking-home-address"
+            className="block text-sm font-medium text-slate-700 mb-1.5"
+          >
             Alamat kunjungan rumah (min. 10 karakter)
           </label>
           <textarea
+            id="booking-home-address"
             required
             className={`${inputBase} min-h-[88px]`}
             value={homeVisitAddress}
@@ -401,23 +455,36 @@ export default function BookingForm() {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+        <label
+          htmlFor="booking-notes"
+          className="block text-sm font-medium text-slate-700 mb-1.5"
+        >
           Catatan
         </label>
         <textarea
+          id="booking-notes"
           className={`${inputBase} min-h-[80px]`}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
         />
       </div>
+      </div>
 
-      <button
-        type="submit"
-        disabled={submitLoading || listLoading}
-        className={`${btnPrimary} w-full py-3`}
-      >
-        {submitLoading ? "Mengirim…" : "Buat booking"}
-      </button>
+      <div className="flex flex-col gap-3 border-t border-slate-100 pt-2 sm:flex-row sm:flex-wrap sm:items-center">
+        <Link
+          href="/therapists"
+          className={`${btnSecondary} order-2 min-h-[44px] justify-center text-center sm:order-1 sm:min-w-[11rem]`}
+        >
+          Cari di daftar terapis
+        </Link>
+        <button
+          type="submit"
+          disabled={submitLoading || listLoading}
+          className={`${btnPrimary} order-1 min-h-[48px] w-full justify-center py-3 sm:order-2 sm:ml-auto sm:w-auto sm:min-w-[12rem]`}
+        >
+          {submitLoading ? "Mengirim…" : "Buat booking"}
+        </button>
+      </div>
     </form>
   );
 }

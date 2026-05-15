@@ -9,16 +9,15 @@ import {
   PageHeader,
   PageLoading,
   SignInRequired,
+  formPageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyBookings } from "@/lib/api/bookings";
 import { createReview } from "@/lib/api/reviews";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-
-const narrowShell =
-  "max-w-lg mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-6 pb-16";
 
 type BookingOption = { id: string; status: string };
 
@@ -35,11 +34,11 @@ function asBookings(data: unknown): BookingOption[] {
 
 export default function WriteReviewPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [completed, setCompleted] = useState<BookingOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const [bookingId, setBookingId] = useState("");
   const [rating, setRating] = useState(5);
@@ -75,14 +74,13 @@ export default function WriteReviewPage() {
     }
     setSubmitting(true);
     setError(null);
-    setSuccess(null);
     try {
       await createReview({
         bookingId,
         rating,
         comment: comment.trim() || undefined,
       });
-      setSuccess("Ulasan terkirim.");
+      toast.success("Ulasan terkirim. Terima kasih atas masukan Anda.");
       setComment("");
       await load();
     } catch (err) {
@@ -104,7 +102,7 @@ export default function WriteReviewPage() {
 
   if (user.role !== "PATIENT") {
     return (
-      <main className={narrowShell}>
+      <main className={formPageShell}>
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             title="Ulasan"
@@ -119,7 +117,7 @@ export default function WriteReviewPage() {
   }
 
   return (
-    <main className={narrowShell}>
+    <main className={formPageShell}>
       <PageHeader
         eyebrow="Feedback"
         title="Beri ulasan"
@@ -127,8 +125,6 @@ export default function WriteReviewPage() {
       />
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
-      {success ? <AlertBanner variant="success">{success}</AlertBanner> : null}
-
       {loading ? (
         <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
           <span
@@ -140,7 +136,15 @@ export default function WriteReviewPage() {
       ) : completed.length === 0 ? (
         <EmptyState
           title="Belum ada booking selesai"
-          hint="Setelah sesi ditandai selesai, Anda dapat memberi ulasan di halaman ini."
+          hint="Ulasan bisa ditulis setelah fisioterapis menandai sesi booking sebagai selesai."
+          actions={[
+            { href: "/bookings", label: "Lihat status booking" },
+            {
+              href: "/appointment",
+              label: "Buat janji baru",
+              variant: "secondary",
+            },
+          ]}
         />
       ) : (
         <form onSubmit={handleSubmit} className={`${cardSurface} space-y-5`}>

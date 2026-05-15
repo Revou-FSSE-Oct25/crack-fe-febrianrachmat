@@ -1,19 +1,26 @@
 "use client";
 
 import {
+  AdminBreadcrumb,
   AlertBanner,
   btnDanger,
+  btnOutline,
   btnPrimary,
+  btnSecondary,
   cardSurface,
   EmptyState,
   inputBase,
   ListSkeleton,
   PageHeader,
+  ConfirmDialog,
   PageLoading,
-  pageShell,
+  StatusChip,
+  widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
+import { transactionStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { listMyBookings } from "@/lib/api/bookings";
@@ -24,6 +31,7 @@ import {
   refundTransaction,
   type CreateTransactionBody,
 } from "@/lib/api/transactions";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 type PendingBookingPay = {
@@ -84,6 +92,7 @@ function asTxRows(data: unknown): TxRow[] {
 
 export default function TransactionsPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [rows, setRows] = useState<TxRow[]>([]);
   const [pendingBookings, setPendingBookings] = useState<PendingBookingPay[]>(
     [],
@@ -102,6 +111,7 @@ export default function TransactionsPage() {
     Record<string, string>
   >({});
   const [refundingId, setRefundingId] = useState<string | null>(null);
+  const [refundConfirmId, setRefundConfirmId] = useState<string | null>(null);
   const [confirmingPayId, setConfirmingPayId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -182,6 +192,7 @@ export default function TransactionsPage() {
       setBookingId("");
       setPaymentProofUrl("");
       setProofFile(null);
+      toast.success("Transaksi dibuat. Menunggu konfirmasi admin.");
       await load();
     } catch (err) {
       setError(
@@ -197,6 +208,7 @@ export default function TransactionsPage() {
     setError(null);
     try {
       await confirmTransactionPaidByAdmin(id);
+      toast.success("Pembayaran dikonfirmasi.");
       await load();
     } catch (err) {
       setError(
@@ -209,12 +221,20 @@ export default function TransactionsPage() {
     }
   }
 
-  async function refund(id: string) {
+  function requestRefundConfirm(id: string) {
     const reason = (refundReasonById[id] ?? "").trim();
     if (reason.length < 5) {
       setError("Alasan refund minimal 5 karakter.");
       return;
     }
+    setError(null);
+    setRefundConfirmId(id);
+  }
+
+  async function confirmRefund() {
+    if (!refundConfirmId) return;
+    const id = refundConfirmId;
+    const reason = (refundReasonById[id] ?? "").trim();
     setRefundingId(id);
     setError(null);
     try {
@@ -224,6 +244,8 @@ export default function TransactionsPage() {
         delete next[id];
         return next;
       });
+      setRefundConfirmId(null);
+      toast.success("Refund berhasil diproses (dummy).");
       await load();
     } catch (err) {
       setError(
@@ -246,31 +268,69 @@ export default function TransactionsPage() {
 
   if (user.role === "PHYSIOTHERAPIST") {
     return (
-      <main className={`${pageShell} space-y-4 pb-16`}>
+      <main className={`${widePageShell} space-y-6 pb-16`}>
         <PageHeader
+          eyebrow="Pembayaran"
           title="Transaksi"
           description="Daftar transaksi tersedia untuk Pasien dan Admin. Akun fisioterapis tidak menggunakan halaman ini."
         />
-        <div className={cardSurface}>
-          <p className="text-slate-700 text-sm leading-relaxed">
+        <div className={`${cardSurface} space-y-4`}>
+          <p className="text-sm leading-relaxed text-slate-700">
             Gunakan pintasan di bawah navbar untuk konsultasi, booking, dan chat.
             Pembayaran dilakukan oleh pasien melalui menu Transaksi di akun mereka.
           </p>
+          <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/bookings"
+              className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+            >
+              Daftar booking
+            </Link>
+            <Link
+              href="/consultations"
+              className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[11rem]`}
+            >
+              Konsultasi
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className={`${pageShell} space-y-8 pb-16`}>
-      <PageHeader
-        title="Transaksi"
-        description={
-          user.role === "ADMIN"
-            ? "Konfirmasi pembayaran dummy dan refund untuk transaksi yang memenuhi syarat."
-            : "Buat permintaan pembayaran untuk booking Anda. Nominal mengikuti tarif visit terapis saat booking dibuat. Konfirmasi lunas oleh admin."
-        }
-      />
+    <main className={`${widePageShell} space-y-8 pb-16`}>
+      {user.role === "ADMIN" ? <AdminBreadcrumb /> : null}
+
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <PageHeader
+          eyebrow="Pembayaran"
+          title="Transaksi"
+          description={
+            user.role === "ADMIN"
+              ? "Konfirmasi pembayaran dummy dan refund untuk transaksi yang memenuhi syarat."
+              : "Buat permintaan pembayaran untuk booking Anda. Nominal mengikuti tarif visit terapis saat booking dibuat. Konfirmasi lunas oleh admin."
+          }
+        />
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          {user.role === "PATIENT" ? (
+            <>
+              <Link
+                href="/bookings"
+                className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+              >
+                Daftar booking
+              </Link>
+              <Link
+                href="/consultations"
+                className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[11rem]`}
+              >
+                Konsultasi
+              </Link>
+            </>
+          ) : null}
+        </div>
+      </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
@@ -344,7 +404,7 @@ export default function TransactionsPage() {
             <button
               type="submit"
               disabled={creating}
-              className={btnPrimary}
+              className={`${btnPrimary} min-h-[44px]`}
             >
               {creating ? "Menyimpan…" : "Buat transaksi"}
             </button>
@@ -381,15 +441,34 @@ export default function TransactionsPage() {
         ) : rows.length === 0 ? (
           <EmptyState
             title="Belum ada transaksi"
-            hint="Buat transaksi dari booking yang sudah ada (pasien), atau tunggu data masuk (admin)."
+            hint={
+              user.role === "PATIENT"
+                ? "Setelah booking selesai, buat transaksi pembayaran dari formulir di atas."
+                : "Transaksi dari pasien akan muncul di sini untuk dikonfirmasi."
+            }
+            actions={
+              user.role === "PATIENT"
+                ? [
+                    { href: "/bookings", label: "Lihat booking saya" },
+                    {
+                      href: "/appointment",
+                      label: "Buat janji baru",
+                      variant: "secondary",
+                    },
+                  ]
+                : [{ href: "/admin/dashboard", label: "Kembali ke dashboard" }]
+            }
           />
         ) : (
           <ul className="space-y-4">
             {rows.map((t) => (
               <li key={t.id} className={`${cardSurface} space-y-3`}>
                 <div className="flex flex-wrap justify-between gap-3 items-start">
-                  <div>
-                    <p className="font-semibold text-slate-900">{t.status}</p>
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <StatusChip
+                      label={transactionStatusMeta(t.status).label}
+                      tone={transactionStatusMeta(t.status).tone}
+                    />
                     <p className="text-sm text-slate-600">
                       {t.paymentMethod} ·{" "}
                       {typeof t.amount === "string"
@@ -437,7 +516,7 @@ export default function TransactionsPage() {
                         !proofDisplayHref(t.paymentProofUrl)
                       }
                       onClick={() => void confirmPaymentAsAdmin(t.id)}
-                      className={`${btnPrimary} text-sm disabled:opacity-50 disabled:pointer-events-none`}
+                      className={`${btnPrimary} min-h-[44px] text-sm disabled:pointer-events-none disabled:opacity-50`}
                     >
                       {confirmingPayId === t.id
                         ? "Memproses…"
@@ -464,8 +543,8 @@ export default function TransactionsPage() {
                     <button
                       type="button"
                       disabled={refundingId === t.id}
-                      onClick={() => void refund(t.id)}
-                      className={`${btnDanger} text-sm`}
+                      onClick={() => requestRefundConfirm(t.id)}
+                      className={`${btnDanger} min-h-[44px] text-sm`}
                     >
                       {refundingId === t.id ? "Memproses…" : "Refund (dummy)"}
                     </button>
@@ -476,6 +555,20 @@ export default function TransactionsPage() {
           </ul>
         )}
       </section>
+
+      <ConfirmDialog
+        open={refundConfirmId !== null}
+        title="Proses refund?"
+        description="Transaksi akan ditandai refund (dummy). Pastikan alasan refund sudah benar — tindakan ini untuk keperluan demo admin."
+        confirmLabel="Ya, refund"
+        cancelLabel="Tidak jadi"
+        variant="danger"
+        loading={refundConfirmId !== null && refundingId === refundConfirmId}
+        onConfirm={() => void confirmRefund()}
+        onCancel={() => {
+          if (refundingId === null) setRefundConfirmId(null);
+        }}
+      />
     </main>
   );
 }

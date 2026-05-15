@@ -16,9 +16,10 @@ import {
   ListSkeleton,
   PageHeader,
   PageLoading,
-  pageShell,
+  widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 type NotifRow = {
@@ -106,20 +107,34 @@ export default function NotificationsPage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-8 pb-16`}>
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-4">
+    <main className={`${widePageShell} space-y-8 pb-16`}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
           eyebrow="Kotak masuk"
           title="Notifikasi"
           description="Pemberitahan dari sistem dan admin. Notifikasi yang belum dibaca ditandai dengan latar berbeda."
         />
-        <button
-          type="button"
-          onClick={() => void markAll()}
-          className={btnSecondary}
-        >
-          Tandai semua dibaca
-        </button>
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+          <Link
+            href="/bookings"
+            className={`${btnOutline} min-h-[44px] justify-center text-center sm:min-w-[9rem]`}
+          >
+            Booking
+          </Link>
+          <Link
+            href="/consultations"
+            className={`${btnOutline} min-h-[44px] justify-center text-center sm:min-w-[9rem]`}
+          >
+            Konsultasi
+          </Link>
+          <button
+            type="button"
+            onClick={() => void markAll()}
+            className={`${btnSecondary} min-h-[44px] justify-center px-5 text-center sm:min-w-[12rem]`}
+          >
+            Tandai semua dibaca
+          </button>
+        </div>
       </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
@@ -129,7 +144,15 @@ export default function NotificationsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Tidak ada notifikasi"
-          hint="Notifikasi akan muncul ketika ada pembaruan penting pada akun atau aktivitas Anda."
+          hint="Notifikasi akan muncul ketika ada pembaruan pada booking, konsultasi, atau transaksi Anda."
+          actions={[
+            { href: "/bookings", label: "Lihat booking" },
+            {
+              href: "/consultations",
+              label: "Lihat konsultasi",
+              variant: "secondary",
+            },
+          ]}
         />
       ) : (
         <>
@@ -147,7 +170,7 @@ export default function NotificationsPage() {
                     <button
                       type="button"
                       onClick={() => void markOne(n.id)}
-                      className="text-xs font-semibold text-teal-700 hover:text-teal-800 shrink-0"
+                      className={`${btnOutline} min-h-[36px] shrink-0 px-3 py-1.5 text-xs font-semibold text-teal-800`}
                     >
                       Tandai dibaca
                     </button>
@@ -168,7 +191,7 @@ export default function NotificationsPage() {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => void load(page - 1)}
-                className={btnOutline}
+                className={`${btnOutline} min-h-[44px] px-5`}
               >
                 Sebelumnya
               </button>
@@ -179,7 +202,7 @@ export default function NotificationsPage() {
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => void load(page + 1)}
-                className={btnOutline}
+                className={`${btnOutline} min-h-[44px] px-5`}
               >
                 Berikutnya
               </button>

@@ -2,19 +2,21 @@
 
 import {
   AlertBanner,
+  btnOutline,
   btnPrimary,
   btnSecondary,
   cardSurface,
   inputBase,
   PageHeader,
   PageLoading,
-  pageShell,
+  widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import type { UserProfile } from "@/lib/api/types";
 import { getMyProfile, updateMyProfile } from "@/lib/api/users";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 function roleLabel(role: string): string {
@@ -100,24 +102,55 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-8 pb-16`}>
-      <PageHeader
-        eyebrow="Akun"
-        title="Profil"
-        description={
-          <span className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-600">
-              {profile?.email ?? user.email}
+    <main className={`${widePageShell} space-y-8 pb-16`}>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <PageHeader
+          eyebrow="Akun"
+          title="Profil"
+          description={
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-slate-600">
+                {profile?.email ?? user.email}
+              </span>
+              <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-900 ring-1 ring-teal-100">
+                {roleLabel(user.role)}
+              </span>
             </span>
-            <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-900 ring-1 ring-teal-100">
-              {roleLabel(user.role)}
-            </span>
-          </span>
-        }
-      />
+          }
+        />
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <Link
+            href="/bookings"
+            className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[9rem]`}
+          >
+            Booking
+          </Link>
+          <Link
+            href="/transactions"
+            className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[9rem]`}
+          >
+            Transaksi
+          </Link>
+          {user.role === "ADMIN" ? (
+            <Link
+              href="/admin/dashboard"
+              className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[10rem]`}
+            >
+              Dashboard admin
+            </Link>
+          ) : user.role === "PHYSIOTHERAPIST" ? (
+            <Link
+              href="/physiotherapist/profile"
+              className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[11rem]`}
+            >
+              Profil fisioterapis
+            </Link>
+          ) : null}
+        </div>
+      </div>
 
       {loading && !profile ? (
-        <div className={`${cardSurface} animate-pulse space-y-4 max-w-lg`}>
+        <div className={`${cardSurface} mx-auto max-w-lg animate-pulse space-y-4`}>
           <div className="h-4 w-40 rounded bg-slate-200" />
           <div className="h-10 rounded-xl bg-slate-100" />
           <div className="h-10 rounded-xl bg-slate-100" />
@@ -125,57 +158,67 @@ export default function ProfilePage() {
       ) : (
         <>
           {error ? (
-            <AlertBanner variant="error" className="max-w-lg">
+            <AlertBanner variant="error" className="max-w-lg mx-auto">
               {error}
             </AlertBanner>
           ) : null}
           {savedMsg ? (
-            <AlertBanner variant="success" className="max-w-lg">
+            <AlertBanner variant="success" className="max-w-lg mx-auto">
               {savedMsg}
             </AlertBanner>
           ) : null}
 
           <form
             onSubmit={handleSave}
-            className={`${cardSurface} max-w-lg space-y-4`}
+            className={`${cardSurface} mx-auto max-w-lg space-y-6`}
           >
-            <div>
-              <label className="block text-sm font-medium mb-1 text-slate-700">
-                Nama lengkap
-              </label>
-              <input
-                required
-                minLength={3}
-                className={inputBase}
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                disabled={loading}
-              />
+            <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5">
+              <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+                Data diri
+              </h2>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Nama tampil dan kontak opsional. Email tidak dapat diubah di sini.
+              </p>
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">
+                    Nama lengkap
+                  </label>
+                  <input
+                    required
+                    minLength={3}
+                    className={inputBase}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">
+                    Nomor telepon
+                  </label>
+                  <input
+                    className={inputBase}
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="Opsional"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-slate-700">
-                Nomor telepon
-              </label>
-              <input
-                className={inputBase}
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Opsional"
-                disabled={loading}
-              />
-            </div>
-            <div className="flex gap-3 flex-wrap pt-2">
+            <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap">
               <button
                 type="submit"
                 disabled={saving || loading}
-                className={btnPrimary}
+                className={`${btnPrimary} min-h-[44px] justify-center sm:min-w-[10rem]`}
               >
                 {saving ? "Menyimpan…" : "Simpan perubahan"}
               </button>
               <button
                 type="button"
                 onClick={() => logout()}
-                className={btnSecondary}
+                className={`${btnSecondary} min-h-[44px] justify-center sm:min-w-[8rem]`}
               >
                 Keluar
               </button>

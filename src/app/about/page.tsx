@@ -4,17 +4,33 @@ import {
   btnSecondary,
   cardSurface,
   PageHeader,
-  pageShell,
+  widePageShell,
 } from "@/components/ui/page-shell";
 
 export default function AboutPage() {
   return (
-    <main className={`${pageShell} space-y-10 pb-16`}>
-      <PageHeader
-        eyebrow="Tentang kami"
-        title="Kinova Movement & Recovery"
-        description="Kami mendampingi perjalanan pemulihan gerak Anda — dari edukasi awal hingga program yang disesuaikan dengan kebutuhan fungsional."
-      />
+    <main className={`${widePageShell} space-y-10 pb-16`}>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <PageHeader
+          eyebrow="Tentang kami"
+          title="Kinova Movement & Recovery"
+          description="Kami mendampingi perjalanan pemulihan gerak Anda — dari edukasi awal hingga program yang disesuaikan dengan kebutuhan fungsional."
+        />
+        <div className="flex shrink-0 flex-col gap-3 self-stretch sm:flex-row sm:flex-wrap lg:self-auto">
+          <Link
+            href="/therapists"
+            className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+          >
+            Cari fisioterapis
+          </Link>
+          <Link
+            href="/appointment"
+            className={`${btnPrimary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+          >
+            Booking
+          </Link>
+        </div>
+      </div>
 
       <section className={`${cardSurface} space-y-4`}>
         <h2 className="text-lg font-semibold text-slate-900">Visi</h2>
@@ -49,11 +65,17 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <div className="flex flex-col sm:flex-row gap-3 sm:justify-start">
-        <Link href="/appointment" className={`${btnPrimary} text-center sm:inline-flex`}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-start">
+        <Link
+          href="/appointment"
+          className={`${btnPrimary} min-h-[44px] justify-center text-center sm:inline-flex`}
+        >
           Buat janji temu
         </Link>
-        <Link href="/services" className={btnSecondary}>
+        <Link
+          href="/services"
+          className={`${btnSecondary} min-h-[44px] justify-center text-center sm:inline-flex`}
+        >
           Lihat layanan
         </Link>
       </div>

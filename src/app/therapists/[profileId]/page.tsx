@@ -15,8 +15,8 @@ import {
   inputBase,
   PageHeader,
   PageLoading,
-  pageShell,
   SignInRequired,
+  widePageShell,
 } from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -117,13 +117,18 @@ export default function TherapistDetailPage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-8 pb-16`}>
-      <Link
-        href="/therapists"
-        className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
+    <main className={`${widePageShell} space-y-8 pb-16`}>
+      <nav
+        className="border-b border-slate-200/90 pb-4"
+        aria-label="Navigasi profil"
       >
-        ← Kembali ke daftar
-      </Link>
+        <Link
+          href="/therapists"
+          className="inline-flex min-h-[40px] items-center rounded-xl px-2 py-1.5 text-sm font-semibold text-teal-800 ring-1 ring-transparent transition-[background,ring,colors] hover:bg-teal-50 hover:ring-teal-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+        >
+          ← Kembali ke daftar
+        </Link>
+      </nav>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
@@ -138,7 +143,10 @@ export default function TherapistDetailPage() {
       ) : !therapist ? (
         <div className={`${cardSurface} text-center py-10`}>
           <p className="text-slate-700 font-medium">Profil tidak ditemukan.</p>
-          <Link href="/therapists" className={`${btnPrimary} mt-4 inline-flex`}>
+          <Link
+            href="/therapists"
+            className={`${btnPrimary} mt-6 inline-flex min-h-[44px] items-center justify-center px-6`}
+          >
             Ke daftar fisioterapis
           </Link>
         </div>
@@ -193,16 +201,19 @@ export default function TherapistDetailPage() {
             </div>
 
             {user.role === "PATIENT" && (
-              <div className="flex flex-wrap gap-3 pt-2">
+              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap">
                 <button
                   type="button"
                   onClick={() => setShowConsultForm((v) => !v)}
-                  className={btnPrimary}
+                  className={`${btnPrimary} min-h-[44px] justify-center px-5 text-center sm:min-w-[14rem]`}
                 >
                   Konsultasi online (
                   {formatRupiah(therapist.consultationFee ?? null)})
                 </button>
-                <Link href="/appointment" className={btnSecondary}>
+                <Link
+                  href="/appointment"
+                  className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[14rem]`}
+                >
                   Booking visit (
                   {formatRupiah(therapist.visitFee ?? null)})
                 </Link>
@@ -303,11 +314,11 @@ export default function TherapistDetailPage() {
                   placeholder="Ceritakan keluhan kamu agar terapis bisa siap menerima sesi."
                 />
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="submit"
                   disabled={submittingConsult}
-                  className={btnPrimary}
+                  className={`${btnPrimary} min-h-[44px] justify-center sm:min-w-[12rem]`}
                 >
                   {submittingConsult ? "Mengirim…" : "Kirim permintaan"}
                 </button>
@@ -319,7 +330,7 @@ export default function TherapistDetailPage() {
                     setConsultSla("STANDARD");
                     setError(null);
                   }}
-                  className={btnOutline}
+                  className={`${btnOutline} min-h-[44px] justify-center sm:min-w-[8rem]`}
                 >
                   Batal
                 </button>

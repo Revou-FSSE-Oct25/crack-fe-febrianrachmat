@@ -4,16 +4,21 @@ import {
   AlertBanner,
   btnOutline,
   btnPrimary,
+  btnSecondary,
   cardSurface,
   EmptyState,
   inputBase,
   ListSkeleton,
   PageHeader,
+  ConfirmDialog,
   PageLoading,
-  pageShell,
+  StatusChip,
+  widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
+import { consultationStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   createConsultation,
@@ -25,6 +30,7 @@ import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { createOrGetConversation } from "@/lib/api/chat";
 import { createTransaction } from "@/lib/api/transactions";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -65,22 +71,6 @@ function asConsultationRows(data: unknown): ConsultationRow[] {
   });
 }
 
-const STATUS_LABEL: Record<ConsultationStatus, string> = {
-  REQUESTED: "Menunggu terapis",
-  ACCEPTED: "Menunggu pembayaran",
-  IN_PROGRESS: "Sesi aktif",
-  COMPLETED: "Selesai",
-  CANCELLED: "Dibatalkan",
-};
-
-const STATUS_CHIP: Record<ConsultationStatus, string> = {
-  REQUESTED: "bg-amber-50 text-amber-800 border-amber-200",
-  ACCEPTED: "bg-sky-50 text-sky-800 border-sky-200",
-  IN_PROGRESS: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  COMPLETED: "bg-slate-100 text-slate-700 border-slate-200",
-  CANCELLED: "bg-rose-50 text-rose-800 border-rose-200",
-};
-
 function formatRupiah(value: string | null): string {
   if (!value) return "—";
   const n = Number(value);
@@ -96,6 +86,7 @@ type ConsultationPayProof = { file: File | null; url: string };
 
 export default function ConsultationsPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const router = useRouter();
   const [rows, setRows] = useState<ConsultationRow[]>([]);
   const [therapists, setTherapists] = useState<PhysiotherapistBrowseItem[]>(
@@ -103,12 +94,13 @@ export default function ConsultationsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [proofByConsultationId, setProofByConsultationId] = useState<
     Record<string, ConsultationPayProof>
   >({});
+  const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   const [physiotherapistId, setPhysiotherapistId] = useState("");
   const [complaint, setComplaint] = useState("");
@@ -161,7 +153,6 @@ export default function ConsultationsPage() {
     }
     setSubmitting(true);
     setError(null);
-    setInfo(null);
     try {
       await createConsultation({
         physiotherapistId,
@@ -170,8 +161,8 @@ export default function ConsultationsPage() {
       });
       setComplaint("");
       setSlaTier("STANDARD");
-      setInfo(
-        "Permintaan konsultasi terkirim. Tunggu terapis menerima, lalu kamu akan diminta membayar.",
+      toast.success(
+        "Permintaan konsultasi terkirim. Tunggu terapis menerima, lalu lakukan pembayaran.",
       );
       await load();
     } catch (err) {
@@ -201,14 +192,38 @@ export default function ConsultationsPage() {
     status: UpdateConsultationStatusBody["status"],
   ) {
     setError(null);
-    setInfo(null);
     try {
       await updateConsultationStatus(id, { status });
+      const labels: Record<string, string> = {
+        ACCEPTED: "Permintaan diterima. Pasien dapat membayar.",
+        COMPLETED: "Konsultasi ditandai selesai.",
+      };
+      if (labels[status]) toast.success(labels[status]);
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError ? err.message : "Gagal memperbarui status.",
       );
+    }
+  }
+
+  async function confirmCancelConsultation() {
+    if (!cancelConfirmId) return;
+    setCancelLoading(true);
+    setError(null);
+    try {
+      await updateConsultationStatus(cancelConfirmId, { status: "CANCELLED" });
+      setCancelConfirmId(null);
+      toast.success("Konsultasi dibatalkan.");
+      await load();
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Gagal membatalkan konsultasi.",
+      );
+    } finally {
+      setCancelLoading(false);
     }
   }
 
@@ -234,7 +249,6 @@ export default function ConsultationsPage() {
       return;
     }
     setError(null);
-    setInfo(null);
     setPayingId(row.id);
     try {
       await createTransaction({
@@ -248,8 +262,8 @@ export default function ConsultationsPage() {
         delete next[row.id];
         return next;
       });
-      setInfo(
-        "Permintaan pembayaran terkirim. Admin akan mengonfirmasi sebentar lagi; chat akan terbuka otomatis setelahnya. Pantau di halaman Transaksi.",
+      toast.success(
+        "Pembayaran terkirim. Admin akan mengonfirmasi; pantau di halaman Transaksi.",
       );
       await load();
     } catch (err) {
@@ -282,17 +296,36 @@ export default function ConsultationsPage() {
   }
 
   return (
-    <main className={`${pageShell} space-y-10 pb-16`}>
-      <PageHeader
-        title="Konsultasi"
-        description="Ajukan keluhan awal, bayar setelah terapis menerima, lalu mulai sesi chat profesional."
-      />
+    <main className={`${widePageShell} space-y-10 pb-16`}>
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <PageHeader
+          eyebrow="Telehealth"
+          title="Konsultasi"
+          description="Ajukan keluhan awal, bayar setelah terapis menerima, lalu mulai sesi chat profesional."
+        />
+        <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          <Link
+            href="/therapists"
+            className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
+          >
+            Cari fisioterapis
+          </Link>
+          <Link
+            href="/chat"
+            className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[10rem]`}
+          >
+            Daftar chat
+          </Link>
+        </div>
+      </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
-      {info ? <AlertBanner variant="success">{info}</AlertBanner> : null}
 
       {user.role === "PATIENT" && (
-        <section className={`${cardSurface} space-y-4`}>
+        <section
+          id="ajukan-konsultasi"
+          className={`${cardSurface} space-y-4 scroll-mt-24`}
+        >
           <h2 className="text-lg font-semibold text-slate-900">
             Ajukan konsultasi baru
           </h2>
@@ -374,7 +407,7 @@ export default function ConsultationsPage() {
             <button
               type="submit"
               disabled={submitting || loading}
-              className={btnPrimary}
+              className={`${btnPrimary} min-h-[44px]`}
             >
               {submitting ? "Mengirim…" : "Kirim"}
             </button>
@@ -393,15 +426,32 @@ export default function ConsultationsPage() {
             title="Belum ada konsultasi"
             hint={
               user.role === "PATIENT"
-                ? "Ajukan konsultasi baru dengan form di atas."
-                : "Permintaan dari pasien akan muncul di sini."
+                ? "Mulai dengan mengajukan keluhan awal ke fisioterapis pilihan Anda."
+                : "Permintaan dari pasien akan muncul di sini setelah mereka mengajukan konsultasi."
+            }
+            actions={
+              user.role === "PATIENT"
+                ? [
+                    { href: "#ajukan-konsultasi", label: "Ajukan konsultasi" },
+                    {
+                      href: "/therapists",
+                      label: "Cari fisioterapis",
+                      variant: "secondary",
+                    },
+                  ]
+                : [
+                    {
+                      href: "/physiotherapist/profile",
+                      label: "Kelola profil",
+                      variant: "secondary",
+                    },
+                  ]
             }
           />
         ) : (
           <ul className="space-y-4">
             {rows.map((c) => {
-              const chip = STATUS_CHIP[c.status] ?? STATUS_CHIP.REQUESTED;
-              const label = STATUS_LABEL[c.status] ?? c.status;
+              const statusMeta = consultationStatusMeta(c.status);
               const isPatient = user.role === "PATIENT";
               const isPt = user.role === "PHYSIOTHERAPIST";
               const isAdmin = user.role === "ADMIN";
@@ -422,11 +472,10 @@ export default function ConsultationsPage() {
                 >
                   <div className="min-w-0 flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${chip}`}
-                      >
-                        {label}
-                      </span>
+                      <StatusChip
+                        label={statusMeta.label}
+                        tone={statusMeta.tone}
+                      />
                       <span className="text-xs text-slate-500">
                         {new Date(c.createdAt).toLocaleString("id-ID")}
                       </span>
@@ -499,7 +548,7 @@ export default function ConsultationsPage() {
                           type="button"
                           onClick={() => void payConsultation(c)}
                           disabled={payingId === c.id}
-                          className={btnPrimary}
+                          className={`${btnPrimary} min-h-[44px] w-full justify-center sm:w-auto`}
                         >
                           {payingId === c.id
                             ? "Memproses…"
@@ -511,7 +560,7 @@ export default function ConsultationsPage() {
                       <button
                         type="button"
                         onClick={() => void openChat(c.id)}
-                        className="inline-flex items-center rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-sm font-medium text-teal-900 hover:bg-teal-100/80 transition-colors"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-900 transition-colors hover:bg-teal-100/80"
                       >
                         Buka chat
                       </button>
@@ -520,7 +569,7 @@ export default function ConsultationsPage() {
                       <button
                         type="button"
                         onClick={() => void patchStatus(c.id, "ACCEPTED")}
-                        className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-900 hover:bg-emerald-100/80 transition-colors"
+                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 transition-colors hover:bg-emerald-100/80"
                       >
                         Terima permintaan
                       </button>
@@ -529,7 +578,7 @@ export default function ConsultationsPage() {
                       <button
                         type="button"
                         onClick={() => void patchStatus(c.id, "COMPLETED")}
-                        className={`${btnOutline} bg-slate-50`}
+                        className={`${btnOutline} min-h-[44px] justify-center bg-slate-50 px-4`}
                       >
                         Tandai selesai
                       </button>
@@ -537,8 +586,8 @@ export default function ConsultationsPage() {
                     {canCancel && (
                       <button
                         type="button"
-                        onClick={() => void patchStatus(c.id, "CANCELLED")}
-                        className={btnOutline}
+                        onClick={() => setCancelConfirmId(c.id)}
+                        className={`${btnOutline} min-h-[44px] justify-center px-4`}
                       >
                         Batalkan
                       </button>
@@ -550,6 +599,20 @@ export default function ConsultationsPage() {
           </ul>
         )}
       </section>
+
+      <ConfirmDialog
+        open={cancelConfirmId !== null}
+        title="Batalkan konsultasi?"
+        description="Permintaan atau sesi konsultasi ini akan dibatalkan. Anda bisa mengajukan konsultasi baru nanti jika diperlukan."
+        confirmLabel="Ya, batalkan"
+        cancelLabel="Tidak jadi"
+        variant="danger"
+        loading={cancelLoading}
+        onConfirm={() => void confirmCancelConsultation()}
+        onCancel={() => {
+          if (!cancelLoading) setCancelConfirmId(null);
+        }}
+      />
     </main>
   );
 }

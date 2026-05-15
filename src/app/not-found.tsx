@@ -22,10 +22,16 @@ export default function NotFound() {
           Alamat yang Anda buka tidak ada atau sudah dipindahkan.
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-1">
-          <Link href="/" className={btnPrimary}>
+          <Link
+            href="/"
+            className={`${btnPrimary} min-h-[44px] justify-center px-6`}
+          >
             Ke beranda
           </Link>
-          <Link href="/therapists" className={btnOutline}>
+          <Link
+            href="/therapists"
+            className={`${btnOutline} min-h-[44px] justify-center px-6`}
+          >
             Cari terapis
           </Link>
         </div>
