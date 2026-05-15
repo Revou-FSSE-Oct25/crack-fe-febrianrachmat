@@ -1,50 +1,62 @@
-This is a [Next.js](https://nextjs.org) frontend for **Kinova** — a demo physiotherapy booking & online consultation app (Revou / Crack capstone). It talks to the NestJS backend via `NEXT_PUBLIC_API_URL`.
+# Kinova — Frontend (Next.js)
 
-## Product policy & demo limits
+Frontend demo untuk platform booking & konsultasi fisioterapi. Backend: [crack-be-febrianrachmat](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat).
 
-- **In-app summary:** run the app and open **`/kebijakan`**.
-- **Full policy (Bahasa Indonesia):** [`product-policy.md`](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/product-policy.md) in the backend repository (`crack-be-febrianrachmat`).
+## Kebijakan produk
 
----
+- Ringkasan in-app: [`/kebijakan`](http://localhost:3000/kebijakan) saat dev server berjalan.
+- Dokumen lengkap: [product-policy.md](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/product-policy.md) (repo backend).
 
-## Environment Variables
+## Environment
 
-Copy `.env.example` to `.env`, then set:
+Salin `.env.example` → `.env`:
 
-- `NEXT_PUBLIC_API_URL`: base URL backend API NestJS.
-- `JWT_SECRET`: same secret value used by backend JWT signing (server-side only, used by `src/proxy.ts` to verify token signature for admin route guard).
+| Variabel | Keterangan |
+|----------|------------|
+| `NEXT_PUBLIC_API_URL` | Base URL API NestJS (bukan Postgres). Produksi: `https://crack-be-febrianrachmat-production.up.railway.app` |
+| `JWT_SECRET` | Sama dengan backend — dipakai middleware untuk verifikasi JWT admin |
 
-## Getting Started
-
-First, run the development server:
+## Menjalankan lokal
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka http://localhost:3000. Pastikan backend berjalan di `NEXT_PUBLIC_API_URL` (default `http://localhost:3000`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Skrip
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Perintah | Fungsi |
+|----------|--------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run start` | Jalankan build produksi |
+| `npm run lint` | ESLint |
 
-## Learn More
+## Kualitas & CI
 
-To learn more about Next.js, take a look at the following resources:
+GitHub Actions (`.github/workflows/ci.yml`) pada push/PR ke `main`:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. `npm ci`
+2. `npm run lint`
+3. `npm run build`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Monitoring API
 
-## Deploy on Vercel
+- Backend langsung: `{NEXT_PUBLIC_API_URL}/health`
+- Dari frontend (proxy): `GET /api/health` — berguna untuk cek CORS/network dari lingkungan Next.js.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Vercel / Railway / Node:** set env di atas, lalu `npm run build` + `npm run start`.
+- Set `CORS_ORIGINS` di backend agar mencakup URL frontend produksi.
+
+## Akun demo
+
+Setelah `npm run prisma:seed` di backend — password default `password123`:
+
+- `admin@demo.local`, `patient1@demo.local`, `patient2@demo.local`
+- `physio1@demo.local`, `physio2@demo.local`, `physio3@demo.local` (pending)
+
+Lihat [backend README](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat#readme) untuk operasional lengkap.
