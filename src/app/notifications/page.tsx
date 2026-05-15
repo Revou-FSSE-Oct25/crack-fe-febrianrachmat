@@ -7,7 +7,17 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/api/notifications";
-import Link from "next/link";
+import {
+  AlertBanner,
+  btnOutline,
+  btnSecondary,
+  cardSurface,
+  EmptyState,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useCallback, useEffect, useState } from "react";
 
 type NotifRow = {
@@ -87,95 +97,99 @@ export default function NotificationsPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
-    return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk untuk melihat notifikasi.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
-    );
+    return <SignInRequired message="Silakan masuk untuk melihat notifikasi." />;
   }
 
   return (
-    <main className="max-w-3xl mx-auto py-16 px-6 space-y-6">
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        <h1 className="text-3xl font-bold">Notifikasi</h1>
+    <main className={`${pageShell} space-y-8 pb-16`}>
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-4">
+        <PageHeader
+          eyebrow="Kotak masuk"
+          title="Notifikasi"
+          description="Pemberitahan dari sistem dan admin. Notifikasi yang belum dibaca ditandai dengan latar berbeda."
+        />
         <button
           type="button"
           onClick={() => void markAll()}
-          className="text-sm border px-4 py-2 rounded"
+          className={btnSecondary}
         >
           Tandai semua dibaca
         </button>
       </div>
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+            aria-hidden
+          />
+          Memuat…
+        </p>
       ) : rows.length === 0 ? (
-        <p className="text-gray-600">Tidak ada notifikasi.</p>
+        <EmptyState
+          title="Tidak ada notifikasi"
+          hint="Notifikasi akan muncul ketika ada pembaruan penting pada akun atau aktivitas Anda."
+        />
       ) : (
         <>
           <ul className="space-y-3">
             {rows.map((n) => (
               <li
                 key={n.id}
-                className={`border rounded-lg p-4 ${n.isRead ? "bg-white" : "bg-teal-50/40"}`}
+                className={`${cardSurface} ${
+                  n.isRead ? "" : "border-teal-200/80 bg-teal-50/25"
+                }`}
               >
-                <div className="flex justify-between gap-2">
-                  <h2 className="font-semibold">{n.title}</h2>
-                  {!n.isRead && (
+                <div className="flex justify-between gap-3 items-start">
+                  <h2 className="font-semibold text-slate-900">{n.title}</h2>
+                  {!n.isRead ? (
                     <button
                       type="button"
                       onClick={() => void markOne(n.id)}
-                      className="text-xs text-teal-700 shrink-0"
+                      className="text-xs font-semibold text-teal-700 hover:text-teal-800 shrink-0"
                     >
                       Tandai dibaca
                     </button>
-                  )}
+                  ) : null}
                 </div>
-                <p className="text-gray-700 mt-2 whitespace-pre-wrap">{n.body}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  {new Date(n.createdAt).toLocaleString()}
+                <p className="text-slate-700 mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+                  {n.body}
+                </p>
+                <p className="text-xs text-slate-500 mt-3">
+                  {new Date(n.createdAt).toLocaleString("id-ID")}
                 </p>
               </li>
             ))}
           </ul>
-          {totalPages > 1 && (
-            <div className="flex gap-3 justify-center items-center pt-4">
+          {totalPages > 1 ? (
+            <div className="flex flex-wrap gap-3 justify-center items-center pt-2">
               <button
                 type="button"
                 disabled={page <= 1}
                 onClick={() => void load(page - 1)}
-                className="border px-4 py-2 rounded disabled:opacity-40"
+                className={btnOutline}
               >
                 Sebelumnya
               </button>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-slate-600 tabular-nums">
                 Halaman {page} / {totalPages}
               </span>
               <button
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => void load(page + 1)}
-                className="border px-4 py-2 rounded disabled:opacity-40"
+                className={btnOutline}
               >
                 Berikutnya
               </button>
             </div>
-          )}
+          ) : null}
         </>
       )}
     </main>

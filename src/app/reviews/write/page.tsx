@@ -1,11 +1,24 @@
 "use client";
 
+import {
+  AlertBanner,
+  btnPrimary,
+  cardSurface,
+  EmptyState,
+  inputBase,
+  PageHeader,
+  PageLoading,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyBookings } from "@/lib/api/bookings";
 import { createReview } from "@/lib/api/reviews";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+
+const narrowShell =
+  "max-w-lg mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-6 pb-16";
 
 type BookingOption = { id: string; status: string };
 
@@ -82,64 +95,62 @@ export default function WriteReviewPage() {
   }
 
   if (!isReady) {
-    return (
-      <main className="max-w-lg mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
-    return (
-      <main className="max-w-lg mx-auto py-16 px-6 text-center">
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
-    );
+    return <SignInRequired message="Silakan masuk untuk menulis ulasan." />;
   }
 
   if (user.role !== "PATIENT") {
     return (
-      <main className="max-w-lg mx-auto py-16 px-6">
-        <p>Hanya pasien yang dapat menulis ulasan.</p>
-        <Link href="/" className="text-teal-600 underline">
-          Beranda
-        </Link>
+      <main className={narrowShell}>
+        <div className={`${cardSurface} max-w-lg space-y-4`}>
+          <PageHeader
+            title="Ulasan"
+            description="Hanya pasien yang dapat menulis ulasan setelah sesi selesai."
+          />
+          <Link href="/" className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800">
+            Kembali ke beranda
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-lg mx-auto py-12 px-6 space-y-6">
-      <h1 className="text-3xl font-bold">Beri ulasan</h1>
-      <p className="text-sm text-gray-600">
-        POST /reviews — booking harus berstatus COMPLETED dan belum ada ulasan
-        untuk booking tersebut.
-      </p>
+    <main className={narrowShell}>
+      <PageHeader
+        eyebrow="Feedback"
+        title="Beri ulasan"
+        description="Pilih booking yang sudah selesai, beri rating 1–5, dan tambahkan komentar jika perlu. Satu booking hanya boleh satu ulasan."
+      />
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
-      {success && (
-        <p className="text-green-800 text-sm bg-green-50 border border-green-100 rounded p-3">
-          {success}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {success ? <AlertBanner variant="success">{success}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat booking…</p>
-      ) : completed.length === 0 ? (
-        <p className="text-gray-600">
-          Tidak ada booking selesai untuk diulas.
+        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+            aria-hidden
+          />
+          Memuat booking…
         </p>
+      ) : completed.length === 0 ? (
+        <EmptyState
+          title="Belum ada booking selesai"
+          hint="Setelah sesi ditandai selesai, Anda dapat memberi ulasan di halaman ini."
+        />
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className={`${cardSurface} space-y-5`}>
           <div>
-            <label className="block text-sm font-medium mb-1">Booking</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Booking
+            </label>
             <select
               required
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={bookingId}
               onChange={(e) => setBookingId(e.target.value)}
             >
@@ -152,9 +163,11 @@ export default function WriteReviewPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Rating (1–5)</label>
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
+              Rating (1–5)
+            </label>
             <select
-              className="border rounded-lg w-full p-3"
+              className={inputBase}
               value={rating}
               onChange={(e) => setRating(Number(e.target.value))}
             >
@@ -166,11 +179,11 @@ export default function WriteReviewPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-sm font-medium text-slate-800 mb-1.5">
               Komentar (opsional)
             </label>
             <textarea
-              className="border rounded-lg w-full p-3 min-h-[100px]"
+              className={`${inputBase} min-h-[100px] resize-y`}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
@@ -178,7 +191,7 @@ export default function WriteReviewPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-teal-600 text-white py-3 rounded-lg disabled:opacity-50"
+            className={`${btnPrimary} w-full`}
           >
             {submitting ? "Mengirim…" : "Kirim ulasan"}
           </button>

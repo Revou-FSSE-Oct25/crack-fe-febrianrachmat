@@ -3,11 +3,22 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
+  AlertBanner,
+  btnOutline,
+  cardSurface,
+  PageHeader,
+  PageLoading,
+  SignInRequired,
+} from "@/components/ui/page-shell";
+import {
   getAdminDashboardOverview,
   type AdminDashboardOverview,
 } from "@/lib/api/admin-dashboard";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+
+const adminShell =
+  "max-w-6xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
 
 function parseMoney(v: string | number): number {
   if (typeof v === "number") return v;
@@ -196,70 +207,53 @@ export default function AdminDashboardPage() {
   }, [isReady, user?.role, load]);
 
   if (!isReady) {
-    return (
-      <main className="max-w-6xl mx-auto py-16 px-6 text-slate-600">Memuat…</main>
-    );
+    return <PageLoading label="Memuat dashboard…" />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-6xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk sebagai admin.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Silakan masuk sebagai admin untuk melihat ringkasan." />
     );
   }
 
   if (user.role !== "ADMIN") {
     return (
-      <main className="max-w-6xl mx-auto py-16 px-6 space-y-4">
-        <h1 className="text-2xl font-bold">Akses ditolak</h1>
-        <p className="text-gray-700">
-          Halaman ini hanya untuk peran Admin.
-        </p>
-        <Link href="/" className="text-teal-600 underline">
-          Kembali ke beranda
-        </Link>
+      <main className={adminShell}>
+        <div className={`${cardSurface} max-w-lg space-y-4`}>
+          <PageHeader
+            eyebrow="Admin"
+            title="Akses ditolak"
+            description="Halaman ini hanya untuk peran Admin."
+          />
+          <Link href="/" className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800">
+            Kembali ke beranda
+          </Link>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-6xl mx-auto py-10 sm:py-12 px-6 space-y-8">
+    <main className={adminShell}>
       <div className="rounded-2xl border border-teal-100 bg-gradient-to-br from-white to-teal-50/40 p-6 sm:p-8 shadow-sm ring-1 ring-slate-900/5">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-              Admin
-            </p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-              Dashboard
-            </h1>
-            <p className="text-slate-600 mt-2 text-sm sm:text-base max-w-2xl">
-              Ringkasan dari{" "}
-              <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono text-slate-800">
-                GET /admin/dashboard/overview
-              </code>
-            </p>
-          </div>
+          <PageHeader
+            eyebrow="Admin"
+            title="Dashboard"
+            description="Ringkasan pengguna, booking, transaksi, dan ulasan dari endpoint ringkasan admin."
+          />
           <button
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 transition-colors"
+            className={btnOutline}
           >
             {loading ? "Memuat…" : "Muat ulang"}
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-900 text-sm">
-          {error}
-        </div>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading && !data ? (
         <DashboardSkeleton />

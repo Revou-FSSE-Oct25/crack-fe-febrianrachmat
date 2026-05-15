@@ -91,8 +91,9 @@ export default function BookingsPage() {
   const terminal = new Set(["COMPLETED", "CANCELLED"]);
 
   return (
-    <main className={`${pageShell} space-y-6`}>
+    <main className={`${pageShell} space-y-6 pb-16`}>
       <PageHeader
+        eyebrow="Janji temu"
         title="Booking"
         description="Kelola janji temu Anda. Pasien dapat membatalkan sebelum selesai; fisioterapis memperbarui alur sesi."
       />
