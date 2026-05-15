@@ -31,9 +31,7 @@ type AuthContextValue = {
   user: AuthUserResponse | null;
   isReady: boolean;
   login: (body: authApi.LoginBody) => Promise<void>;
-  register: (
-    body: authApi.RegisterBody,
-  ) => Promise<{ requiresEmailVerification: boolean; email: string }>;
+  register: (body: authApi.RegisterBody) => Promise<void>;
   completeOAuthLogin: (accessToken: string) => Promise<void>;
   logout: () => void;
   /** Perbarui nama/email di navbar setelah simpan profil. */
@@ -136,19 +134,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(async (body: authApi.RegisterBody) => {
     const data = await authApi.register(body);
-    if (data.requiresEmailVerification) {
-      return {
-        requiresEmailVerification: true,
-        email: data.email,
-      };
-    }
     setStoredAccessToken(data.accessToken);
     setStoredAuthUser(data.user);
     setUser(data.user);
-    return {
-      requiresEmailVerification: false,
-      email: data.user.email,
-    };
   }, []);
 
   const completeOAuthLogin = useCallback(async (accessToken: string) => {
