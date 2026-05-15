@@ -5,6 +5,17 @@ import { ApiRequestError } from "@/lib/api/client";
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { listCategories } from "@/lib/api/categories";
 import type { Category, PhysiotherapistBrowseItem } from "@/lib/api/types";
+import {
+  AlertBanner,
+  btnPrimary,
+  cardSurface,
+  EmptyState,
+  inputBase,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -52,116 +63,136 @@ export default function TherapistsBrowsePage() {
   useEffect(() => {
     if (!isReady || !user) return;
     void load();
-    // Hanya muat ulang otomatis saat kategori/login berubah; pencarian lewat tombol Terapkan.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, user, categoryId, onlineOnly]);
 
   if (!isReady) {
-    return (
-      <main className="max-w-5xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-5xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Masuk untuk melihat daftar fisioterapis terverifikasi.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Masuk untuk melihat daftar fisioterapis terverifikasi." />
     );
   }
 
   return (
-    <main className="max-w-5xl mx-auto py-12 px-6 space-y-8">
-      <h1 className="text-3xl font-bold">Cari fisioterapis</h1>
-      <p className="text-sm text-gray-600">
-        GET /physiotherapists — hanya profil APPROVED. Centang &quot;Hanya
-        online&quot; untuk terapis yang baru saja membuka dashboard (heartbeat
-        ~5 menit).
-      </p>
+    <main className={`${pageShell} space-y-8 pb-16`}>
+      <PageHeader
+        eyebrow="Jaringan"
+        title="Cari fisioterapis"
+        description={
+          <>
+            Profil yang tampil sudah <strong>APPROVED</strong>. Centang
+            &quot;Hanya online&quot; untuk terapis yang sedang aktif di dashboard
+            (heartbeat ~5 menit).
+          </>
+        }
+      />
 
-      <div className="flex flex-wrap gap-4 items-end">
-        <div>
-          <label className="block text-sm font-medium mb-1">Kategori</label>
-          <select
-            className="border rounded-lg p-2 min-w-[160px]"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+      <div className={`${cardSurface} space-y-5`}>
+        <div className="flex flex-col lg:flex-row flex-wrap gap-4 lg:items-end">
+          <div className="min-w-[160px]">
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Kategori
+            </label>
+            <select
+              className={inputBase}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+            >
+              <option value="">Semua</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Cari
+            </label>
+            <input
+              className={inputBase}
+              placeholder="Nama atau kata kunci"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className={btnPrimary}
           >
-            <option value="">Semua</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            Terapkan
+          </button>
         </div>
-        <div className="flex-1 min-w-[200px]">
-          <label className="block text-sm font-medium mb-1">Cari</label>
-          <input
-            className="border rounded-lg p-2 w-full"
-            placeholder="Nama atau kata kunci"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-          />
-        </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="bg-teal-600 text-white px-4 py-2 rounded-lg"
-        >
-          Terapkan
-        </button>
-        <label className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer select-none">
+        <label className="flex items-center gap-2.5 text-sm text-slate-700 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={onlineOnly}
             onChange={(e) => setOnlineOnly(e.target.checked)}
-            className="rounded border-gray-300"
+            className="rounded border-slate-300 text-teal-600 focus:ring-teal-500"
           />
           Hanya terapis online sekarang
         </label>
       </div>
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+            aria-hidden
+          />
+          Memuat daftar…
+        </p>
       ) : items.length === 0 ? (
-        <p className="text-gray-600">Tidak ada hasil.</p>
+        <EmptyState
+          title="Tidak ada hasil"
+          hint="Ubah filter, matikan &quot;Hanya online&quot;, atau kosongkan pencarian lalu Terapkan lagi."
+        />
       ) : (
-        <ul className="grid gap-6 sm:grid-cols-2">
+        <ul className="grid gap-5 sm:grid-cols-2">
           {items.map((t) => (
-            <li key={t.id} className="border rounded-xl p-5 shadow-sm bg-white">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-lg font-semibold">{t.user.fullName}</h2>
-                {isTherapistOnlineNow(t) ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 border border-emerald-200">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Online
-                  </span>
-                ) : null}
-              </div>
-              {t.category && (
-                <p className="text-sm text-teal-700">{t.category.name}</p>
-              )}
-              {t.bio && (
-                <p className="text-sm text-gray-700 mt-2 line-clamp-3">
-                  {t.bio}
-                </p>
-              )}
-              <Link
-                href={`/therapists/${t.id}`}
-                className="inline-block mt-4 text-teal-700 font-medium text-sm hover:underline"
+            <li key={t.id}>
+              <div
+                className={`${cardSurface} h-full flex flex-col transition-shadow duration-200 hover:shadow-[0_8px_30px_rgb(15_23_42_/_0.08)]`}
               >
-                Lihat detail &amp; ulasan →
-              </Link>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {t.user.fullName}
+                  </h2>
+                  {isTherapistOnlineNow(t) ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/80">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Online
+                    </span>
+                  ) : null}
+                </div>
+                {t.category ? (
+                  <p className="text-sm font-medium text-teal-700 mt-1">
+                    {t.category.name}
+                  </p>
+                ) : null}
+                {t.bio ? (
+                  <p className="text-sm text-slate-600 mt-3 line-clamp-3 leading-relaxed flex-1">
+                    {t.bio}
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-400 mt-3 italic flex-1">
+                    Belum ada bio singkat.
+                  </p>
+                )}
+                <Link
+                  href={`/therapists/${t.id}`}
+                  className="mt-5 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+                >
+                  Lihat detail &amp; ulasan →
+                </Link>
+              </div>
             </li>
           ))}
         </ul>

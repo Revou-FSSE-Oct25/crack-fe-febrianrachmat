@@ -6,6 +6,18 @@ import { createConsultation } from "@/lib/api/consultations";
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { listPublicReviewsForPhysiotherapist } from "@/lib/api/reviews";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
+import {
+  AlertBanner,
+  btnOutline,
+  btnPrimary,
+  btnSecondary,
+  cardSurface,
+  inputBase,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -95,87 +107,108 @@ export default function TherapistDetailPage() {
   }, [isReady, user, profileId, load]);
 
   if (!isReady) {
-    return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
     return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-center">
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
+      <SignInRequired message="Masuk untuk melihat profil fisioterapis." />
     );
   }
 
   return (
-    <main className="max-w-3xl mx-auto py-12 px-6 space-y-8">
-      <Link href="/therapists" className="text-sm text-teal-700 hover:underline">
-        ← Daftar fisioterapis
+    <main className={`${pageShell} space-y-8 pb-16`}>
+      <Link
+        href="/therapists"
+        className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
+      >
+        ← Kembali ke daftar
       </Link>
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+            aria-hidden
+          />
+          Memuat profil…
+        </p>
       ) : !therapist ? (
-        <p className="text-gray-600">Profil tidak ditemukan.</p>
+        <div className={`${cardSurface} text-center py-10`}>
+          <p className="text-slate-700 font-medium">Profil tidak ditemukan.</p>
+          <Link href="/therapists" className={`${btnPrimary} mt-4 inline-flex`}>
+            Ke daftar fisioterapis
+          </Link>
+        </div>
       ) : (
-        <section className="space-y-3">
-          <h1 className="text-3xl font-bold">{therapist.user.fullName}</h1>
-          {therapist.category && (
-            <p className="text-teal-700">{therapist.category.name}</p>
-          )}
-          {therapist.bio && (
-            <p className="text-gray-800 whitespace-pre-wrap">{therapist.bio}</p>
-          )}
-          {therapist.clinicAddress && (
-            <p className="text-sm text-gray-700">
-              <span className="font-medium">Klinik: </span>
-              {therapist.clinicAddress}
-            </p>
-          )}
-          <p className="text-sm text-gray-600">
-            Biaya konsultasi online:{" "}
-            <span className="font-medium">
-              {formatRupiah(therapist.consultationFee ?? null)}
-            </span>
-            {" · "}
-            Biaya visit (klinik / rumah):{" "}
-            <span className="font-medium">
-              {formatRupiah(therapist.visitFee ?? null)}
-            </span>
-            {therapist.onlineUntil &&
-            new Date(String(therapist.onlineUntil)) > new Date() ? (
-              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 border border-emerald-200">
-                Online
-              </span>
-            ) : null}
-          </p>
+        <>
+          <PageHeader
+            eyebrow="Profil terapis"
+            title={therapist.user.fullName}
+            description={
+              therapist.category ? (
+                <span className="text-teal-700 font-medium">
+                  {therapist.category.name}
+                </span>
+              ) : null
+            }
+          />
 
-          {user.role === "PATIENT" && (
-            <div className="mt-4 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => setShowConsultForm((v) => !v)}
-                className="inline-flex items-center rounded-lg bg-teal-600 px-5 py-2 text-white hover:bg-teal-700 transition-colors"
-              >
-                Konsultasi online ({formatRupiah(therapist.consultationFee ?? null)})
-              </button>
-              <Link
-                href="/appointment"
-                className="inline-flex items-center rounded-lg border border-teal-200 bg-white px-5 py-2 text-teal-800 hover:bg-teal-50 transition-colors"
-              >
-                Booking visit ({formatRupiah(therapist.visitFee ?? null)})
-              </Link>
+          <div className={`${cardSurface} space-y-4`}>
+            {therapist.bio ? (
+              <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
+                {therapist.bio}
+              </p>
+            ) : (
+              <p className="text-slate-500 text-sm italic">Belum ada bio.</p>
+            )}
+            {therapist.clinicAddress ? (
+              <p className="text-sm text-slate-700">
+                <span className="font-semibold text-slate-800">Klinik: </span>
+                {therapist.clinicAddress}
+              </p>
+            ) : null}
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 pt-1 border-t border-slate-100">
+              <span>
+                Konsultasi online:{" "}
+                <strong className="text-slate-900">
+                  {formatRupiah(therapist.consultationFee ?? null)}
+                </strong>
+              </span>
+              <span className="text-slate-300">·</span>
+              <span>
+                Visit:{" "}
+                <strong className="text-slate-900">
+                  {formatRupiah(therapist.visitFee ?? null)}
+                </strong>
+              </span>
+              {therapist.onlineUntil &&
+              new Date(String(therapist.onlineUntil)) > new Date() ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
+                  Online
+                </span>
+              ) : null}
             </div>
-          )}
+
+            {user.role === "PATIENT" && (
+              <div className="flex flex-wrap gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConsultForm((v) => !v)}
+                  className={btnPrimary}
+                >
+                  Konsultasi online (
+                  {formatRupiah(therapist.consultationFee ?? null)})
+                </button>
+                <Link href="/appointment" className={btnSecondary}>
+                  Booking visit (
+                  {formatRupiah(therapist.visitFee ?? null)})
+                </Link>
+              </div>
+            )}
+          </div>
 
           {showConsultForm && user.role === "PATIENT" && (
             <form
@@ -216,34 +249,36 @@ export default function TherapistDetailPage() {
                   setSubmittingConsult(false);
                 }
               }}
-              className="mt-4 rounded-lg border border-teal-100 bg-teal-50/40 p-4 space-y-3"
+              className={`${cardSurface} space-y-4 border-teal-100/80 bg-teal-50/30`}
             >
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-slate-700 leading-relaxed">
                 Alur: kirim keluhan → terapis menerima → kamu bayar{" "}
-                <strong>{formatRupiah(therapist.consultationFee ?? null)}</strong>{" "}
+                <strong>
+                  {formatRupiah(therapist.consultationFee ?? null)}
+                </strong>{" "}
                 → chat aktif setelah pembayaran dikonfirmasi.
               </p>
-              <fieldset className="space-y-2 text-sm text-slate-700">
-                <legend className="font-medium text-slate-800">
+              <fieldset className="space-y-2.5 text-sm text-slate-700">
+                <legend className="font-semibold text-slate-800 mb-1">
                   Batas balasan terapis setelah bayar
                 </legend>
-                <label className="flex items-start gap-2 cursor-pointer">
+                <label className="flex items-start gap-2.5 cursor-pointer rounded-lg p-2 hover:bg-white/60">
                   <input
                     type="radio"
                     name="consultSla"
                     checked={consultSla === "STANDARD"}
                     onChange={() => setConsultSla("STANDARD")}
-                    className="mt-1"
+                    className="mt-1 text-teal-600 focus:ring-teal-500"
                   />
                   <span>Standar (~24 jam)</span>
                 </label>
-                <label className="flex items-start gap-2 cursor-pointer">
+                <label className="flex items-start gap-2.5 cursor-pointer rounded-lg p-2 hover:bg-white/60">
                   <input
                     type="radio"
                     name="consultSla"
                     checked={consultSla === "FAST_ONLINE"}
                     onChange={() => setConsultSla("FAST_ONLINE")}
-                    className="mt-1"
+                    className="mt-1 text-teal-600 focus:ring-teal-500"
                   />
                   <span>
                     Respons cepat (~10 menit) — hanya jika badge{" "}
@@ -251,22 +286,28 @@ export default function TherapistDetailPage() {
                   </span>
                 </label>
               </fieldset>
-              <label className="block text-sm font-medium text-slate-800">
-                Keluhan (min. 10 karakter)
+              <div>
+                <label
+                  htmlFor="consult-complaint"
+                  className="block text-sm font-medium text-slate-800 mb-1.5"
+                >
+                  Keluhan (min. 10 karakter)
+                </label>
                 <textarea
+                  id="consult-complaint"
                   required
                   minLength={10}
                   value={complaint}
                   onChange={(e) => setComplaint(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 min-h-[100px]"
+                  className={`${inputBase} min-h-[100px]`}
                   placeholder="Ceritakan keluhan kamu agar terapis bisa siap menerima sesi."
                 />
-              </label>
-              <div className="flex gap-2">
+              </div>
+              <div className="flex flex-wrap gap-2">
                 <button
                   type="submit"
                   disabled={submittingConsult}
-                  className="inline-flex items-center rounded-lg bg-teal-600 px-5 py-2 text-white hover:bg-teal-700 transition-colors disabled:opacity-60"
+                  className={btnPrimary}
                 >
                   {submittingConsult ? "Mengirim…" : "Kirim permintaan"}
                 </button>
@@ -276,45 +317,54 @@ export default function TherapistDetailPage() {
                     setShowConsultForm(false);
                     setComplaint("");
                     setConsultSla("STANDARD");
+                    setError(null);
                   }}
-                  className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-5 py-2 text-slate-700 hover:bg-slate-50 transition-colors"
+                  className={btnOutline}
                 >
                   Batal
                 </button>
               </div>
             </form>
           )}
-        </section>
+        </>
       )}
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4">Ulasan publik</h2>
-        <p className="text-xs text-gray-500 mb-4">
-          GET /physiotherapists/:id/reviews
-        </p>
-        {reviews.length === 0 ? (
-          <p className="text-gray-600">Belum ada ulasan.</p>
-        ) : (
-          <ul className="space-y-4">
-            {reviews.map((r) => (
-              <li key={r.id} className="border rounded-lg p-4 bg-gray-50">
-                <div className="flex justify-between gap-2">
-                  <span className="font-medium">{r.patientName}</span>
-                  <span className="text-amber-600">{r.rating}/5</span>
-                </div>
-                {r.comment && (
-                  <p className="text-gray-800 mt-2 whitespace-pre-wrap">
-                    {r.comment}
+      {!loading && therapist ? (
+        <section className="space-y-4">
+          <h2 className="text-lg font-semibold text-slate-900">Ulasan publik</h2>
+          <p className="text-xs text-slate-500">
+            Ulasan dari pasien setelah sesi booking selesai.
+          </p>
+          {reviews.length === 0 ? (
+            <div className={`${cardSurface} text-center py-8 text-slate-600 text-sm`}>
+              Belum ada ulasan.
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {reviews.map((r) => (
+                <li key={r.id} className={cardSurface}>
+                  <div className="flex justify-between gap-2 items-start">
+                    <span className="font-semibold text-slate-900">
+                      {r.patientName}
+                    </span>
+                    <span className="text-amber-700 font-medium text-sm shrink-0">
+                      {r.rating}/5
+                    </span>
+                  </div>
+                  {r.comment ? (
+                    <p className="text-slate-700 mt-2 whitespace-pre-wrap text-sm leading-relaxed">
+                      {r.comment}
+                    </p>
+                  ) : null}
+                  <p className="text-xs text-slate-500 mt-2">
+                    {new Date(r.createdAt).toLocaleString("id-ID")}
                   </p>
-                )}
-                <p className="text-xs text-gray-500 mt-2">
-                  {new Date(r.createdAt).toLocaleString()}
-                </p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </main>
   );
 }

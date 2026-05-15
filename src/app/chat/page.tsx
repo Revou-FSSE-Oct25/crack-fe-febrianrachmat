@@ -3,6 +3,15 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyConversations } from "@/lib/api/chat";
+import {
+  AlertBanner,
+  cardSurface,
+  EmptyState,
+  PageHeader,
+  PageLoading,
+  pageShell,
+  SignInRequired,
+} from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -49,51 +58,50 @@ export default function ChatListPage() {
   }, [isReady, user, load]);
 
   if (!isReady) {
-    return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (!user) {
-    return (
-      <main className="max-w-3xl mx-auto py-16 px-6 text-center space-y-4">
-        <p>Silakan masuk untuk chat.</p>
-        <Link href="/login" className="text-teal-600 underline">
-          Masuk
-        </Link>
-      </main>
-    );
+    return <SignInRequired message="Silakan masuk untuk melihat percakapan." />;
   }
 
   return (
-    <main className="max-w-3xl mx-auto py-16 px-6 space-y-6">
-      <h1 className="text-3xl font-bold">Chat</h1>
-      <p className="text-gray-600 text-sm">
-        Buka percakapan dari halaman Konsultasi (tombol Chat). Daftar di bawah
-        memuat percakapan yang sudah pernah dibuat.
-      </p>
+    <main className={`${pageShell} space-y-8 pb-16`}>
+      <PageHeader
+        eyebrow="Pesan"
+        title="Chat"
+        description="Buka percakapan dari halaman Konsultasi (tombol Buka chat). Di bawah ini daftar percakapan yang pernah dibuat untuk akun Anda."
+      />
 
-      {error && (
-        <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-          {error}
-        </p>
-      )}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-gray-600">Memuat…</p>
+        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
+          <span
+            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
+            aria-hidden
+          />
+          Memuat…
+        </p>
       ) : rows.length === 0 ? (
-        <p className="text-gray-600">Belum ada percakapan.</p>
+        <EmptyState
+          title="Belum ada percakapan"
+          hint="Setelah konsultasi aktif, gunakan tombol chat di halaman Konsultasi untuk memulai obrolan."
+        />
       ) : (
-        <ul className="divide-y border rounded-lg overflow-hidden bg-white">
+        <ul className={`${cardSurface} divide-y divide-slate-100 p-0 overflow-hidden`}>
           {rows.map((c) => (
             <li key={c.id}>
               <Link
                 href={`/chat/${c.id}`}
-                className="block p-4 hover:bg-gray-50 transition"
+                className="block px-5 py-4 hover:bg-teal-50/40 transition-colors"
               >
-                <span className="font-mono text-sm">{c.id}</span>
-                <p className="text-xs text-gray-500 mt-1">
-                  Terbaru: {new Date(c.updatedAt).toLocaleString()}
+                <span className="font-mono text-xs text-slate-500 break-all">
+                  {c.id}
+                </span>
+                <p className="text-xs text-slate-500 mt-1">
+                  Terbaru:{" "}
+                  {new Date(c.updatedAt).toLocaleString("id-ID")}
                 </p>
               </Link>
             </li>
