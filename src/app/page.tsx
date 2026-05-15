@@ -3,24 +3,24 @@ import ServiceCard from "@/components/ServiceCard";
 
 export default function Home() {
   return (
-    <main>
+    <main className="pb-16">
       <Hero />
 
       <section className="relative border-t border-slate-200/60 bg-gradient-to-b from-white via-slate-50/80 to-slate-50">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/50 to-transparent" aria-hidden />
-        <div className="max-w-6xl mx-auto py-16 sm:py-24 px-6">
-          <div className="text-center max-w-2xl mx-auto mb-14 sm:mb-16">
-            <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+          <header className="mx-auto mb-14 max-w-2xl space-y-2 text-center sm:mb-16">
+            <p className="mx-auto inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-800 ring-1 ring-teal-100">
               Yang kami tawarkan
             </p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight text-balance">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 text-balance sm:text-3xl">
               Layanan kami
             </h2>
-            <p className="mt-4 text-slate-600 leading-relaxed">
+            <p className="text-pretty text-sm leading-relaxed text-slate-600 sm:text-base">
               Pendekatan berbasis bukti untuk pemulihan cedera, manajemen nyeri,
               dan peningkatan performa.
             </p>
-          </div>
+          </header>
 
           <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             <ServiceCard

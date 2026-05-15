@@ -39,13 +39,13 @@ function DashboardSkeleton() {
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
-          className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 min-h-[160px]"
+          className={`${cardSurface} min-h-[160px]`}
         >
-          <div className="h-3 w-24 rounded bg-slate-200" />
+          <div className="h-3 w-24 rounded-lg bg-slate-200" />
           <div className="mt-6 space-y-3">
-            <div className="h-4 w-full rounded bg-slate-100" />
-            <div className="h-4 w-[85%] rounded bg-slate-100" />
-            <div className="h-4 w-[60%] rounded bg-slate-100" />
+            <div className="h-4 w-full rounded-lg bg-slate-100" />
+            <div className="h-4 w-[85%] rounded-lg bg-slate-100" />
+            <div className="h-4 w-[60%] rounded-lg bg-slate-100" />
           </div>
         </div>
       ))}
@@ -54,13 +54,10 @@ function DashboardSkeleton() {
 }
 
 function OverviewCards({ data }: { data: AdminDashboardOverview }) {
-  const cardBase =
-    "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm ring-1 ring-slate-900/5 transition-shadow hover:shadow-md hover:ring-slate-900/10";
-
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-      <section className={`${cardBase} border-l-4 border-l-teal-500`}>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <section className={`${cardSurface} border-l-4 border-l-teal-500`}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Pengguna
         </h2>
         <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">
@@ -79,8 +76,8 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
         </dl>
       </section>
 
-      <section className={`${cardBase} border-l-4 border-l-amber-400`}>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <section className={`${cardSurface} border-l-4 border-l-amber-400`}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Verifikasi fisioterapis
         </h2>
         <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">
@@ -99,7 +96,7 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
         </dl>
         <Link
           href="/admin/physiotherapists"
-          className="mt-5 inline-flex items-center text-sm font-medium text-teal-700 hover:text-teal-600"
+          className="mt-5 inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800"
         >
           Kelola antrian verifikasi
           <span aria-hidden className="ml-1">
@@ -108,8 +105,8 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
         </Link>
       </section>
 
-      <section className={`${cardBase} border-l-4 border-l-sky-500`}>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <section className={`${cardSurface} border-l-4 border-l-sky-500`}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Booking
         </h2>
         <p className="mt-4 text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
@@ -127,9 +124,9 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
       </section>
 
       <section
-        className={`${cardBase} md:col-span-2 xl:col-span-2 border-l-4 border-l-emerald-500`}
+        className={`${cardSurface} md:col-span-2 xl:col-span-2 border-l-4 border-l-emerald-500`}
       >
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Transaksi
         </h2>
         <div className="mt-5 grid sm:grid-cols-2 gap-6">
@@ -156,8 +153,8 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
         </ul>
       </section>
 
-      <section className={`${cardBase} border-l-4 border-l-violet-500`}>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <section className={`${cardSurface} border-l-4 border-l-violet-500`}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Ulasan
         </h2>
         <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">

@@ -15,14 +15,14 @@ export default function Hero() {
         className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50 to-transparent opacity-90"
         aria-hidden
       />
-      <div className="relative max-w-3xl mx-auto px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-100/95">
+      <div className="relative mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
+        <p className="inline-flex items-center justify-center rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-50 ring-1 ring-white/25 backdrop-blur-sm">
           Kinova
         </p>
         <h1 className="mt-4 text-4xl sm:text-5xl lg:text-[3.25rem] font-bold tracking-tight text-balance leading-[1.1]">
           Pulihkan gerak. Kembali beraktivitas.
         </h1>
-        <p className="mt-6 text-lg sm:text-xl text-teal-50/95 max-w-xl mx-auto text-pretty leading-relaxed">
+        <p className="mt-6 mx-auto max-w-2xl text-pretty text-base leading-relaxed text-teal-50/95 sm:text-lg">
           Mitra fisioterapi dan pemulihan gerak Anda — dari konsultasi hingga
           program latihan.
         </p>
