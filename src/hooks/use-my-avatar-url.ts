@@ -12,7 +12,7 @@ export function useMyAvatarUrl(avatarUrl: string | null | undefined) {
 
   useEffect(() => {
     if (!hasUserAvatar(avatarUrl)) {
-      setSrc(null);
+      queueMicrotask(() => setSrc(null));
       return;
     }
 

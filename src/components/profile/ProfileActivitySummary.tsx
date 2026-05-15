@@ -118,8 +118,11 @@ export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps)
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setLoading(true);
+      setError(null);
+    });
     getMyActivitySummary()
       .then((data) => {
         if (!cancelled) setSummary(data);
