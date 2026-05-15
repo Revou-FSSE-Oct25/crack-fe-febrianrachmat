@@ -21,7 +21,8 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | **Status dari FE** | `{FRONTEND_URL}/status` |
 
 > Set `NEXT_PUBLIC_API_URL` ke base URL backend (bukan connection string Postgres).  
-> Di service **backend** Railway, set `CORS_ORIGINS` ke URL frontend produksi (pisah koma jika ada preview).
+> Di service **backend** Railway, set `CORS_ORIGINS` (atau `FRONTEND_URL`) ke URL frontend produksi (pisah koma jika ada preview).  
+> Untuk **login OAuth**, backend juga membutuhkan `API_PUBLIC_URL` dan kredensial provider — lihat [OAuth & notifikasi](#oauth--notifikasi-backend).
 
 ---
 
@@ -32,9 +33,24 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | Framework | [Next.js](https://nextjs.org/) 16 (App Router) |
 | UI | [React](https://react.dev/) 19, [Tailwind CSS](https://tailwindcss.com/) 4 |
 | Bahasa | TypeScript 5 |
-| Auth client | JWT di `localStorage` + cookie mirror untuk rute `/admin` |
+| Auth client | JWT di `localStorage` + cookie mirror untuk gate `/admin` |
+| Login sosial | OAuth 2.0 via backend → redirect ke `/auth/callback?accessToken=...` |
 | Verifikasi admin (edge) | [`jose`](https://github.com/panva/jose) di `src/proxy.ts` |
 | API | `fetch` + envelope `{ success, data }` — lihat `src/lib/api/client.ts` |
+| UX global | Toast (`success` / `error` / `info`), dark mode (class `dark` + `localStorage`) |
+
+---
+
+## UX global
+
+| Fitur | Ringkasan |
+| --- | --- |
+| **Dark mode** | Toggle bulan/matahari di navbar; preferensi disimpan (`kinova-theme`: `light` / `dark` / default ikuti sistem). |
+| **Toast** | Notifikasi singkat pojok layar setelah aksi sukses/gagal/info. |
+| **Notifikasi in-app** | Ikon bell + badge jumlah belum dibaca (polling ~60 detik + refresh setelah aksi booking/konsultasi/dll.). Halaman `/notifications`. |
+| **Pintasan** | `AppShortcutBar` di bawah navbar untuk user login (per role: pasien / PT / admin). |
+
+Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 
 ---
 
@@ -42,8 +58,9 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 
 ### Publik (tanpa login)
 
-- Landing, layanan, tentang, kebijakan produk
-- Login & registrasi (`PATIENT` / `PHYSIOTHERAPIST`)
+- Landing, layanan, tentang, kebijakan produk (`/kebijakan`)
+- Login & registrasi (`PATIENT` / `PHYSIOTHERAPIST`) — email/password **atau** OAuth (jika provider dikonfigurasi di backend)
+- Callback OAuth: `/auth/callback` (menerima token dari backend, lalu menyimpan sesi)
 
 ### Pasien (`PATIENT`)
 
@@ -54,8 +71,8 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | Konsultasi online | `/consultations` | Create, bayar, chat, cancel |
 | Pembayaran | `/transactions` | Create transaksi + upload bukti |
 | Ulasan | `/reviews`, `/reviews/write` | Create, list, delete sendiri |
-| Chat & notifikasi | `/chat`, `/notifications` | Read, kirim pesan |
-| Profil | `/profile` | Read, update, ganti password |
+| Chat & notifikasi | `/chat`, `/notifications` | Read, kirim pesan; mark read |
+| Profil | `/profile` | Read, update, ganti password, upload avatar, data medis pasien |
 
 ### Fisioterapis (`PHYSIOTHERAPIST`)
 
@@ -75,11 +92,27 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | Verifikasi PT | `/admin/physiotherapists` | Approve / reject |
 | Kategori layanan | `/admin/categories` | Full CRUD |
 | Moderasi ulasan | `/admin/reviews` | Sembunyikan / tampilkan |
-| Broadcast notifikasi | `/admin/notifications` | Create |
+| Broadcast notifikasi | `/admin/notifications` | Kirim ke satu user atau broadcast |
 | Transaksi | `/transactions` | Konfirmasi bayar, refund |
 | Konsultasi & booking | `/consultations`, `/bookings` | Read (monitoring) |
 
-Rute sensitif dilindungi **server-side** di `src/proxy.ts` (JWT dari cookie `kinova_access_token`, diverifikasi dengan `JWT_SECRET`):
+### OAuth & notifikasi (backend)
+
+Fitur berikut membutuhkan konfigurasi di **backend** (bukan variabel FE):
+
+| Fitur | Variabel / endpoint (BE) |
+| --- | --- |
+| Google / GitHub / Facebook / Apple login | `API_PUBLIC_URL`, `FRONTEND_URL`, `GOOGLE_*`, `GITHUB_*`, `FACEBOOK_*`, `APPLE_*` — lihat [`.env.example` backend](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/.env.example) |
+| Daftar provider aktif | `GET /auth/oauth/providers` |
+| Email mock (log server, bukan SMTP) | `EMAIL_MOCK_ENABLED` — dipicu saat notifikasi sistem dibuat |
+
+Setelah OAuth sukses, backend mengarahkan ke `{FRONTEND_URL}/auth/callback?accessToken=...`.
+
+---
+
+## Proteksi rute (`src/proxy.ts`)
+
+Rute sensitif dilindungi **server-side** (JWT dari cookie `kinova_access_token`, diverifikasi dengan `JWT_SECRET`):
 
 | Pola route | Role |
 | --- | --- |
@@ -87,6 +120,8 @@ Rute sensitif dilindungi **server-side** di `src/proxy.ts` (JWT dari cookie `kin
 | `/physiotherapist/*` | `PHYSIOTHERAPIST` |
 | `/appointment`, `/reviews/*` | `PATIENT` |
 | `/profile`, `/bookings`, `/consultations`, `/transactions`, `/notifications`, `/chat/*`, `/therapists/*` | Semua role (wajib login) |
+
+Publik tanpa login: `/`, `/login`, `/register`, `/services`, `/about`, `/kebijakan`, `/status`, `/auth/callback`, serta aset statis.
 
 Tanpa token → redirect `/login?next=...`. Role salah → redirect `/`. Halaman tetap memakai `SignInRequired` + cek role di client sebagai lapisan kedua.
 
@@ -102,6 +137,7 @@ Tambahkan tangkapan layar ke folder [`docs/screenshots/`](./docs/screenshots/) l
 | `booking.png` | Form janji / daftar booking |
 | `consultation.png` | Konsultasi + chat |
 | `admin-dashboard.png` | Dashboard admin |
+| `dark-mode.png` | Contoh tampilan dark mode (opsional) |
 
 Contoh setelah file ada:
 
@@ -118,6 +154,7 @@ Contoh setelah file ada:
 | --- | --- |
 | Indeks docs BE | [docs/README.md](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/README.md) |
 | Skema DB & ERD sumber | [docs/02-database-schema.md](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/02-database-schema.md), [database-erd.dbml](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/database-erd.dbml) |
+| Notifikasi API | [docs/18-notification-feature.md](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/18-notification-feature.md) |
 | Kebijakan produk | [docs/product-policy.md](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/product-policy.md) |
 | Runbook operasi | [docs/32-operations-runbook.md](https://github.com/Revou-FSSE-Oct25/crack-be-febrianrachmat/blob/main/docs/32-operations-runbook.md) |
 | Ringkasan in-app | `/kebijakan` |
@@ -135,6 +172,8 @@ Salin `.env.example` → `.env`:
 | `NEXT_PUBLIC_API_URL` | Base URL API NestJS. Lokal: `http://localhost:3000` (port backend). Produksi: `https://crack-be-febrianrachmat-production.up.railway.app` |
 | `JWT_SECRET` | **Harus sama** dengan `JWT_SECRET` di backend — untuk verifikasi JWT pada rute `/admin` di `src/proxy.ts` |
 
+OAuth tidak memerlukan env tambahan di frontend; provider dikonfigurasi hanya di backend.
+
 ---
 
 ## Menjalankan lokal
@@ -150,6 +189,8 @@ npm run dev
 ```
 
 Buka http://localhost:3000 (default port Next.js; pastikan tidak bentrok dengan port API).
+
+Untuk uji OAuth lokal, set callback backend ke `http://localhost:3000/auth/callback` dan `FRONTEND_URL=http://localhost:3000` di `.env` backend.
 
 ---
 
@@ -169,8 +210,8 @@ Buka http://localhost:3000 (default port Next.js; pastikan tidak bentrok dengan 
 1. Connect repo GitHub ke Railway, service **Node**.
 2. **Variables:** `NEXT_PUBLIC_API_URL`, `JWT_SECRET` (sama dengan BE).
 3. **Build:** `npm run build` — **Start:** `npm run start` (atau gunakan Nixpacks default Next.js).
-4. Di backend, set `CORS_ORIGINS` = URL publik service frontend Railway.
-5. Verifikasi: buka `/status` pada URL FE dan `/health` pada URL BE.
+4. Di backend, set `CORS_ORIGINS` = URL publik service frontend Railway; untuk OAuth set juga `FRONTEND_URL` dan `API_PUBLIC_URL`.
+5. Verifikasi: buka `/status` pada URL FE dan `/health` pada URL BE; uji login (email + OAuth jika dikonfigurasi) dan toggle dark mode di navbar.
 
 ---
 
@@ -206,25 +247,36 @@ Setelah `npm run prisma:seed` di backend — password default **`password123`**:
 | `physio2@demo.local` | PHYSIOTHERAPIST |
 | `physio3@demo.local` | PHYSIOTHERAPIST (pending verifikasi) |
 
+Akun demo memakai login email/password. OAuth membuat atau menautkan user terpisah sesuai email provider.
+
 ---
 
 ## Validasi form
 
 Aturan validasi client-side (selaras DTO backend) ada di `src/lib/validation/`. Dipakai pada login, register, booking, transaksi, konsultasi, profil, ulasan, dan panel admin. Pesan error per field ditampilkan lewat `FieldError` pada form auth.
 
+---
+
 ## Struktur repo
 
 ```
 crack-fe-febrianrachmat/
-├── docs/screenshots/     # Aset README (opsional)
+├── docs/screenshots/          # Aset README (opsional)
 ├── public/
 ├── src/
-│   ├── app/              # Halaman App Router
+│   ├── app/                   # Halaman App Router (+ /auth/callback)
 │   ├── components/
-│   ├── contexts/         # Auth, toast
-│   └── lib/api/          # Client REST per domain
-├── src/proxy.ts          # Gate auth server-side (JWT cookie + role)
-├── src/lib/auth/proxy-routes.ts
-├── .github/workflows/
+│   │   ├── auth/              # OAuthButtons
+│   │   ├── profile/           # Avatar, medis pasien, danger zone
+│   │   └── ui/                # page-shell, dialog, field-error
+│   ├── contexts/              # auth, theme, toast
+│   ├── hooks/                 # unread notifications, avatar URL
+│   └── lib/
+│       ├── api/               # Client REST per domain
+│       ├── auth/              # storage, session, proxy-routes
+│       ├── notifications/     # unread refresh, action feedback
+│       ├── theme/             # preferensi dark/light
+│       └── validation/
+├── src/proxy.ts               # Gate auth server-side (JWT cookie + role)
 └── package.json
 ```
