@@ -73,7 +73,7 @@ export default function Navbar() {
   const menuId = useId();
 
   useEffect(() => {
-    setMenuOpen(false);
+    queueMicrotask(() => setMenuOpen(false));
   }, [pathname]);
 
   useEffect(() => {
