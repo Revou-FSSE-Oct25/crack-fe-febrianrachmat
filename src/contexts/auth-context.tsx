@@ -1,6 +1,6 @@
 "use client";
 
-import type { AuthUserResponse } from "@/lib/api/types";
+import type { AuthUserResponse, UserProfile } from "@/lib/api/types";
 import * as authApi from "@/lib/api/auth";
 import { ApiRequestError } from "@/lib/api/client";
 import { getMyProfile } from "@/lib/api/users";
@@ -33,6 +33,8 @@ type AuthContextValue = {
   login: (body: authApi.LoginBody) => Promise<void>;
   register: (body: authApi.RegisterBody) => Promise<void>;
   logout: () => void;
+  /** Perbarui nama/email di navbar setelah simpan profil. */
+  syncUserFromProfile: (profile: UserProfile) => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -55,6 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearStoredAccessToken();
     clearStoredAuthUser();
     setUser(null);
+  }, []);
+
+  const syncUserFromProfile = useCallback((profile: UserProfile) => {
+    const authUser = profileToAuthUser(profile);
+    setStoredAuthUser(authUser);
+    setUser(authUser);
   }, []);
 
   useEffect(() => {
@@ -135,8 +143,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
+      syncUserFromProfile,
     }),
-    [user, isReady, login, register, logout],
+    [user, isReady, login, register, logout, syncUserFromProfile],
   );
 
   return (
