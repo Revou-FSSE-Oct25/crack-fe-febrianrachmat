@@ -169,6 +169,66 @@ export function asBookings(data: unknown): Booking[] {
   });
 }
 
+/** GET /reviews/me, POST /reviews — Prisma Review. */
+export type Review = {
+  id: string;
+  bookingId: string;
+  patientId: string;
+  physiotherapistId: string;
+  rating: number;
+  comment: string | null;
+  isHidden: boolean;
+  moderationNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** GET /physiotherapists/:id/reviews — ulasan publik. */
+export type PublicReview = {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: string;
+  patientName: string;
+};
+
+export function asReviews(data: unknown): Review[] {
+  if (!Array.isArray(data)) return [];
+  return data.map((item) => {
+    const r = asRecord(item);
+    return {
+      id: String(r.id ?? ""),
+      bookingId: String(r.bookingId ?? ""),
+      patientId: String(r.patientId ?? ""),
+      physiotherapistId: String(r.physiotherapistId ?? ""),
+      rating: Number(r.rating ?? 0),
+      comment: r.comment != null ? String(r.comment) : null,
+      isHidden: Boolean(r.isHidden),
+      moderationNote:
+        r.moderationNote != null ? String(r.moderationNote) : null,
+      createdAt: String(r.createdAt ?? ""),
+      updatedAt: String(r.updatedAt ?? ""),
+    };
+  });
+}
+
+export function asPublicReviews(data: unknown): PublicReview[] {
+  if (!Array.isArray(data)) return [];
+  return data.map((item) => {
+    const r = asRecord(item);
+    const patient = r.patient as
+      | { user?: { fullName?: string } }
+      | undefined;
+    return {
+      id: String(r.id ?? ""),
+      rating: Number(r.rating ?? 0),
+      comment: r.comment != null ? String(r.comment) : null,
+      createdAt: String(r.createdAt ?? ""),
+      patientName: String(patient?.user?.fullName ?? "Pasien"),
+    };
+  });
+}
+
 /** Label referensi transaksi (booking XOR consultation). */
 export function transactionReferenceLabel(tx: Transaction): string {
   if (tx.consultationId) {

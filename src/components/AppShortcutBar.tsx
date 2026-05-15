@@ -169,7 +169,10 @@ export default function AppShortcutBar() {
     forYouItems.push({ href: "/therapists", label: "Fisioterapis" });
   }
   if (user.role === "PATIENT") {
-    forYouItems.push({ href: "/reviews/write", label: "Tulis ulasan" });
+    forYouItems.push(
+      { href: "/reviews", label: "Ulasan saya" },
+      { href: "/reviews/write", label: "Tulis ulasan" },
+    );
   }
   if (isPt) {
     forYouItems.push(

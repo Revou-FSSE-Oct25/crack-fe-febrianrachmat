@@ -13,9 +13,14 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import type { UserProfile } from "@/lib/api/types";
-import { getMyProfile, updateMyProfile } from "@/lib/api/users";
+import {
+  changePassword,
+  getMyProfile,
+  updateMyProfile,
+} from "@/lib/api/users";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -34,6 +39,7 @@ function roleLabel(role: string): string {
 
 export default function ProfilePage() {
   const { user, isReady, logout } = useAuth();
+  const toast = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -41,6 +47,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isReady || !user) return;
@@ -78,6 +90,40 @@ export default function ProfilePage() {
 
   if (!user) {
     return <SignInRequired message="Anda belum masuk." />;
+  }
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    setPasswordMsg(null);
+    setError(null);
+    if (newPassword.length < 8) {
+      setError("Password baru minimal 8 karakter.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("Konfirmasi password tidak cocok.");
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const res = await changePassword({
+        currentPassword,
+        newPassword,
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMsg(res.message || "Password berhasil diubah.");
+      toast.success("Password berhasil diubah.");
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Gagal mengubah password.",
+      );
+    } finally {
+      setChangingPassword(false);
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -131,6 +177,14 @@ export default function ProfilePage() {
           >
             Transaksi
           </Link>
+          {user.role === "PATIENT" ? (
+            <Link
+              href="/reviews"
+              className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[9rem]`}
+            >
+              Ulasan saya
+            </Link>
+          ) : null}
           {user.role === "ADMIN" ? (
             <Link
               href="/admin/dashboard"
@@ -165,6 +219,11 @@ export default function ProfilePage() {
           {savedMsg ? (
             <AlertBanner variant="success" className="max-w-lg mx-auto">
               {savedMsg}
+            </AlertBanner>
+          ) : null}
+          {passwordMsg ? (
+            <AlertBanner variant="success" className="max-w-lg mx-auto">
+              {passwordMsg}
             </AlertBanner>
           ) : null}
 
@@ -221,6 +280,77 @@ export default function ProfilePage() {
                 className={`${btnSecondary} min-h-[44px] justify-center sm:min-w-[8rem]`}
               >
                 Keluar
+              </button>
+            </div>
+          </form>
+
+          <form
+            onSubmit={handleChangePassword}
+            className={`${cardSurface} mx-auto max-w-lg space-y-6`}
+          >
+            <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5">
+              <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+                Ubah password
+              </h2>
+              <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                Password baru minimal 8 karakter. Anda perlu memasukkan password
+                saat ini.
+              </p>
+              <div className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">
+                    Password saat ini
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="current-password"
+                    className={inputBase}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    disabled={changingPassword}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">
+                    Password baru
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    className={inputBase}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={changingPassword}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-slate-700">
+                    Konfirmasi password baru
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    className={inputBase}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={changingPassword}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row">
+              <button
+                type="submit"
+                disabled={changingPassword}
+                className={`${btnOutline} min-h-[44px] justify-center sm:min-w-[10rem]`}
+              >
+                {changingPassword ? "Menyimpan…" : "Ubah password"}
               </button>
             </div>
           </form>

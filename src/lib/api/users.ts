@@ -19,3 +19,18 @@ export async function updateMyProfile(
     body: JSON.stringify(body),
   });
 }
+
+/** PATCH /users/change-password — selaras `ChangePasswordDto` */
+export type ChangePasswordBody = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export async function changePassword(
+  body: ChangePasswordBody,
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>("/users/change-password", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}

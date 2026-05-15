@@ -1,4 +1,8 @@
 import { apiFetch } from "./client";
+import type { PublicReview, Review } from "./contract";
+import { asPublicReviews, asReviews } from "./contract";
+
+export type { PublicReview, Review };
 
 /** Selaras `CreateReviewDto` */
 export type CreateReviewBody = {
@@ -21,37 +25,49 @@ function paginationQuery(params: { page?: number; limit?: number }): string {
   return s ? `?${s}` : "";
 }
 
-export async function createReview(body: CreateReviewBody): Promise<unknown> {
-  return apiFetch<unknown>("/reviews", {
+export async function createReview(body: CreateReviewBody): Promise<Review> {
+  const raw = await apiFetch<unknown>("/reviews", {
     method: "POST",
     body: JSON.stringify(body),
   });
+  return asReviews([raw])[0]!;
 }
 
-/** GET /physiotherapists/:physiotherapistId/reviews — ulasan publik (isHidden: false di backend) */
 export async function listPublicReviewsForPhysiotherapist(
   physiotherapistProfileId: string,
   params?: { page?: number; limit?: number },
-): Promise<unknown[]> {
-  return apiFetch<unknown[]>(
+): Promise<PublicReview[]> {
+  const raw = await apiFetch<unknown[]>(
     `/physiotherapists/${physiotherapistProfileId}/reviews${paginationQuery(params ?? {})}`,
   );
+  return asPublicReviews(raw);
 }
 
-/** GET /reviews/me — admin mendapat semua ulasan (lihat `ReviewsService.listMyReviews`) */
 export async function listMyReviews(params?: {
   page?: number;
   limit?: number;
-}): Promise<unknown[]> {
-  return apiFetch<unknown[]>(`/reviews/me${paginationQuery(params ?? {})}`);
+}): Promise<Review[]> {
+  const raw = await apiFetch<unknown[]>(
+    `/reviews/me${paginationQuery(params ?? {})}`,
+  );
+  return asReviews(raw);
+}
+
+export async function deleteMyReview(
+  reviewId: string,
+): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>(`/reviews/${reviewId}`, {
+    method: "DELETE",
+  });
 }
 
 export async function moderateReview(
   reviewId: string,
   body: ModerateReviewBody,
-): Promise<unknown> {
-  return apiFetch<unknown>(`/admin/reviews/${reviewId}/moderate`, {
+): Promise<Review> {
+  const raw = await apiFetch<unknown>(`/admin/reviews/${reviewId}/moderate`, {
     method: "PATCH",
     body: JSON.stringify(body),
   });
+  return asReviews([raw])[0]!;
 }

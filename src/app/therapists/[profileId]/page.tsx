@@ -4,7 +4,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { createConsultation } from "@/lib/api/consultations";
 import { getPhysiotherapistById } from "@/lib/api/physiotherapists";
-import { listPublicReviewsForPhysiotherapist } from "@/lib/api/reviews";
+import {
+  listPublicReviewsForPhysiotherapist,
+  type PublicReview,
+} from "@/lib/api/reviews";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
 import {
   AlertBanner,
@@ -33,31 +36,6 @@ function formatRupiah(value: string | number | null | undefined): string {
   }).format(n);
 }
 
-type PublicReviewRow = {
-  id: string;
-  rating: number;
-  comment: string | null;
-  createdAt: string;
-  patientName: string;
-};
-
-function asPublicReviews(data: unknown): PublicReviewRow[] {
-  if (!Array.isArray(data)) return [];
-  return data.map((item) => {
-    const r = item as Record<string, unknown>;
-    const patient = r.patient as
-      | { user?: { fullName?: string } }
-      | undefined;
-    return {
-      id: String(r.id ?? ""),
-      rating: Number(r.rating ?? 0),
-      comment: r.comment != null ? String(r.comment) : null,
-      createdAt: String(r.createdAt ?? ""),
-      patientName: String(patient?.user?.fullName ?? "Pasien"),
-    };
-  });
-}
-
 export default function TherapistDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -67,7 +45,7 @@ export default function TherapistDetailPage() {
   const [therapist, setTherapist] = useState<PhysiotherapistBrowseItem | null>(
     null,
   );
-  const [reviews, setReviews] = useState<PublicReviewRow[]>([]);
+  const [reviews, setReviews] = useState<PublicReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submittingConsult, setSubmittingConsult] = useState(false);
@@ -88,7 +66,7 @@ export default function TherapistDetailPage() {
         page: 1,
         limit: 50,
       });
-      setReviews(asPublicReviews(rev));
+      setReviews(rev);
     } catch (err) {
       setTherapist(null);
       setReviews([]);

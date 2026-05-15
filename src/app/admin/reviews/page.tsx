@@ -19,35 +19,13 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
-import { listMyReviews, moderateReview } from "@/lib/api/reviews";
+import {
+  listMyReviews,
+  moderateReview,
+  type Review,
+} from "@/lib/api/reviews";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-
-type ReviewRow = {
-  id: string;
-  rating: number;
-  comment: string | null;
-  isHidden: boolean;
-  moderationNote: string | null;
-  bookingId: string;
-  createdAt: string;
-};
-
-function asReviewRows(data: unknown): ReviewRow[] {
-  if (!Array.isArray(data)) return [];
-  return data.map((item) => {
-    const r = item as Record<string, unknown>;
-    return {
-      id: String(r.id ?? ""),
-      rating: Number(r.rating ?? 0),
-      comment: r.comment != null ? String(r.comment) : null,
-      isHidden: Boolean(r.isHidden),
-      moderationNote: r.moderationNote != null ? String(r.moderationNote) : null,
-      bookingId: String(r.bookingId ?? ""),
-      createdAt: String(r.createdAt ?? ""),
-    };
-  });
-}
 
 const hideBtn =
   "inline-flex items-center justify-center rounded-xl bg-slate-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-700 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 transition-[transform,colors] duration-150";
@@ -55,7 +33,7 @@ const hideBtn =
 export default function AdminReviewsPage() {
   const { user, isReady } = useAuth();
   const toast = useToast();
-  const [rows, setRows] = useState<ReviewRow[]>([]);
+  const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -67,7 +45,7 @@ export default function AdminReviewsPage() {
     setError(null);
     try {
       const list = await listMyReviews({ page: 1, limit: 100 });
-      setRows(asReviewRows(list));
+      setRows(list);
     } catch (err) {
       setRows([]);
       setError(
