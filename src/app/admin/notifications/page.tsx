@@ -2,6 +2,7 @@
 
 import {
   adminPageShell,
+  AdminBreadcrumb,
   AlertBanner,
   btnPrimary,
   cardSurface,
@@ -11,6 +12,7 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   broadcastNotification,
@@ -21,6 +23,7 @@ import { useState } from "react";
 
 export default function AdminNotificationsPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
 
   const [broadcastTitle, setBroadcastTitle] = useState("");
   const [broadcastBody, setBroadcastBody] = useState("");
@@ -32,7 +35,6 @@ export default function AdminNotificationsPage() {
   const [sendLoading, setSendLoading] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault();
@@ -45,10 +47,9 @@ export default function AdminNotificationsPage() {
 
     setBroadcastLoading(true);
     setError(null);
-    setSuccess(null);
     try {
       await broadcastNotification({ title, body });
-      setSuccess("Broadcast notifikasi berhasil dikirim.");
+      toast.success("Broadcast notifikasi berhasil dikirim.");
       setBroadcastTitle("");
       setBroadcastBody("");
     } catch (err) {
@@ -76,10 +77,9 @@ export default function AdminNotificationsPage() {
 
     setSendLoading(true);
     setError(null);
-    setSuccess(null);
     try {
       await sendNotificationToUser(uid, { title, body });
-      setSuccess("Notifikasi ke user berhasil dikirim.");
+      toast.success("Notifikasi ke user berhasil dikirim.");
       setUserTitle("");
       setUserBody("");
     } catch (err) {
@@ -125,12 +125,7 @@ export default function AdminNotificationsPage() {
 
   return (
     <main className={adminPageShell}>
-      <Link
-        href="/admin/dashboard"
-        className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
-      >
-        ← Dashboard
-      </Link>
+      <AdminBreadcrumb />
 
       <PageHeader
         eyebrow="Admin"
@@ -139,7 +134,6 @@ export default function AdminNotificationsPage() {
       />
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
-      {success ? <AlertBanner variant="success">{success}</AlertBanner> : null}
 
       <section className={`${cardSurface} space-y-4`}>
         <h2 className="text-lg font-semibold text-slate-900">
@@ -173,7 +167,7 @@ export default function AdminNotificationsPage() {
           <button
             type="submit"
             disabled={broadcastLoading}
-            className={btnPrimary}
+            className={`${btnPrimary} min-h-[44px]`}
           >
             {broadcastLoading ? "Mengirim…" : "Kirim broadcast"}
           </button>
@@ -221,7 +215,7 @@ export default function AdminNotificationsPage() {
               required
             />
           </div>
-          <button type="submit" disabled={sendLoading} className={btnPrimary}>
+          <button type="submit" disabled={sendLoading} className={`${btnPrimary} min-h-[44px]`}>
             {sendLoading ? "Mengirim…" : "Kirim ke user"}
           </button>
         </form>

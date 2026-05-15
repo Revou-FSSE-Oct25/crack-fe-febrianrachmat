@@ -8,8 +8,10 @@ import {
   PageHeader,
   PageLoading,
   SignInRequired,
+  widePageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
 import { listCategories } from "@/lib/api/categories";
@@ -22,16 +24,13 @@ import {
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-const therapistShell =
-  "max-w-2xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-6 pb-16";
-
 export default function PhysiotherapistProfilePage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const [categoryId, setCategoryId] = useState("");
   const [bio, setBio] = useState("");
@@ -97,7 +96,6 @@ export default function PhysiotherapistProfilePage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
 
     const body: UpdatePhysiotherapistProfileBody = {};
     if (categoryId) body.categoryId = categoryId;
@@ -120,7 +118,7 @@ export default function PhysiotherapistProfilePage() {
     setSaving(true);
     try {
       await updateMyPhysiotherapistProfile(body);
-      setSuccess(
+      toast.success(
         "Profil disimpan. Status verifikasi dapat kembali menunggu tinjauan admin.",
       );
       await load();
@@ -143,26 +141,29 @@ export default function PhysiotherapistProfilePage() {
 
   if (user.role !== "PHYSIOTHERAPIST") {
     return (
-      <main className={therapistShell}>
-        <div className={`${cardSurface} space-y-4`}>
-          <PageHeader
-            eyebrow="Profil"
-            title="Akses terbatas"
-            description="Halaman ini hanya untuk akun fisioterapis."
-          />
-          <Link
-            href="/"
-            className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
-          >
-            Kembali ke beranda
-          </Link>
+      <main className={`${widePageShell} pb-16`}>
+        <div className="mx-auto max-w-2xl space-y-6">
+          <div className={`${cardSurface} space-y-4`}>
+            <PageHeader
+              eyebrow="Profil"
+              title="Akses terbatas"
+              description="Halaman ini hanya untuk akun fisioterapis."
+            />
+            <Link
+              href="/"
+              className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+            >
+              Kembali ke beranda
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className={therapistShell}>
+    <main className={`${widePageShell} pb-16`}>
+      <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex flex-col gap-2">
         <Link
           href="/physiotherapist/availability"
@@ -186,7 +187,6 @@ export default function PhysiotherapistProfilePage() {
       </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
-      {success ? <AlertBanner variant="success">{success}</AlertBanner> : null}
 
       {loading ? (
         <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
@@ -309,6 +309,7 @@ export default function PhysiotherapistProfilePage() {
           </button>
         </form>
       )}
+      </div>
     </main>
   );
 }

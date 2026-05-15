@@ -2,6 +2,7 @@
 
 import {
   adminPageShell,
+  AdminBreadcrumb,
   AlertBanner,
   btnOutline,
   btnPrimary,
@@ -11,9 +12,12 @@ import {
   ListSkeleton,
   PageHeader,
   PageLoading,
+  ConfirmDialog,
+  StatusChip,
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyReviews, moderateReview } from "@/lib/api/reviews";
 import Link from "next/link";
@@ -50,11 +54,13 @@ const hideBtn =
 
 export default function AdminReviewsPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [rows, setRows] = useState<ReviewRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [noteById, setNoteById] = useState<Record<string, string>>({});
+  const [hideConfirmId, setHideConfirmId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,6 +105,9 @@ export default function AdminReviewsPage() {
         delete next[reviewId];
         return next;
       });
+      toast.success(
+        isHidden ? "Ulasan disembunyikan." : "Ulasan ditampilkan kembali.",
+      );
       await load();
     } catch (err) {
       setError(
@@ -143,14 +152,10 @@ export default function AdminReviewsPage() {
 
   return (
     <main className={adminPageShell}>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2 min-w-0">
-          <Link
-            href="/admin/dashboard"
-            className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
-          >
-            ← Dashboard
-          </Link>
+      <AdminBreadcrumb />
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0 flex-1">
           <PageHeader
             eyebrow="Admin"
             title="Moderasi ulasan"
@@ -161,7 +166,7 @@ export default function AdminReviewsPage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className={btnOutline}
+          className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
         >
           Muat ulang
         </button>
@@ -174,7 +179,15 @@ export default function AdminReviewsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Belum ada ulasan"
-          hint="Ulasan dari pasien akan muncul di sini setelah booking selesai dan ulasan dikirim."
+          hint="Ulasan muncul setelah pasien menyelesaikan booking dan mengirim penilaian."
+          actions={[
+            { href: "/admin/dashboard", label: "Kembali ke dashboard" },
+            {
+              href: "/bookings",
+              label: "Lihat booking (demo)",
+              variant: "secondary",
+            },
+          ]}
         />
       ) : (
         <ul className="space-y-6">
@@ -196,15 +209,10 @@ export default function AdminReviewsPage() {
                     {new Date(rev.createdAt).toLocaleString("id-ID")}
                   </p>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2.5 py-1 rounded-lg ${
-                    rev.isHidden
-                      ? "bg-slate-200 text-slate-800"
-                      : "bg-emerald-100 text-emerald-900"
-                  }`}
-                >
-                  {rev.isHidden ? "Disembunyikan" : "Tampil publik"}
-                </span>
+                <StatusChip
+                  label={rev.isHidden ? "Disembunyikan" : "Tampil publik"}
+                  tone={rev.isHidden ? "neutral" : "success"}
+                />
               </div>
 
               {rev.comment ? (
@@ -242,14 +250,18 @@ export default function AdminReviewsPage() {
                     <button
                       type="button"
                       disabled={actionId === rev.id}
-                      onClick={() =>
-                        void applyModeration(
-                          rev.id,
-                          true,
-                          noteById[rev.id] ?? "",
-                        )
-                      }
-                      className={hideBtn}
+                      onClick={() => {
+                        const note = (noteById[rev.id] ?? "").trim();
+                        if (note.length > 0 && note.length < 3) {
+                          setError(
+                            "Catatan moderasi minimal 3 karakter jika diisi.",
+                          );
+                          return;
+                        }
+                        setError(null);
+                        setHideConfirmId(rev.id);
+                      }}
+                      className={`${hideBtn} min-h-[44px]`}
                     >
                       Sembunyikan
                     </button>
@@ -258,7 +270,7 @@ export default function AdminReviewsPage() {
                       type="button"
                       disabled={actionId === rev.id}
                       onClick={() => void applyModeration(rev.id, false, "")}
-                      className={btnPrimary}
+                      className={`${btnPrimary} min-h-[44px]`}
                     >
                       Tampilkan lagi
                     </button>
@@ -269,6 +281,27 @@ export default function AdminReviewsPage() {
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={hideConfirmId !== null}
+        title="Sembunyikan ulasan?"
+        description="Ulasan tidak akan tampil ke publik. Anda masih bisa menampilkannya lagi dari halaman ini."
+        confirmLabel="Ya, sembunyikan"
+        cancelLabel="Tidak jadi"
+        variant="danger"
+        loading={hideConfirmId !== null && actionId === hideConfirmId}
+        onConfirm={() => {
+          if (!hideConfirmId) return;
+          void applyModeration(
+            hideConfirmId,
+            true,
+            noteById[hideConfirmId] ?? "",
+          ).finally(() => setHideConfirmId(null));
+        }}
+        onCancel={() => {
+          if (actionId === null) setHideConfirmId(null);
+        }}
+      />
     </main>
   );
 }

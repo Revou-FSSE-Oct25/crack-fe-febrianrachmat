@@ -7,11 +7,14 @@ import {
   cardSurface,
   EmptyState,
   inputBase,
+  ConfirmDialog,
   PageHeader,
   PageLoading,
   SignInRequired,
+  widePageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -30,16 +33,15 @@ function toIsoFromDateAndTime(dateYmd: string, timeHm: string): string {
   return dt.toISOString();
 }
 
-const therapistWideShell =
-  "max-w-3xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
-
 export default function PhysiotherapistAvailabilityPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [slots, setSlots] = useState<AvailabilitySlotItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [slotDate, setSlotDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -93,6 +95,7 @@ export default function PhysiotherapistAvailabilityPage() {
         startTime: startIso,
         endTime: endIso,
       });
+      toast.success("Slot ketersediaan ditambahkan.");
       await load();
     } catch (err) {
       setError(
@@ -103,12 +106,15 @@ export default function PhysiotherapistAvailabilityPage() {
     }
   }
 
-  async function remove(id: string) {
-    if (!window.confirm("Hapus slot ini?")) return;
+  async function confirmRemoveSlot() {
+    if (!deleteConfirmId) return;
+    const id = deleteConfirmId;
     setDeletingId(id);
     setError(null);
     try {
       await deleteMyAvailabilitySlot(id);
+      setDeleteConfirmId(null);
+      toast.success("Slot dihapus.");
       await load();
     } catch (err) {
       setError(
@@ -129,26 +135,29 @@ export default function PhysiotherapistAvailabilityPage() {
 
   if (user.role !== "PHYSIOTHERAPIST") {
     return (
-      <main className={therapistWideShell}>
-        <div className={`${cardSurface} space-y-4`}>
-          <PageHeader
-            eyebrow="Jadwal"
-            title="Akses terbatas"
-            description="Halaman ini hanya untuk akun fisioterapis."
-          />
-          <Link
-            href="/"
-            className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
-          >
-            Kembali ke beranda
-          </Link>
+      <main className={`${widePageShell} pb-16`}>
+        <div className="mx-auto max-w-3xl space-y-8">
+          <div className={`${cardSurface} space-y-4`}>
+            <PageHeader
+              eyebrow="Jadwal"
+              title="Akses terbatas"
+              description="Halaman ini hanya untuk akun fisioterapis."
+            />
+            <Link
+              href="/"
+              className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+            >
+              Kembali ke beranda
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className={therapistWideShell}>
+    <main className={`${widePageShell} pb-16`}>
+      <div className="mx-auto max-w-3xl space-y-8">
       <div className="flex flex-col gap-2">
         <Link
           href="/physiotherapist/profile"
@@ -173,7 +182,10 @@ export default function PhysiotherapistAvailabilityPage() {
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
-      <section className={`${cardSurface} space-y-4`}>
+      <section
+        id="tambah-slot"
+        className={`${cardSurface} space-y-4 scroll-mt-24`}
+      >
         <h2 className="font-semibold text-slate-900">Tambah slot</h2>
         <form onSubmit={handleCreate} className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -237,7 +249,8 @@ export default function PhysiotherapistAvailabilityPage() {
         ) : slots.length === 0 ? (
           <EmptyState
             title="Belum ada slot"
-            hint="Tambahkan slot pertama agar pasien dapat memilih waktu janji."
+            hint="Pasien hanya bisa memilih waktu yang sudah Anda buka di sini."
+            actions={[{ href: "#tambah-slot", label: "Tambah slot sekarang" }]}
           />
         ) : (
           <ul className="space-y-3">
@@ -261,8 +274,8 @@ export default function PhysiotherapistAvailabilityPage() {
                 <button
                   type="button"
                   disabled={deletingId === s.id}
-                  onClick={() => void remove(s.id)}
-                  className={`${btnOutline} border-red-200 text-red-800 hover:bg-red-50`}
+                  onClick={() => setDeleteConfirmId(s.id)}
+                  className={`${btnOutline} min-h-[44px] border-red-200 text-red-800 hover:bg-red-50`}
                 >
                   Hapus
                 </button>
@@ -271,6 +284,21 @@ export default function PhysiotherapistAvailabilityPage() {
           </ul>
         )}
       </section>
+      </div>
+
+      <ConfirmDialog
+        open={deleteConfirmId !== null}
+        title="Hapus slot ketersediaan?"
+        description="Slot ini tidak lagi ditampilkan ke pasien. Booking yang sudah memakai slot tidak otomatis terpengaruh di demo ini."
+        confirmLabel="Ya, hapus"
+        cancelLabel="Tidak jadi"
+        variant="danger"
+        loading={deleteConfirmId !== null && deletingId === deleteConfirmId}
+        onConfirm={() => void confirmRemoveSlot()}
+        onCancel={() => {
+          if (deletingId === null) setDeleteConfirmId(null);
+        }}
+      />
     </main>
   );
 }

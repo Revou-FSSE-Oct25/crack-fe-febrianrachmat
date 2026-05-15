@@ -2,6 +2,7 @@
 
 import {
   adminPageShell,
+  AdminBreadcrumb,
   AlertBanner,
   btnDanger,
   btnOutline,
@@ -11,10 +12,12 @@ import {
   inputBase,
   ListSkeleton,
   PageHeader,
+  ConfirmDialog,
   PageLoading,
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   createCategory,
@@ -28,6 +31,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function AdminCategoriesPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +44,11 @@ export default function AdminCategoriesPage() {
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +87,7 @@ export default function AdminCategoriesPage() {
       });
       setCreateName("");
       setCreateDesc("");
+      toast.success("Kategori berhasil ditambahkan.");
       await load();
     } catch (err) {
       setError(
@@ -114,6 +124,7 @@ export default function AdminCategoriesPage() {
         description: editDesc.trim() || undefined,
       });
       cancelEdit();
+      toast.success("Kategori diperbarui.");
       await load();
     } catch (err) {
       setError(
@@ -124,23 +135,22 @@ export default function AdminCategoriesPage() {
     }
   }
 
-  async function handleDelete(categoryId: string, label: string) {
-    if (
-      !window.confirm(
-        `Hapus kategori "${label}"? Tindakan ini tidak bisa dibatalkan jika ada relasi yang memblokir.`,
-      )
-    ) {
-      return;
-    }
+  async function confirmDeleteCategory() {
+    if (!deleteConfirm) return;
+    setDeleting(true);
     setError(null);
     try {
-      await deleteCategory(categoryId);
-      if (editingId === categoryId) cancelEdit();
+      await deleteCategory(deleteConfirm.id);
+      if (editingId === deleteConfirm.id) cancelEdit();
+      setDeleteConfirm(null);
+      toast.success("Kategori dihapus.");
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError ? err.message : "Gagal menghapus.",
       );
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -176,12 +186,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <main className={adminPageShell}>
-      <Link
-        href="/admin/dashboard"
-        className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
-      >
-        ← Dashboard
-      </Link>
+      <AdminBreadcrumb />
 
       <PageHeader
         eyebrow="Admin"
@@ -191,7 +196,10 @@ export default function AdminCategoriesPage() {
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
-      <section className={`${cardSurface} space-y-4`}>
+      <section
+        id="tambah-kategori"
+        className={`${cardSurface} space-y-4 scroll-mt-24`}
+      >
         <h2 className="text-lg font-semibold text-slate-900">Tambah kategori</h2>
         <form onSubmit={handleCreate} className="space-y-3 max-w-lg">
           <div>
@@ -221,7 +229,7 @@ export default function AdminCategoriesPage() {
           <button
             type="submit"
             disabled={creating}
-            className={btnPrimary}
+            className={`${btnPrimary} min-h-[44px]`}
           >
             {creating ? "Menyimpan…" : "Simpan"}
           </button>
@@ -235,7 +243,7 @@ export default function AdminCategoriesPage() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className={btnOutline}
+            className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
           >
             Muat ulang
           </button>
@@ -246,7 +254,10 @@ export default function AdminCategoriesPage() {
         ) : items.length === 0 ? (
           <EmptyState
             title="Belum ada kategori"
-            hint="Tambahkan kategori pertama menggunakan formulir di atas."
+            hint="Kategori dipakai saat pasien memfilter dan memilih layanan fisioterapis."
+            actions={[
+              { href: "#tambah-kategori", label: "Tambah kategori pertama" },
+            ]}
           />
         ) : (
           <ul className="space-y-4">
@@ -320,8 +331,10 @@ export default function AdminCategoriesPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void handleDelete(c.id, c.name)}
-                        className={btnDanger}
+                        onClick={() =>
+                          setDeleteConfirm({ id: c.id, label: c.name })
+                        }
+                        className={`${btnDanger} min-h-[44px]`}
                       >
                         Hapus
                       </button>
@@ -333,6 +346,24 @@ export default function AdminCategoriesPage() {
           </ul>
         )}
       </section>
+
+      <ConfirmDialog
+        open={deleteConfirm !== null}
+        title={
+          deleteConfirm
+            ? `Hapus kategori "${deleteConfirm.label}"?`
+            : "Hapus kategori?"
+        }
+        description="Kategori akan dihapus dari sistem. Jika masih dipakai relasi lain, server dapat menolak permintaan ini."
+        confirmLabel="Ya, hapus"
+        cancelLabel="Tidak jadi"
+        variant="danger"
+        loading={deleting}
+        onConfirm={() => void confirmDeleteCategory()}
+        onCancel={() => {
+          if (!deleting) setDeleteConfirm(null);
+        }}
+      />
     </main>
   );
 }

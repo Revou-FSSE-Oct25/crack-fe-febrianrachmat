@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
             type="button"
             onClick={() => void load()}
             disabled={loading}
-            className={btnOutline}
+            className={`${btnOutline} min-h-[44px] px-5`}
           >
             {loading ? "Memuat…" : "Muat ulang"}
           </button>
@@ -256,19 +256,34 @@ export default function AdminDashboardPage() {
         <>
           <OverviewCards data={data} />
           <div className="flex flex-wrap gap-3 sm:gap-4 border-t border-slate-200 pt-8">
-            <Link href="/admin/physiotherapists" className={btnOutline}>
+            <Link
+              href="/admin/physiotherapists"
+              className={`${btnOutline} min-h-[44px] items-center justify-center`}
+            >
               Verifikasi fisioterapis →
             </Link>
-            <Link href="/admin/categories" className={btnOutline}>
+            <Link
+              href="/admin/categories"
+              className={`${btnOutline} min-h-[44px] items-center justify-center`}
+            >
               Kelola kategori →
             </Link>
-            <Link href="/admin/reviews" className={btnOutline}>
+            <Link
+              href="/admin/reviews"
+              className={`${btnOutline} min-h-[44px] items-center justify-center`}
+            >
               Moderasi ulasan →
             </Link>
-            <Link href="/transactions" className={btnOutline}>
+            <Link
+              href="/transactions"
+              className={`${btnOutline} min-h-[44px] items-center justify-center`}
+            >
               Transaksi &amp; refund →
             </Link>
-            <Link href="/admin/notifications" className={btnOutline}>
+            <Link
+              href="/admin/notifications"
+              className={`${btnOutline} min-h-[44px] items-center justify-center`}
+            >
               Broadcast notifikasi →
             </Link>
           </div>

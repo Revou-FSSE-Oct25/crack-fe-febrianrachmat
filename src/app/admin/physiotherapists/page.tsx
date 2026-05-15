@@ -2,6 +2,8 @@
 
 import {
   adminPageShell,
+  adminScrollWrap,
+  AdminBreadcrumb,
   AlertBanner,
   btnOutline,
   btnPrimary,
@@ -10,10 +12,12 @@ import {
   inputBase,
   ListSkeleton,
   PageHeader,
+  ConfirmDialog,
   PageLoading,
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   listPendingPhysiotherapists,
@@ -63,11 +67,13 @@ const rejectBtn =
 
 export default function AdminPhysiotherapistsPage() {
   const { user, isReady } = useAuth();
+  const toast = useToast();
   const [rows, setRows] = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<Record<string, string>>({});
+  const [rejectConfirmId, setRejectConfirmId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,6 +101,7 @@ export default function AdminPhysiotherapistsPage() {
     setError(null);
     try {
       await verifyPhysiotherapist(profileId, { status: "APPROVED" });
+      toast.success("Profil fisioterapis disetujui.");
       await load();
     } catch (err) {
       setError(
@@ -105,12 +112,20 @@ export default function AdminPhysiotherapistsPage() {
     }
   }
 
-  async function reject(profileId: string) {
+  function requestReject(profileId: string) {
     const reason = (rejectReason[profileId] ?? "").trim();
     if (reason.length < 5) {
       setError("Alasan penolakan minimal 5 karakter.");
       return;
     }
+    setError(null);
+    setRejectConfirmId(profileId);
+  }
+
+  async function confirmReject() {
+    if (!rejectConfirmId) return;
+    const profileId = rejectConfirmId;
+    const reason = (rejectReason[profileId] ?? "").trim();
     setActionId(profileId);
     setError(null);
     try {
@@ -123,6 +138,8 @@ export default function AdminPhysiotherapistsPage() {
         delete next[profileId];
         return next;
       });
+      setRejectConfirmId(null);
+      toast.success("Profil fisioterapis ditolak.");
       await load();
     } catch (err) {
       setError(
@@ -165,14 +182,10 @@ export default function AdminPhysiotherapistsPage() {
 
   return (
     <main className={adminPageShell}>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-2 min-w-0">
-          <Link
-            href="/admin/dashboard"
-            className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800"
-          >
-            ← Dashboard
-          </Link>
+      <AdminBreadcrumb />
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div className="min-w-0 flex-1">
           <PageHeader
             eyebrow="Admin"
             title="Verifikasi fisioterapis"
@@ -183,7 +196,7 @@ export default function AdminPhysiotherapistsPage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className={btnOutline}
+          className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
         >
           Muat ulang
         </button>
@@ -196,14 +209,22 @@ export default function AdminPhysiotherapistsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Tidak ada profil PENDING"
-          hint="Semua permohonan verifikasi sudah diproses, atau belum ada pendaftar baru."
+          hint="Semua permohonan verifikasi sudah diproses, atau belum ada pendaftar fisioterapis baru."
+          actions={[
+            { href: "/admin/dashboard", label: "Kembali ke dashboard" },
+            {
+              href: "/register",
+              label: "Halaman daftar (demo)",
+              variant: "secondary",
+            },
+          ]}
         />
       ) : (
         <ul className="space-y-6">
           {rows.map((row) => (
             <li key={row.id} className={`${cardSurface} space-y-4`}>
-              <div className="flex flex-wrap justify-between gap-2">
-                <div>
+              <div className="flex flex-wrap justify-between gap-2 min-w-0">
+                <div className="min-w-0 flex-1">
                   <h2 className="text-lg font-semibold text-slate-900">
                     {row.user.fullName}
                   </h2>
@@ -228,7 +249,7 @@ export default function AdminPhysiotherapistsPage() {
                   {row.bio}
                 </p>
               ) : null}
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
+              <dl className={`${adminScrollWrap} grid gap-2 text-sm sm:grid-cols-2 min-w-[16rem]`}>
                 {row.licenseNumber ? (
                   <div>
                     <dt className="text-slate-500">Nomor lisensi</dt>
@@ -258,7 +279,7 @@ export default function AdminPhysiotherapistsPage() {
                     type="button"
                     disabled={actionId === row.id}
                     onClick={() => void approve(row.id)}
-                    className={btnPrimary}
+                    className={`${btnPrimary} min-h-[44px]`}
                   >
                     Setujui
                   </button>
@@ -281,8 +302,8 @@ export default function AdminPhysiotherapistsPage() {
                   <button
                     type="button"
                     disabled={actionId === row.id}
-                    onClick={() => void reject(row.id)}
-                    className={rejectBtn}
+                    onClick={() => requestReject(row.id)}
+                    className={`${rejectBtn} min-h-[44px]`}
                   >
                     Tolak
                   </button>
@@ -292,6 +313,20 @@ export default function AdminPhysiotherapistsPage() {
           ))}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={rejectConfirmId !== null}
+        title="Tolak verifikasi fisioterapis?"
+        description="Profil akan ditandai ditolak dan alasan yang Anda tulis akan disimpan. Fisioterapis dapat memperbaiki dokumen dan mendaftar ulang sesuai alur produk."
+        confirmLabel="Ya, tolak"
+        cancelLabel="Tidak jadi"
+        variant="danger"
+        loading={rejectConfirmId !== null && actionId === rejectConfirmId}
+        onConfirm={() => void confirmReject()}
+        onCancel={() => {
+          if (actionId === null) setRejectConfirmId(null);
+        }}
+      />
     </main>
   );
 }
