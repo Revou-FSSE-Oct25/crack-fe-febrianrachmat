@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
   return (
     <main
-      className={`${pageShell} flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center py-10 sm:py-14`}
+      className={`${pageShell} flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center py-10 sm:py-14 pb-16`}
     >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">

@@ -13,6 +13,7 @@ import {
   btnSecondary,
   cardSurface,
   EmptyState,
+  ListSkeleton,
   PageHeader,
   PageLoading,
   pageShell,
@@ -124,13 +125,7 @@ export default function NotificationsPage() {
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       {loading ? (
-        <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
-          <span
-            className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
-            aria-hidden
-          />
-          Memuat…
-        </p>
+        <ListSkeleton rows={3} />
       ) : rows.length === 0 ? (
         <EmptyState
           title="Tidak ada notifikasi"

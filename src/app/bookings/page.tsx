@@ -20,6 +20,9 @@ import {
 } from "@/lib/api/bookings";
 import { useCallback, useEffect, useState } from "react";
 
+const btnTealSoft = `${btnOutline} border-teal-200 bg-teal-50 text-teal-900 hover:bg-teal-100/80`;
+const btnSkySoft = `${btnOutline} border-sky-200 bg-sky-50 text-sky-900 hover:bg-sky-100/80`;
+
 type BookingRow = {
   id: string;
   status: string;
@@ -143,7 +146,7 @@ export default function BookingsPage() {
                   <button
                     type="button"
                     onClick={() => void patchStatus(b.id, "CONFIRMED")}
-                    className="inline-flex items-center rounded-xl border border-teal-200 bg-teal-50 px-3 py-1.5 text-sm font-medium text-teal-900 hover:bg-teal-100/80 transition-colors"
+                    className={btnTealSoft}
                   >
                     Konfirmasi
                   </button>
@@ -153,7 +156,7 @@ export default function BookingsPage() {
                     <button
                       type="button"
                       onClick={() => void patchStatus(b.id, "IN_PROGRESS")}
-                      className="inline-flex items-center rounded-xl border border-sky-200 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-900 hover:bg-sky-100/80 transition-colors"
+                      className={btnSkySoft}
                     >
                       Mulai sesi
                     </button>

@@ -14,7 +14,7 @@ export default function Footer() {
         }}
         aria-hidden
       />
-      <div className="relative max-w-7xl mx-auto px-6 py-12 sm:py-16">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-10">
           <div className="max-w-sm">
             <p className="text-lg font-bold tracking-tight text-white">Kinova</p>
