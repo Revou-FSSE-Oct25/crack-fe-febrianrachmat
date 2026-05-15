@@ -1,25 +1,27 @@
 import { apiFetch } from "./client";
+import type {
+  Consultation,
+  ConsultationSlaTier,
+  PatchableConsultationStatus,
+} from "./contract";
+import { asConsultations } from "./contract";
+
+export type { Consultation, ConsultationSlaTier, PatchableConsultationStatus };
 
 /** Selaras `CreateConsultationDto` */
 export type CreateConsultationBody = {
   physiotherapistId: string;
   complaint: string;
   /** STANDARD = 24h first reply SLA; FAST_ONLINE = 10 min, requires therapist online at create. */
-  slaTier?: "STANDARD" | "FAST_ONLINE";
+  slaTier?: ConsultationSlaTier;
 };
 
 /**
- * Selaras `UpdateConsultationStatusDto`. Phase 1: `REJECTED` dipensiunkan
- * (di-merge ke `CANCELLED`), dan `IN_PROGRESS` ditambah hanya untuk admin
- * override — pasien/terapis tidak boleh set `IN_PROGRESS` lewat endpoint ini.
+ * Selaras `UpdateConsultationStatusDto` + aturan service:
+ * `IN_PROGRESS` hanya lewat admin konfirmasi pembayaran, bukan PATCH status.
  */
 export type UpdateConsultationStatusBody = {
-  status:
-    | "REQUESTED"
-    | "ACCEPTED"
-    | "IN_PROGRESS"
-    | "COMPLETED"
-    | "CANCELLED";
+  status: PatchableConsultationStatus;
 };
 
 function paginationQuery(params: { page?: number; limit?: number }): string {
@@ -42,10 +44,11 @@ export async function createConsultation(
 export async function listMyConsultations(params?: {
   page?: number;
   limit?: number;
-}): Promise<unknown[]> {
-  return apiFetch<unknown[]>(
+}): Promise<Consultation[]> {
+  const raw = await apiFetch<unknown[]>(
     `/consultations/me${paginationQuery(params ?? {})}`,
   );
+  return asConsultations(raw);
 }
 
 export async function updateConsultationStatus(

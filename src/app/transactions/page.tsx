@@ -24,12 +24,14 @@ import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { getApiBaseUrl } from "@/lib/api/config";
 import { listMyBookings } from "@/lib/api/bookings";
+import { transactionReferenceLabel } from "@/lib/api/contract";
 import {
   confirmTransactionPaidByAdmin,
   createTransaction,
   listTransactions,
   refundTransaction,
   type CreateTransactionBody,
+  type Transaction,
 } from "@/lib/api/transactions";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -61,39 +63,10 @@ function formatIdrSnapshot(
   }).format(n);
 }
 
-type TxRow = {
-  id: string;
-  bookingId: string;
-  status: string;
-  amount: string | number;
-  paymentMethod: string;
-  paymentProofUrl: string | null;
-  createdAt: string;
-};
-
-function asTxRows(data: unknown): TxRow[] {
-  if (!Array.isArray(data)) return [];
-  return data.map((item) => {
-    const r = item as Record<string, unknown>;
-    return {
-      id: String(r.id ?? ""),
-      bookingId: String(r.bookingId ?? ""),
-      status: String(r.status ?? ""),
-      amount: r.amount as string | number,
-      paymentMethod: String(r.paymentMethod ?? ""),
-      paymentProofUrl:
-        r.paymentProofUrl != null && r.paymentProofUrl !== ""
-          ? String(r.paymentProofUrl)
-          : null,
-      createdAt: String(r.createdAt ?? ""),
-    };
-  });
-}
-
 export default function TransactionsPage() {
   const { user, isReady } = useAuth();
   const toast = useToast();
-  const [rows, setRows] = useState<TxRow[]>([]);
+  const [rows, setRows] = useState<Transaction[]>([]);
   const [pendingBookings, setPendingBookings] = useState<PendingBookingPay[]>(
     [],
   );
@@ -119,7 +92,7 @@ export default function TransactionsPage() {
     setError(null);
     try {
       const list = await listTransactions({ page: 1, limit: 50 });
-      setRows(asTxRows(list));
+      setRows(list);
     } catch (err) {
       setError(
         err instanceof ApiRequestError ? err.message : "Gagal memuat transaksi.",
@@ -141,18 +114,28 @@ export default function TransactionsPage() {
   useEffect(() => {
     if (!isReady || user?.role !== "PATIENT") return;
     let cancelled = false;
-    listMyBookings({ page: 1, limit: 50 })
-      .then((data) => {
-        if (!cancelled && Array.isArray(data)) {
-          const opts: PendingBookingPay[] = data.map((raw) => {
-            const b = raw as Record<string, unknown>;
-            return {
-              id: String(b.id ?? ""),
-              visitFeeSnapshot: b.visitFeeSnapshot as string | number,
-            };
-          });
-          setPendingBookings(opts);
-        }
+    Promise.all([
+      listMyBookings({ page: 1, limit: 50 }),
+      listTransactions({ page: 1, limit: 50 }),
+    ])
+      .then(([bookings, transactions]) => {
+        if (cancelled) return;
+        const bookedWithOpenTx = new Set(
+          transactions
+            .filter((t) => t.bookingId && (t.status === "PENDING" || t.status === "PAID"))
+            .map((t) => t.bookingId as string),
+        );
+        const opts: PendingBookingPay[] = bookings
+          .filter(
+            (b) =>
+              b.status === "PENDING" &&
+              !bookedWithOpenTx.has(b.id),
+          )
+          .map((b) => ({
+            id: b.id,
+            visitFeeSnapshot: b.visitFeeSnapshot,
+          }));
+        setPendingBookings(opts);
       })
       .catch(() => {});
     return () => {
@@ -410,10 +393,13 @@ export default function TransactionsPage() {
             </button>
           </form>
           <p className="text-sm text-slate-600 max-w-md leading-relaxed">
-            Bukti bayar disimpan pada transaksi; admin hanya bisa mengonfirmasi
-            lunas jika bukti sudah ada. Setelah status{" "}
-            <strong>PENDING</strong>, konfirmasi pembayaran dilakukan oleh{" "}
-            <strong>admin</strong> (bukan dari akun pasien).
+            Pembayaran untuk <strong>konsultasi online</strong> dibuat dari halaman{" "}
+            <Link href="/consultations" className="text-teal-700 underline font-medium">
+              Konsultasi
+            </Link>{" "}
+            setelah terapis menerima. Formulir di atas hanya untuk transaksi{" "}
+            <strong>booking kunjungan</strong>. Bukti bayar wajib; konfirmasi lunas
+            oleh admin.
           </p>
         </section>
       )}
@@ -470,10 +456,10 @@ export default function TransactionsPage() {
                       tone={transactionStatusMeta(t.status).tone}
                     />
                     <p className="text-sm text-slate-600">
-                      {t.paymentMethod} ·{" "}
-                      {typeof t.amount === "string"
-                        ? t.amount
-                        : t.amount.toFixed?.(2) ?? t.amount}
+                      {t.paymentMethod} · {formatIdrSnapshot(t.amount)}
+                    </p>
+                    <p className="text-xs text-slate-600">
+                      {transactionReferenceLabel(t)}
                     </p>
                     <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                       {t.id}

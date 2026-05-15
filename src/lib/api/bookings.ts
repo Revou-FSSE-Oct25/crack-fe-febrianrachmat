@@ -1,5 +1,9 @@
 import type { AppointmentType } from "./types";
 import { apiFetch } from "./client";
+import type { Booking, BookingStatus } from "./contract";
+import { asBookings } from "./contract";
+
+export type { Booking, BookingStatus };
 
 /** Body selaras `CreateBookingDto` */
 export type CreateBookingBody = {
@@ -22,12 +26,7 @@ export async function createBooking(body: CreateBookingBody): Promise<unknown> {
 
 /** Selaras `UpdateBookingStatusDto` */
 export type UpdateBookingStatusBody = {
-  status:
-    | "PENDING"
-    | "CONFIRMED"
-    | "IN_PROGRESS"
-    | "COMPLETED"
-    | "CANCELLED";
+  status: BookingStatus;
 };
 
 function paginationQuery(params: { page?: number; limit?: number }): string {
@@ -41,10 +40,11 @@ function paginationQuery(params: { page?: number; limit?: number }): string {
 export async function listMyBookings(params?: {
   page?: number;
   limit?: number;
-}): Promise<unknown[]> {
-  return apiFetch<unknown[]>(
+}): Promise<Booking[]> {
+  const raw = await apiFetch<unknown[]>(
     `/bookings/me${paginationQuery(params ?? {})}`,
   );
+  return asBookings(raw);
 }
 
 export async function updateBookingStatus(

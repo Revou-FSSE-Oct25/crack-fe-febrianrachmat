@@ -25,6 +25,7 @@ export function bookingStatusMeta(status: string): StatusMeta {
   }
 }
 
+/** Selaras Prisma `TransactionStatus` — tidak ada nilai CANCELLED. */
 export function transactionStatusMeta(status: string): StatusMeta {
   switch (status) {
     case "PENDING":
@@ -35,8 +36,19 @@ export function transactionStatusMeta(status: string): StatusMeta {
       return { label: "Direfund", tone: "info" };
     case "FAILED":
       return { label: "Gagal", tone: "danger" };
-    case "CANCELLED":
-      return { label: "Dibatalkan", tone: "danger" };
+    default:
+      return { label: status.replaceAll("_", " "), tone: "neutral" };
+  }
+}
+
+export function therapistVerificationStatusMeta(status: string): StatusMeta {
+  switch (status) {
+    case "PENDING":
+      return { label: "Menunggu verifikasi", tone: "warning" };
+    case "APPROVED":
+      return { label: "Disetujui", tone: "success" };
+    case "REJECTED":
+      return { label: "Ditolak", tone: "danger" };
     default:
       return { label: status.replaceAll("_", " "), tone: "neutral" };
   }

@@ -52,13 +52,16 @@ export type Category = {
   updatedAt: string;
 };
 
-/** Profil fisioterapis hasil browse (subset yang dipakai UI) */
+/** Profil fisioterapis hasil browse / GET /physiotherapists/:profileId */
 export type PhysiotherapistBrowseItem = {
   id: string;
   bio: string | null;
+  education?: string | null;
+  experienceYears?: number;
   clinicAddress: string | null;
   consultationFee: string | number | null;
   visitFee: string | number | null;
+  verificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
   /** ISO timestamp; if in the future, therapist recently sent a dashboard heartbeat. */
   onlineUntil?: string | null;
   user: {

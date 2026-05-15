@@ -3,7 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { createConsultation } from "@/lib/api/consultations";
-import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
+import { getPhysiotherapistById } from "@/lib/api/physiotherapists";
 import { listPublicReviewsForPhysiotherapist } from "@/lib/api/reviews";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
 import {
@@ -82,8 +82,7 @@ export default function TherapistDetailPage() {
     setLoading(true);
     setError(null);
     try {
-      const browse = await browsePhysiotherapists({ limit: 200, page: 1 });
-      const found = browse.items.find((x) => x.id === profileId) ?? null;
+      const found = await getPhysiotherapistById(profileId);
       setTherapist(found);
       const rev = await listPublicReviewsForPhysiotherapist(profileId, {
         page: 1,

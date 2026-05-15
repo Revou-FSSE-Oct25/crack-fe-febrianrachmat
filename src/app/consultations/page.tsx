@@ -24,6 +24,8 @@ import {
   createConsultation,
   listMyConsultations,
   updateConsultationStatus,
+  type Consultation,
+  type ConsultationSlaTier,
   type UpdateConsultationStatusBody,
 } from "@/lib/api/consultations";
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
@@ -34,47 +36,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
-type ConsultationStatus =
-  | "REQUESTED"
-  | "ACCEPTED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "CANCELLED";
-
-type ConsultationSlaTierUi = "STANDARD" | "FAST_ONLINE";
-
-type ConsultationRow = {
-  id: string;
-  complaint: string;
-  status: ConsultationStatus;
-  createdAt: string;
-  feeSnapshot: string | null;
-  slaTier: ConsultationSlaTierUi;
-};
-
-function asConsultationRows(data: unknown): ConsultationRow[] {
-  if (!Array.isArray(data)) return [];
-  return data.map((item) => {
-    const r = item as Record<string, unknown>;
-    return {
-      id: String(r.id ?? ""),
-      complaint: String(r.complaint ?? ""),
-      status: String(r.status ?? "REQUESTED") as ConsultationStatus,
-      createdAt: String(r.createdAt ?? ""),
-      feeSnapshot:
-        r.feeSnapshot != null && r.feeSnapshot !== ""
-          ? String(r.feeSnapshot)
-          : null,
-      slaTier:
-        r.slaTier === "FAST_ONLINE" ? "FAST_ONLINE" : "STANDARD",
-    };
-  });
-}
-
-function formatRupiah(value: string | null): string {
+function formatRupiah(
+  value: string | number | null | undefined,
+): string {
   if (!value) return "—";
   const n = Number(value);
-  if (!Number.isFinite(n)) return value;
+  if (!Number.isFinite(n)) return String(value);
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -88,7 +55,7 @@ export default function ConsultationsPage() {
   const { user, isReady } = useAuth();
   const toast = useToast();
   const router = useRouter();
-  const [rows, setRows] = useState<ConsultationRow[]>([]);
+  const [rows, setRows] = useState<Consultation[]>([]);
   const [therapists, setTherapists] = useState<PhysiotherapistBrowseItem[]>(
     [],
   );
@@ -104,14 +71,14 @@ export default function ConsultationsPage() {
 
   const [physiotherapistId, setPhysiotherapistId] = useState("");
   const [complaint, setComplaint] = useState("");
-  const [slaTier, setSlaTier] = useState<ConsultationSlaTierUi>("STANDARD");
+  const [slaTier, setSlaTier] = useState<ConsultationSlaTier>("STANDARD");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const list = await listMyConsultations({ page: 1, limit: 50 });
-      setRows(asConsultationRows(list));
+      setRows(list);
       if (user?.role === "PATIENT") {
         const browse = await browsePhysiotherapists({ limit: 50, page: 1 });
         setTherapists(browse.items);
@@ -229,7 +196,7 @@ export default function ConsultationsPage() {
 
   // Patient initiates payment for an ACCEPTED consultation. The dummy
   // gateway is just a POST that lands in PENDING; admin will confirm.
-  async function payConsultation(row: ConsultationRow) {
+  async function payConsultation(row: Consultation) {
     if (row.status !== "ACCEPTED") return;
     if (!row.feeSnapshot) {
       setError("Biaya konsultasi tidak diketahui untuk sesi ini.");
@@ -456,7 +423,9 @@ export default function ConsultationsPage() {
               const isPt = user.role === "PHYSIOTHERAPIST";
               const isAdmin = user.role === "ADMIN";
 
-              const canChat = c.status === "IN_PROGRESS" || isAdmin;
+              const canChat =
+                c.status === "IN_PROGRESS" ||
+                (isAdmin && c.status !== "CANCELLED");
               const canPay = isPatient && c.status === "ACCEPTED";
               const canCancel =
                 isPatient &&

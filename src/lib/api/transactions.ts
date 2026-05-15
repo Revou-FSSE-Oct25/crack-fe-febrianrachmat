@@ -1,4 +1,8 @@
 import { apiFetch } from "./client";
+import type { PaymentMethod, Transaction } from "./contract";
+import { asTransactions } from "./contract";
+
+export type { PaymentMethod, Transaction };
 
 /**
  * Selaras `CreateTransactionDto`. Transaksi tertaut pada **salah satu**:
@@ -67,10 +71,11 @@ export async function confirmTransactionPaidByAdmin(
 export async function listTransactions(params?: {
   page?: number;
   limit?: number;
-}): Promise<unknown[]> {
-  return apiFetch<unknown[]>(
+}): Promise<Transaction[]> {
+  const raw = await apiFetch<unknown[]>(
     `/transactions${paginationQuery(params ?? {})}`,
   );
+  return asTransactions(raw);
 }
 
 /** Selaras `RefundTransactionDto` — admin saja */

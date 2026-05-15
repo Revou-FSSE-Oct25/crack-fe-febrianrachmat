@@ -1,5 +1,5 @@
 import type { PhysiotherapistBrowseItem, PaginationMeta } from "./types";
-import { apiFetchPaginated } from "./client";
+import { apiFetch, apiFetchPaginated } from "./client";
 
 /** Query selaras `BrowsePhysiotherapistsQueryDto` */
 export type BrowsePhysiotherapistsParams = {
@@ -29,4 +29,13 @@ export async function browsePhysiotherapists(
     `/physiotherapists${toQuery(params)}`,
   );
   return { items: data, meta };
+}
+
+/** GET /physiotherapists/:profileId — profil terapis disetujui (publik). */
+export async function getPhysiotherapistById(
+  profileId: string,
+): Promise<PhysiotherapistBrowseItem> {
+  return apiFetch<PhysiotherapistBrowseItem>(
+    `/physiotherapists/${profileId}`,
+  );
 }
