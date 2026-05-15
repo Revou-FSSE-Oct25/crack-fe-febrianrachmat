@@ -25,6 +25,24 @@ import {
 } from "@/lib/api/transactions";
 import { useCallback, useEffect, useState } from "react";
 
+type PendingBookingPay = {
+  id: string;
+  visitFeeSnapshot: string | number;
+};
+
+function formatIdrSnapshot(
+  value: string | number | null | undefined,
+): string {
+  if (value == null || value === "") return "—";
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
 type TxRow = {
   id: string;
   bookingId: string;
@@ -52,13 +70,14 @@ function asTxRows(data: unknown): TxRow[] {
 export default function TransactionsPage() {
   const { user, isReady } = useAuth();
   const [rows, setRows] = useState<TxRow[]>([]);
-  const [bookingIds, setBookingIds] = useState<string[]>([]);
+  const [pendingBookings, setPendingBookings] = useState<PendingBookingPay[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
   const [bookingId, setBookingId] = useState("");
-  const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] =
     useState<CreateTransactionBody["paymentMethod"]>("QRIS");
 
@@ -98,8 +117,14 @@ export default function TransactionsPage() {
     listMyBookings({ page: 1, limit: 50 })
       .then((data) => {
         if (!cancelled && Array.isArray(data)) {
-          const ids = data.map((b) => String((b as { id: string }).id ?? ""));
-          setBookingIds(ids);
+          const opts: PendingBookingPay[] = data.map((raw) => {
+            const b = raw as Record<string, unknown>;
+            return {
+              id: String(b.id ?? ""),
+              visitFeeSnapshot: b.visitFeeSnapshot as string | number,
+            };
+          });
+          setPendingBookings(opts);
         }
       })
       .catch(() => {});
@@ -110,9 +135,8 @@ export default function TransactionsPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    const num = Number(amount);
-    if (!bookingId || Number.isNaN(num) || num < 0) {
-      setError("Booking dan jumlah harus valid.");
+    if (!bookingId) {
+      setError("Pilih booking.");
       return;
     }
     setCreating(true);
@@ -120,10 +144,9 @@ export default function TransactionsPage() {
     try {
       await createTransaction({
         bookingId,
-        amount: num,
         paymentMethod,
       });
-      setAmount("");
+      setBookingId("");
       await load();
     } catch (err) {
       setError(
@@ -210,7 +233,7 @@ export default function TransactionsPage() {
         description={
           user.role === "ADMIN"
             ? "Konfirmasi pembayaran dummy dan refund untuk transaksi yang memenuhi syarat."
-            : "Buat permintaan pembayaran untuk booking Anda. Konfirmasi lunas dilakukan oleh admin."
+            : "Buat permintaan pembayaran untuk booking Anda. Nominal mengikuti tarif visit terapis saat booking dibuat. Konfirmasi lunas oleh admin."
         }
       />
 
@@ -224,7 +247,7 @@ export default function TransactionsPage() {
           <form onSubmit={handleCreate} className="space-y-3 max-w-md">
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
-                Booking
+                Booking &amp; tarif visit
               </label>
               <select
                 required
@@ -233,26 +256,12 @@ export default function TransactionsPage() {
                 onChange={(e) => setBookingId(e.target.value)}
               >
                 <option value="">— Pilih booking —</option>
-                {bookingIds.map((id) => (
-                  <option key={id} value={id}>
-                    {id}
+                {pendingBookings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.id.slice(0, 8)}… · {formatIdrSnapshot(b.visitFeeSnapshot)}
                   </option>
                 ))}
               </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1 text-slate-700">
-                Jumlah
-              </label>
-              <input
-                type="number"
-                min={0}
-                step="0.01"
-                required
-                className={inputBase}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">

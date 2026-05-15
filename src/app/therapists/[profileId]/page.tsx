@@ -146,6 +146,11 @@ export default function TherapistDetailPage() {
             <span className="font-medium">
               {formatRupiah(therapist.consultationFee ?? null)}
             </span>
+            {" · "}
+            Biaya visit (klinik / rumah):{" "}
+            <span className="font-medium">
+              {formatRupiah(therapist.visitFee ?? null)}
+            </span>
             {therapist.onlineUntil &&
             new Date(String(therapist.onlineUntil)) > new Date() ? (
               <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 border border-emerald-200">
@@ -167,7 +172,7 @@ export default function TherapistDetailPage() {
                 href="/appointment"
                 className="inline-flex items-center rounded-lg border border-teal-200 bg-white px-5 py-2 text-teal-800 hover:bg-teal-50 transition-colors"
               >
-                Booking visit fisik
+                Booking visit ({formatRupiah(therapist.visitFee ?? null)})
               </Link>
             </div>
           )}

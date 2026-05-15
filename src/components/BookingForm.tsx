@@ -25,6 +25,17 @@ function todayISODate(): string {
   return `${y}-${m}-${day}`;
 }
 
+function formatVisitRupiah(value: string | number | null | undefined): string {
+  if (value == null || value === "") return "—";
+  const n = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(n)) return String(value);
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
 export default function BookingForm() {
   const { user, isReady } = useAuth();
 
@@ -286,6 +297,15 @@ export default function BookingForm() {
           ))}
         </select>
       </div>
+
+      {selectedTherapist ? (
+        <p className="text-sm text-gray-700 rounded-lg border border-teal-100 bg-teal-50/50 px-3 py-2">
+          <span className="font-medium">Tarif terapis ini:</span> konsultasi
+          online {formatVisitRupiah(selectedTherapist.consultationFee)} · visit{" "}
+          {formatVisitRupiah(selectedTherapist.visitFee)} (dibekukan pada saat
+          booking dibuat).
+        </p>
+      ) : null}
 
       <div>
         <label className="block text-sm font-medium mb-1">Tipe janji</label>

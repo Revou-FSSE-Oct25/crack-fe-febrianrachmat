@@ -221,7 +221,6 @@ export default function ConsultationsPage() {
     try {
       await createTransaction({
         consultationId: row.id,
-        amount: Number(row.feeSnapshot),
         paymentMethod: "BANK_TRANSFER",
       });
       setInfo(
@@ -282,8 +281,11 @@ export default function ConsultationsPage() {
                 {therapists.map((t) => (
                   <option key={t.id} value={t.id}>
                     {t.user.fullName}
-                    {t.consultationFee
-                      ? ` · ${formatRupiah(String(t.consultationFee))}`
+                    {t.consultationFee != null && t.consultationFee !== ""
+                      ? ` · online ${formatRupiah(String(t.consultationFee))}`
+                      : ""}
+                    {t.visitFee != null && t.visitFee !== ""
+                      ? ` · visit ${formatRupiah(String(t.visitFee))}`
                       : ""}
                   </option>
                 ))}

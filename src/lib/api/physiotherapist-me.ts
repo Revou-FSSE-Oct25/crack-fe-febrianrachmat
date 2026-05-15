@@ -9,6 +9,7 @@ export type UpdatePhysiotherapistProfileBody = {
   certificationUrl?: string;
   licenseNumber?: string;
   consultationFee?: number;
+  visitFee?: number;
   clinicAddress?: string;
 };
 

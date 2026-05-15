@@ -28,6 +28,7 @@ export default function PhysiotherapistProfilePage() {
   const [certificationUrl, setCertificationUrl] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
   const [consultationFee, setConsultationFee] = useState("");
+  const [visitFee, setVisitFee] = useState("");
   const [clinicAddress, setClinicAddress] = useState("");
 
   useTherapistOnlineHeartbeat(
@@ -63,6 +64,7 @@ export default function PhysiotherapistProfilePage() {
       setConsultationFee(
         p.consultationFee != null ? String(p.consultationFee) : "",
       );
+      setVisitFee(p.visitFee != null ? String(p.visitFee) : "");
       setClinicAddress(
         p.clinicAddress != null ? String(p.clinicAddress) : "",
       );
@@ -97,6 +99,8 @@ export default function PhysiotherapistProfilePage() {
     }
     const fee = parseFloat(consultationFee);
     if (!Number.isNaN(fee) && fee >= 0) body.consultationFee = fee;
+    const visit = parseFloat(visitFee);
+    if (!Number.isNaN(visit) && visit >= 0) body.visitFee = visit;
     if (clinicAddress.trim().length >= 10) {
       body.clinicAddress = clinicAddress.trim();
     }
@@ -247,7 +251,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">
-              Biaya konsultasi
+              Biaya konsultasi online
             </label>
             <input
               type="number"
@@ -256,6 +260,19 @@ export default function PhysiotherapistProfilePage() {
               className="border rounded-lg w-full p-3"
               value={consultationFee}
               onChange={(e) => setConsultationFee(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Biaya visit (klinik / kunjungan rumah)
+            </label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              className="border rounded-lg w-full p-3"
+              value={visitFee}
+              onChange={(e) => setVisitFee(e.target.value)}
             />
           </div>
           <div>

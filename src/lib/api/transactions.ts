@@ -3,13 +3,11 @@ import { apiFetch } from "./client";
 /**
  * Selaras `CreateTransactionDto`. Transaksi tertaut pada **salah satu**:
  * `bookingId` (visit fisik) ATAU `consultationId` (sesi chat online).
- * Backend menolak permintaan yang mengisi keduanya atau tidak mengisi sama
- * sekali.
+ * Nominal pembayaran selalu dari server (snapshot booking / konsultasi).
  */
 export type CreateTransactionBody = {
   bookingId?: string;
   consultationId?: string;
-  amount: number;
   paymentMethod:
     | "BANK_TRANSFER"
     | "E_WALLET"
