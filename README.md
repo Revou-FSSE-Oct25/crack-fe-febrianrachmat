@@ -79,7 +79,16 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | Transaksi | `/transactions` | Konfirmasi bayar, refund |
 | Konsultasi & booking | `/consultations`, `/bookings` | Read (monitoring) |
 
-Rute `/admin/*` dilindungi **server-side** (`src/proxy.ts`: JWT cookie + role `ADMIN`). Halaman lain memakai guard client (`SignInRequired`) + pengecekan role di halaman.
+Rute sensitif dilindungi **server-side** di `src/proxy.ts` (JWT dari cookie `kinova_access_token`, diverifikasi dengan `JWT_SECRET`):
+
+| Pola route | Role |
+| --- | --- |
+| `/admin/*` | `ADMIN` |
+| `/physiotherapist/*` | `PHYSIOTHERAPIST` |
+| `/appointment`, `/reviews/*` | `PATIENT` |
+| `/profile`, `/bookings`, `/consultations`, `/transactions`, `/notifications`, `/chat/*`, `/therapists/*` | Semua role (wajib login) |
+
+Tanpa token → redirect `/login?next=...`. Role salah → redirect `/`. Halaman tetap memakai `SignInRequired` + cek role di client sebagai lapisan kedua.
 
 ---
 
@@ -212,7 +221,8 @@ crack-fe-febrianrachmat/
 │   ├── components/
 │   ├── contexts/         # Auth, toast
 │   └── lib/api/          # Client REST per domain
-├── src/proxy.ts          # Gate /admin (JWT + role)
+├── src/proxy.ts          # Gate auth server-side (JWT cookie + role)
+├── src/lib/auth/proxy-routes.ts
 ├── .github/workflows/
 └── package.json
 ```

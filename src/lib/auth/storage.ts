@@ -5,7 +5,7 @@ export const AUTH_USER_KEY = "kinova_auth_user";
 
 const ACCESS_TOKEN_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;
 
-/** Cookie dengan nama sama dipakai Next middleware untuk rute /admin. */
+/** Cookie mirror untuk verifikasi JWT di `src/proxy.ts` (route terlindungi). */
 function syncAccessTokenCookie(token: string | null): void {
   if (typeof window === "undefined") return;
   if (token) {
