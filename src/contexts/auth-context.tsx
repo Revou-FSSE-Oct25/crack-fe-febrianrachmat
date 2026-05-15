@@ -32,6 +32,7 @@ type AuthContextValue = {
   isReady: boolean;
   login: (body: authApi.LoginBody) => Promise<void>;
   register: (body: authApi.RegisterBody) => Promise<void>;
+  completeOAuthLogin: (accessToken: string) => Promise<void>;
   logout: () => void;
   /** Perbarui nama/email di navbar setelah simpan profil. */
   syncUserFromProfile: (profile: UserProfile) => void;
@@ -42,7 +43,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 function redirectToLogin(): void {
   if (typeof window === "undefined") return;
   const path = window.location.pathname;
-  if (path === "/login" || path === "/register") return;
+  if (path === "/login" || path === "/register" || path === "/auth/callback") {
+    return;
+  }
   const next = encodeURIComponent(
     `${window.location.pathname}${window.location.search}`,
   );
@@ -136,16 +139,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
+  const completeOAuthLogin = useCallback(async (accessToken: string) => {
+    setStoredAccessToken(accessToken);
+    syncAccessTokenCookieFromStorage();
+    const profile = await getMyProfile();
+    if (!profile.isActive) {
+      clearStoredAccessToken();
+      clearStoredAuthUser();
+      setUser(null);
+      throw new ApiRequestError("Akun tidak aktif.", 401);
+    }
+    const authUser = profileToAuthUser(profile);
+    setStoredAuthUser(authUser);
+    setUser(authUser);
+  }, []);
+
   const value = useMemo(
     () => ({
       user,
       isReady,
       login,
       register,
+      completeOAuthLogin,
       logout,
       syncUserFromProfile,
     }),
-    [user, isReady, login, register, logout, syncUserFromProfile],
+    [
+      user,
+      isReady,
+      login,
+      register,
+      completeOAuthLogin,
+      logout,
+      syncUserFromProfile,
+    ],
   );
 
   return (

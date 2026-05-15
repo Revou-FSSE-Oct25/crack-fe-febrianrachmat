@@ -15,6 +15,7 @@ import {
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
+import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -145,6 +146,7 @@ function LoginPageContent() {
               {loading ? "Memproses…" : "Masuk"}
             </button>
           </form>
+          <OAuthButtons nextPath={afterLoginPath} />
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
