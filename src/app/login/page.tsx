@@ -2,6 +2,14 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import {
+  AlertBanner,
+  btnPrimary,
+  cardSurface,
+  inputBase,
+  PageLoading,
+  pageShell,
+} from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -10,6 +18,8 @@ function safeNextPath(next: string | null): string | null {
   if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
   return next;
 }
+
+const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 function LoginPageContent() {
   const { login, user, isReady } = useAuth();
@@ -30,9 +40,7 @@ function LoginPageContent() {
   }, [isReady, user, router, afterLoginPath]);
 
   if (!isReady) {
-    return (
-      <main className="py-20 text-center text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (user) {
@@ -58,63 +66,85 @@ function LoginPageContent() {
   }
 
   return (
-    <main className="max-w-md mx-auto py-20 px-6">
-      <h1 className="text-3xl font-bold text-center mb-2">Masuk</h1>
-      <p className="text-gray-600 text-center mb-8">
-        Belum punya akun?{" "}
-        <Link href="/register" className="text-teal-600 font-medium">
-          Daftar
-        </Link>
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-            {error}
+    <main
+      className={`${pageShell} flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center py-10 sm:py-14`}
+    >
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+            Selamat datang kembali
           </p>
-        )}
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border rounded w-full p-3"
-          />
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+            Masuk
+          </h1>
+          <p className="mt-3 text-sm text-slate-600">
+            Belum punya akun?{" "}
+            <Link
+              href="/register"
+              className="font-semibold text-teal-700 hover:text-teal-600 underline-offset-2 hover:underline"
+            >
+              Daftar
+            </Link>
+          </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Kata sandi</label>
-          <input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border rounded w-full p-3"
-          />
+
+        <div className={`${cardSurface} p-8 sm:p-9`}>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+            <div>
+              <label htmlFor="login-email" className={labelClass}>
+                Email
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label htmlFor="login-password" className={labelClass}>
+                Kata sandi
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`${btnPrimary} w-full py-3`}
+            >
+              {loading ? "Memproses…" : "Masuk"}
+            </button>
+          </form>
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-teal-500 text-white py-3 rounded-lg font-medium disabled:opacity-60"
-        >
-          {loading ? "Memproses…" : "Masuk"}
-        </button>
-      </form>
+
+        <p className="mt-8 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+          Dengan masuk, Anda menyetujui ringkasan{" "}
+          <Link href="/kebijakan" className="text-teal-700 font-medium hover:underline">
+            kebijakan produk & demo
+          </Link>
+          .
+        </p>
+      </div>
     </main>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="py-20 text-center text-gray-600">Memuat…</main>
-      }
-    >
+    <Suspense fallback={<PageLoading />}>
       <LoginPageContent />
     </Suspense>
   );

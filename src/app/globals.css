@@ -3,8 +3,11 @@
 :root {
   --kinova-teal: #0d9488;
   --kinova-teal-dark: #0f766e;
+  --kinova-teal-soft: #f0fdfa;
   --surface: #f8fafc;
   --surface-card: #ffffff;
+  --surface-elevated: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.06);
+  --ring-focus: rgb(13 148 136 / 0.35);
 }
 
 @theme inline {
@@ -16,7 +19,11 @@ html {
 }
 
 body {
-  background: var(--surface);
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgb(204 251 241 / 0.45), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(241 245 249 / 0.9), transparent);
+  background-attachment: fixed;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

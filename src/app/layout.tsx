@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="id" className={plusJakarta.variable}>
       <body
-        className={`${plusJakarta.className} min-h-screen flex flex-col bg-slate-50 text-slate-900`}
+        className={`${plusJakarta.className} min-h-screen flex flex-col text-slate-900 antialiased`}
       >
         <AuthProvider>
           <Navbar />

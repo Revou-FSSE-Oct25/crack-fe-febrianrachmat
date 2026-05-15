@@ -2,9 +2,19 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import {
+  AlertBanner,
+  btnPrimary,
+  cardSurface,
+  inputBase,
+  PageLoading,
+  pageShell,
+} from "@/components/ui/page-shell";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 export default function RegisterPage() {
   const { register, user, isReady } = useAuth();
@@ -24,9 +34,7 @@ export default function RegisterPage() {
   }, [isReady, user, router]);
 
   if (!isReady) {
-    return (
-      <main className="py-20 text-center text-gray-600">Memuat…</main>
-    );
+    return <PageLoading />;
   }
 
   if (user) {
@@ -58,84 +66,117 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="max-w-md mx-auto py-20 px-6">
-      <h1 className="text-3xl font-bold text-center mb-2">Daftar</h1>
-      <p className="text-gray-600 text-center mb-8">
-        Sudah punya akun?{" "}
-        <Link href="/login" className="text-teal-600 font-medium">
-          Masuk
-        </Link>
-      </p>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded p-3">
-            {error}
+    <main
+      className={`${pageShell} flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center py-10 sm:py-14`}
+    >
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
+            Akun baru
           </p>
-        )}
-        <div>
-          <label className="block text-sm font-medium mb-1">Nama lengkap</label>
-          <input
-            required
-            minLength={3}
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="border rounded w-full p-3"
-          />
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+            Daftar
+          </h1>
+          <p className="mt-3 text-sm text-slate-600">
+            Sudah punya akun?{" "}
+            <Link
+              href="/login"
+              className="font-semibold text-teal-700 hover:text-teal-600 underline-offset-2 hover:underline"
+            >
+              Masuk
+            </Link>
+          </p>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border rounded w-full p-3"
-          />
+
+        <div className={`${cardSurface} p-8 sm:p-9`}>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+            <div>
+              <label htmlFor="reg-name" className={labelClass}>
+                Nama lengkap
+              </label>
+              <input
+                id="reg-name"
+                required
+                minLength={3}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label htmlFor="reg-email" className={labelClass}>
+                Email
+              </label>
+              <input
+                id="reg-email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label htmlFor="reg-password" className={labelClass}>
+                Kata sandi
+              </label>
+              <input
+                id="reg-password"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label htmlFor="reg-phone" className={labelClass}>
+                Nomor telepon (opsional)
+              </label>
+              <input
+                id="reg-phone"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label htmlFor="reg-role" className={labelClass}>
+                Peran
+              </label>
+              <select
+                id="reg-role"
+                value={role}
+                onChange={(e) =>
+                  setRole(e.target.value as "PATIENT" | "PHYSIOTHERAPIST")
+                }
+                className={inputBase}
+              >
+                <option value="PATIENT">Pasien</option>
+                <option value="PHYSIOTHERAPIST">Fisioterapis</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`${btnPrimary} w-full py-3`}
+            >
+              {loading ? "Memproses…" : "Daftar"}
+            </button>
+          </form>
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Kata sandi</label>
-          <input
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border rounded w-full p-3"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Nomor telepon (opsional)
-          </label>
-          <input
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="border rounded w-full p-3"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Peran</label>
-          <select
-            value={role}
-            onChange={(e) =>
-              setRole(e.target.value as "PATIENT" | "PHYSIOTHERAPIST")
-            }
-            className="border rounded w-full p-3"
-          >
-            <option value="PATIENT">Pasien</option>
-            <option value="PHYSIOTHERAPIST">Fisioterapis</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-teal-500 text-white py-3 rounded-lg font-medium disabled:opacity-60"
-        >
-          {loading ? "Memproses…" : "Daftar"}
-        </button>
-      </form>
+
+        <p className="mt-8 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+          Lihat{" "}
+          <Link href="/kebijakan" className="text-teal-700 font-medium hover:underline">
+            kebijakan produk & demo
+          </Link>{" "}
+          sebelum menggunakan akun demo.
+        </p>
+      </div>
     </main>
   );
 }

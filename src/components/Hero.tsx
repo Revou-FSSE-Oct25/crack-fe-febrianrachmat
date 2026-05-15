@@ -2,32 +2,44 @@ import Link from "next/link";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden text-center py-20 sm:py-28 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-900 text-white">
+    <section className="relative overflow-hidden text-center py-20 sm:py-28 lg:py-32 bg-gradient-to-br from-teal-600 via-teal-700 to-teal-950 text-white">
       <div
-        className="pointer-events-none absolute inset-0 opacity-30"
+        className="pointer-events-none absolute inset-0 opacity-40"
         style={{
           backgroundImage:
-            "radial-gradient(circle at 20% 50%, white 0%, transparent 45%), radial-gradient(circle at 80% 20%, rgb(94 234 212 / 0.4) 0%, transparent 40%)",
+            "radial-gradient(circle at 20% 50%, white 0%, transparent 45%), radial-gradient(circle at 80% 20%, rgb(94 234 212 / 0.45) 0%, transparent 40%)",
         }}
         aria-hidden
       />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50 to-transparent opacity-90"
+        aria-hidden
+      />
       <div className="relative max-w-3xl mx-auto px-6">
-        <p className="text-sm font-medium uppercase tracking-widest text-teal-100/90">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-100/95">
           Kinova
         </p>
-        <h1 className="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-balance">
+        <h1 className="mt-4 text-4xl sm:text-5xl lg:text-[3.25rem] font-bold tracking-tight text-balance leading-[1.1]">
           Pulihkan gerak. Kembali beraktivitas.
         </h1>
-        <p className="mt-5 text-lg text-teal-50/95 max-w-xl mx-auto text-pretty">
+        <p className="mt-6 text-lg sm:text-xl text-teal-50/95 max-w-xl mx-auto text-pretty leading-relaxed">
           Mitra fisioterapi dan pemulihan gerak Anda — dari konsultasi hingga
           program latihan.
         </p>
-        <Link
-          href="/appointment"
-          className="mt-10 inline-flex items-center justify-center rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-teal-800 shadow-lg shadow-teal-950/25 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-colors"
-        >
-          Buat janji temu
-        </Link>
+        <div className="mt-11 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+          <Link
+            href="/appointment"
+            className="inline-flex w-full sm:w-auto min-w-[200px] items-center justify-center rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-teal-800 shadow-lg shadow-teal-950/30 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-[transform,colors] duration-150 hover:-translate-y-0.5 active:translate-y-0"
+          >
+            Buat janji temu
+          </Link>
+          <Link
+            href="/services"
+            className="inline-flex w-full sm:w-auto min-w-[200px] items-center justify-center rounded-xl border-2 border-white/35 bg-white/10 px-8 py-3.5 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/15 hover:border-white/50 transition-[transform,colors,border-color] duration-150"
+          >
+            Lihat layanan
+          </Link>
+        </div>
       </div>
     </section>
   );
