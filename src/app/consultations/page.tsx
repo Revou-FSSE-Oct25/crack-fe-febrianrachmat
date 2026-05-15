@@ -92,6 +92,8 @@ function formatRupiah(value: string | null): string {
   }).format(n);
 }
 
+type ConsultationPayProof = { file: File | null; url: string };
+
 export default function ConsultationsPage() {
   const { user, isReady } = useAuth();
   const router = useRouter();
@@ -104,6 +106,9 @@ export default function ConsultationsPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [proofByConsultationId, setProofByConsultationId] = useState<
+    Record<string, ConsultationPayProof>
+  >({});
 
   const [physiotherapistId, setPhysiotherapistId] = useState("");
   const [complaint, setComplaint] = useState("");
@@ -215,6 +220,19 @@ export default function ConsultationsPage() {
       setError("Biaya konsultasi tidak diketahui untuk sesi ini.");
       return;
     }
+    const proof =
+      proofByConsultationId[row.id] ?? ({ file: null, url: "" } satisfies ConsultationPayProof);
+    const trimmedUrl = proof.url.trim();
+    if (!proof.file && !trimmedUrl) {
+      setError(
+        "Lampirkan bukti pembayaran: unggah file atau isi URL bukti (https).",
+      );
+      return;
+    }
+    if (trimmedUrl && !trimmedUrl.startsWith("https://")) {
+      setError("URL bukti harus memakai https://");
+      return;
+    }
     setError(null);
     setInfo(null);
     setPayingId(row.id);
@@ -222,6 +240,13 @@ export default function ConsultationsPage() {
       await createTransaction({
         consultationId: row.id,
         paymentMethod: "BANK_TRANSFER",
+        paymentProofUrl: trimmedUrl || undefined,
+        proofFile: proof.file ?? undefined,
+      });
+      setProofByConsultationId((prev) => {
+        const next = { ...prev };
+        delete next[row.id];
+        return next;
       });
       setInfo(
         "Permintaan pembayaran terkirim. Admin akan mengonfirmasi sebentar lagi; chat akan terbuka otomatis setelahnya. Pantau di halaman Transaksi.",
@@ -234,6 +259,16 @@ export default function ConsultationsPage() {
     } finally {
       setPayingId(null);
     }
+  }
+
+  function setConsultationProof(
+    consultationId: string,
+    patch: Partial<ConsultationPayProof>,
+  ) {
+    setProofByConsultationId((prev) => {
+      const cur = prev[consultationId] ?? { file: null, url: "" };
+      return { ...prev, [consultationId]: { ...cur, ...patch } };
+    });
   }
 
   if (!isReady) {
@@ -263,8 +298,9 @@ export default function ConsultationsPage() {
           </h2>
           <p className="text-sm text-slate-600">
             Alur: <strong>terapis menerima</strong> → kamu{" "}
+            <strong>lampirkan bukti bayar</strong> lalu{" "}
             <strong>bayar</strong> → chat otomatis aktif setelah pembayaran
-            dikonfirmasi.
+            dikonfirmasi admin.
           </p>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
@@ -417,7 +453,8 @@ export default function ConsultationsPage() {
                     )}
                     {c.status === "ACCEPTED" && isPatient && (
                       <p className="text-xs text-slate-500">
-                        Terapis sudah menerima. Bayar untuk membuka sesi chat.
+                        Terapis sudah menerima. Unggah bukti transfer atau tautan
+                        https, lalu bayar untuk membuka sesi chat.
                       </p>
                     )}
                     {c.status === "IN_PROGRESS" && (
@@ -429,16 +466,46 @@ export default function ConsultationsPage() {
 
                   <div className="flex flex-wrap gap-2 shrink-0 md:justify-end">
                     {canPay && (
-                      <button
-                        type="button"
-                        onClick={() => void payConsultation(c)}
-                        disabled={payingId === c.id}
-                        className={btnPrimary}
-                      >
-                        {payingId === c.id
-                          ? "Memproses…"
-                          : `Bayar ${formatRupiah(c.feeSnapshot)}`}
-                      </button>
+                      <div className="w-full md:w-auto md:max-w-xs space-y-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                        <p className="text-xs font-medium text-slate-700">
+                          Bukti pembayaran (wajib)
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          disabled={payingId === c.id}
+                          className={`${inputBase} py-2 text-xs file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-2 file:py-1 file:text-xs`}
+                          onChange={(e) =>
+                            setConsultationProof(c.id, {
+                              file: e.target.files?.[0] ?? null,
+                            })
+                          }
+                        />
+                        <input
+                          type="url"
+                          disabled={payingId === c.id}
+                          className={`${inputBase} text-sm`}
+                          placeholder="https://contoh.com/bukti.png"
+                          value={
+                            proofByConsultationId[c.id]?.url ?? ""
+                          }
+                          onChange={(e) =>
+                            setConsultationProof(c.id, {
+                              url: e.target.value,
+                            })
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void payConsultation(c)}
+                          disabled={payingId === c.id}
+                          className={btnPrimary}
+                        >
+                          {payingId === c.id
+                            ? "Memproses…"
+                            : `Bayar ${formatRupiah(c.feeSnapshot)}`}
+                        </button>
+                      </div>
                     )}
                     {canChat && (
                       <button

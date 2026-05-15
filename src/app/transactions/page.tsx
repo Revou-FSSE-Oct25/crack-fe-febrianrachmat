@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { getApiBaseUrl } from "@/lib/api/config";
 import { listMyBookings } from "@/lib/api/bookings";
 import {
   confirmTransactionPaidByAdmin,
@@ -29,6 +30,15 @@ type PendingBookingPay = {
   id: string;
   visitFeeSnapshot: string | number;
 };
+
+function proofDisplayHref(url: string | null | undefined): string | null {
+  const u = (url ?? "").trim();
+  if (!u) return null;
+  if (u.startsWith("http://") || u.startsWith("https://")) return u;
+  const base = getApiBaseUrl().replace(/\/$/, "");
+  const path = u.startsWith("/") ? u : `/${u}`;
+  return `${base}${path}`;
+}
 
 function formatIdrSnapshot(
   value: string | number | null | undefined,
@@ -49,6 +59,7 @@ type TxRow = {
   status: string;
   amount: string | number;
   paymentMethod: string;
+  paymentProofUrl: string | null;
   createdAt: string;
 };
 
@@ -62,6 +73,10 @@ function asTxRows(data: unknown): TxRow[] {
       status: String(r.status ?? ""),
       amount: r.amount as string | number,
       paymentMethod: String(r.paymentMethod ?? ""),
+      paymentProofUrl:
+        r.paymentProofUrl != null && r.paymentProofUrl !== ""
+          ? String(r.paymentProofUrl)
+          : null,
       createdAt: String(r.createdAt ?? ""),
     };
   });
@@ -80,6 +95,8 @@ export default function TransactionsPage() {
   const [bookingId, setBookingId] = useState("");
   const [paymentMethod, setPaymentMethod] =
     useState<CreateTransactionBody["paymentMethod"]>("QRIS");
+  const [paymentProofUrl, setPaymentProofUrl] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
 
   const [refundReasonById, setRefundReasonById] = useState<
     Record<string, string>
@@ -139,14 +156,32 @@ export default function TransactionsPage() {
       setError("Pilih booking.");
       return;
     }
+    const trimmedProofUrl = paymentProofUrl.trim();
+    if (!proofFile && !trimmedProofUrl) {
+      setError(
+        "Lampirkan bukti pembayaran: unggah file atau isi URL bukti (https).",
+      );
+      return;
+    }
+    if (
+      trimmedProofUrl &&
+      !trimmedProofUrl.startsWith("https://")
+    ) {
+      setError("URL bukti harus memakai https://");
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
       await createTransaction({
         bookingId,
         paymentMethod,
+        paymentProofUrl: trimmedProofUrl || undefined,
+        proofFile: proofFile ?? undefined,
       });
       setBookingId("");
+      setPaymentProofUrl("");
+      setProofFile(null);
       await load();
     } catch (err) {
       setError(
@@ -282,6 +317,30 @@ export default function TransactionsPage() {
                 <option value="CREDIT_CARD">Kartu kredit</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-slate-700">
+                Bukti pembayaran (wajib)
+              </label>
+              <p className="text-xs text-slate-500 mb-2 leading-relaxed">
+                Unggah screenshot/struk, atau tautan https ke bukti di cloud
+                storage. Salah satu wajib diisi sebelum transaksi dibuat.
+              </p>
+              <input
+                type="file"
+                accept="image/*,.pdf"
+                className={`${inputBase} py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-sm`}
+                onChange={(e) =>
+                  setProofFile(e.target.files?.[0] ?? null)
+                }
+              />
+              <input
+                type="url"
+                className={`${inputBase} mt-2`}
+                placeholder="https://contoh.com/bukti-bayar.png"
+                value={paymentProofUrl}
+                onChange={(e) => setPaymentProofUrl(e.target.value)}
+              />
+            </div>
             <button
               type="submit"
               disabled={creating}
@@ -291,9 +350,10 @@ export default function TransactionsPage() {
             </button>
           </form>
           <p className="text-sm text-slate-600 max-w-md leading-relaxed">
-            Setelah transaksi berstatus <strong>PENDING</strong>, konfirmasi
-            pembayaran dilakukan oleh <strong>admin</strong> (bukan dari akun
-            pasien). Silakan tunggu atau hubungi admin.
+            Bukti bayar disimpan pada transaksi; admin hanya bisa mengonfirmasi
+            lunas jika bukti sudah ada. Setelah status{" "}
+            <strong>PENDING</strong>, konfirmasi pembayaran dilakukan oleh{" "}
+            <strong>admin</strong> (bukan dari akun pasien).
           </p>
         </section>
       )}
@@ -304,8 +364,8 @@ export default function TransactionsPage() {
         </h2>
         {user.role === "ADMIN" && (
           <p className="text-sm text-slate-600 leading-relaxed">
-            Transaksi <strong>PENDING</strong>: konfirmasi pembayaran dummy
-            lewat tombol di bawah (
+            Transaksi <strong>PENDING</strong> dengan bukti terlampir: konfirmasi
+            pembayaran dummy lewat tombol di bawah (
             <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono">
               PATCH /admin/transactions/:transactionId/pay
             </code>
@@ -339,6 +399,22 @@ export default function TransactionsPage() {
                     <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                       {t.id}
                     </p>
+                    {proofDisplayHref(t.paymentProofUrl) ? (
+                      <p className="text-sm mt-2">
+                        <a
+                          href={proofDisplayHref(t.paymentProofUrl)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-teal-700 underline font-medium"
+                        >
+                          Lihat bukti pembayaran
+                        </a>
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-800 mt-2">
+                        Belum ada bukti terlampir pada transaksi ini.
+                      </p>
+                    )}
                   </div>
                   {user.role === "PATIENT" && t.status === "PENDING" && (
                     <span className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl shrink-0 max-w-xs">
@@ -347,12 +423,21 @@ export default function TransactionsPage() {
                   )}
                 </div>
                 {user.role === "ADMIN" && t.status === "PENDING" && (
-                  <div className="border-t border-slate-100 pt-3">
+                  <div className="border-t border-slate-100 pt-3 space-y-2">
+                    {!proofDisplayHref(t.paymentProofUrl) ? (
+                      <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl">
+                        Konfirmasi bayar dinonaktifkan sampai pasien melampirkan
+                        bukti (URL atau unggahan).
+                      </p>
+                    ) : null}
                     <button
                       type="button"
-                      disabled={confirmingPayId === t.id}
+                      disabled={
+                        confirmingPayId === t.id ||
+                        !proofDisplayHref(t.paymentProofUrl)
+                      }
                       onClick={() => void confirmPaymentAsAdmin(t.id)}
-                      className={`${btnPrimary} text-sm`}
+                      className={`${btnPrimary} text-sm disabled:opacity-50 disabled:pointer-events-none`}
                     >
                       {confirmingPayId === t.id
                         ? "Memproses…"

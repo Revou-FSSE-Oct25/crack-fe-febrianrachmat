@@ -51,17 +51,15 @@ function messageFromErrorBody(body: unknown): string | undefined {
   return undefined;
 }
 
-/**
- * Memanggil API REST dan mengembalikan `data` dari envelope sukses backend
- * (`TransformResponseInterceptor`: `{ success, data }`).
- */
-export async function apiFetch<T>(
-  path: string,
-  options: ApiFetchOptions = {},
-): Promise<T> {
+function buildAuthHeaders(options: ApiFetchOptions): {
+  headers: Headers;
+  rest: Omit<ApiFetchOptions, "headers" | "skipAuth">;
+} {
   const { skipAuth, headers: initHeaders, ...rest } = options;
   const headers = new Headers(initHeaders);
-  if (!headers.has("Content-Type")) {
+  const isFormData =
+    typeof FormData !== "undefined" && rest.body instanceof FormData;
+  if (!headers.has("Content-Type") && !isFormData) {
     headers.set("Content-Type", "application/json");
   }
   if (!skipAuth) {
@@ -70,6 +68,18 @@ export async function apiFetch<T>(
       headers.set("Authorization", `Bearer ${token}`);
     }
   }
+  return { headers, rest };
+}
+
+/**
+ * Memanggil API REST dan mengembalikan `data` dari envelope sukses backend
+ * (`TransformResponseInterceptor`: `{ success, data }`).
+ */
+export async function apiFetch<T>(
+  path: string,
+  options: ApiFetchOptions = {},
+): Promise<T> {
+  const { headers, rest } = buildAuthHeaders(options);
 
   const res = await fetch(buildUrl(path), {
     ...rest,
@@ -152,17 +162,7 @@ async function fetchWithFullResponse(
   path: string,
   options: ApiFetchOptions,
 ): Promise<unknown> {
-  const { skipAuth, headers: initHeaders, ...rest } = options;
-  const headers = new Headers(initHeaders);
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-  if (!skipAuth) {
-    const token = getStoredAccessToken();
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-  }
+  const { headers, rest } = buildAuthHeaders(options);
 
   const res = await fetch(buildUrl(path), {
     ...rest,

@@ -13,6 +13,10 @@ export type CreateTransactionBody = {
     | "E_WALLET"
     | "CREDIT_CARD"
     | "QRIS";
+  /** Bukti https (opsional jika mengunggah `proofFile`) */
+  paymentProofUrl?: string;
+  /** Multipart field `proof` — wajib salah satu dengan URL jika backend mensyaratkan bukti */
+  proofFile?: File;
 };
 
 function paginationQuery(params: { page?: number; limit?: number }): string {
@@ -26,9 +30,28 @@ function paginationQuery(params: { page?: number; limit?: number }): string {
 export async function createTransaction(
   body: CreateTransactionBody,
 ): Promise<unknown> {
+  const hasFile = Boolean(body.proofFile);
+  if (hasFile) {
+    const fd = new FormData();
+    if (body.bookingId) fd.append("bookingId", body.bookingId);
+    if (body.consultationId) fd.append("consultationId", body.consultationId);
+    fd.append("paymentMethod", body.paymentMethod);
+    const url = body.paymentProofUrl?.trim();
+    if (url) fd.append("paymentProofUrl", url);
+    fd.append("proof", body.proofFile as File);
+    return apiFetch<unknown>("/transactions", {
+      method: "POST",
+      body: fd,
+    });
+  }
   return apiFetch<unknown>("/transactions", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      bookingId: body.bookingId,
+      consultationId: body.consultationId,
+      paymentMethod: body.paymentMethod,
+      paymentProofUrl: body.paymentProofUrl?.trim() || undefined,
+    }),
   });
 }
 
