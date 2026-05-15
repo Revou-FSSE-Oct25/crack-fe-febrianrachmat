@@ -21,8 +21,9 @@ import {
 import { transactionStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { PaymentProofLink } from "@/components/PaymentProofLink";
 import { ApiRequestError } from "@/lib/api/client";
-import { getApiBaseUrl } from "@/lib/api/config";
+import { hasTransactionPaymentProof } from "@/lib/api/payment-proof";
 import { listMyBookings } from "@/lib/api/bookings";
 import { transactionReferenceLabel } from "@/lib/api/contract";
 import {
@@ -40,15 +41,6 @@ type PendingBookingPay = {
   id: string;
   visitFeeSnapshot: string | number;
 };
-
-function proofDisplayHref(url: string | null | undefined): string | null {
-  const u = (url ?? "").trim();
-  if (!u) return null;
-  if (u.startsWith("http://") || u.startsWith("https://")) return u;
-  const base = getApiBaseUrl().replace(/\/$/, "");
-  const path = u.startsWith("/") ? u : `/${u}`;
-  return `${base}${path}`;
-}
 
 function formatIdrSnapshot(
   value: string | number | null | undefined,
@@ -464,22 +456,10 @@ export default function TransactionsPage() {
                     <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                       {t.id}
                     </p>
-                    {proofDisplayHref(t.paymentProofUrl) ? (
-                      <p className="text-sm mt-2">
-                        <a
-                          href={proofDisplayHref(t.paymentProofUrl)!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-teal-700 underline font-medium"
-                        >
-                          Lihat bukti pembayaran
-                        </a>
-                      </p>
-                    ) : (
-                      <p className="text-xs text-amber-800 mt-2">
-                        Belum ada bukti terlampir pada transaksi ini.
-                      </p>
-                    )}
+                    <PaymentProofLink
+                      transactionId={t.id}
+                      paymentProofUrl={t.paymentProofUrl}
+                    />
                   </div>
                   {user.role === "PATIENT" && t.status === "PENDING" && (
                     <span className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl shrink-0 max-w-xs">
@@ -489,7 +469,7 @@ export default function TransactionsPage() {
                 </div>
                 {user.role === "ADMIN" && t.status === "PENDING" && (
                   <div className="border-t border-slate-100 pt-3 space-y-2">
-                    {!proofDisplayHref(t.paymentProofUrl) ? (
+                    {!hasTransactionPaymentProof(t.paymentProofUrl) ? (
                       <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl">
                         Konfirmasi bayar dinonaktifkan sampai pasien melampirkan
                         bukti (URL atau unggahan).
@@ -499,7 +479,7 @@ export default function TransactionsPage() {
                       type="button"
                       disabled={
                         confirmingPayId === t.id ||
-                        !proofDisplayHref(t.paymentProofUrl)
+                        !hasTransactionPaymentProof(t.paymentProofUrl)
                       }
                       onClick={() => void confirmPaymentAsAdmin(t.id)}
                       className={`${btnPrimary} min-h-[44px] text-sm disabled:pointer-events-none disabled:opacity-50`}

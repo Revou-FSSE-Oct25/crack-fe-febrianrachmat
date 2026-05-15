@@ -1,3 +1,4 @@
+import { notifyUnauthorized } from "@/lib/auth/session";
 import { getStoredAccessToken } from "@/lib/auth/storage";
 import { getApiBaseUrl } from "./config";
 import type { PaginationMeta } from "./types";
@@ -102,6 +103,9 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok) {
+    if (res.status === 401 && !options.skipAuth) {
+      notifyUnauthorized();
+    }
     const msg =
       messageFromErrorBody(body) ??
       (typeof body === "object" &&
@@ -172,6 +176,9 @@ async function fetchWithFullResponse(
   const body = await parseJson(res);
 
   if (!res.ok) {
+    if (res.status === 401 && !options.skipAuth) {
+      notifyUnauthorized();
+    }
     const msg = messageFromErrorBody(body) ?? `Permintaan gagal (${res.status})`;
     throw new ApiRequestError(msg, res.status);
   }

@@ -2,6 +2,11 @@
 
 import type { AuthUserResponse } from "@/lib/api/types";
 import * as authApi from "@/lib/api/auth";
+import { ApiRequestError } from "@/lib/api/client";
+import { getMyProfile } from "@/lib/api/users";
+import {
+  setUnauthorizedHandler,
+} from "@/lib/auth/session";
 import {
   clearStoredAccessToken,
   clearStoredAuthUser,
@@ -11,6 +16,7 @@ import {
   setStoredAuthUser,
   syncAccessTokenCookieFromStorage,
 } from "@/lib/auth/storage";
+import { profileToAuthUser } from "@/lib/auth/user-map";
 import {
   createContext,
   useCallback,
@@ -31,26 +37,78 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function redirectToLogin(): void {
+  if (typeof window === "undefined") return;
+  const path = window.location.pathname;
+  if (path === "/login" || path === "/register") return;
+  const next = encodeURIComponent(
+    `${window.location.pathname}${window.location.search}`,
+  );
+  window.location.assign(`/login?next=${next}`);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUserResponse | null>(null);
   const [isReady, setIsReady] = useState(false);
 
+  const logout = useCallback(() => {
+    clearStoredAccessToken();
+    clearStoredAuthUser();
+    setUser(null);
+  }, []);
+
   useEffect(() => {
-    // Hindari setState sinkron di body effect (react-hooks/set-state-in-effect).
+    setUnauthorizedHandler(() => {
+      clearStoredAccessToken();
+      clearStoredAuthUser();
+      setUser(null);
+      redirectToLogin();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
-    queueMicrotask(() => {
-      if (cancelled) return;
+
+    async function bootstrap() {
       const token = getStoredAccessToken();
-      const stored = getStoredAuthUser();
-      if (token && stored) {
-        setUser(stored);
-        syncAccessTokenCookieFromStorage();
-      } else if (!token) {
+      if (!token) {
         clearStoredAuthUser();
         setUser(null);
+        setIsReady(true);
+        return;
       }
-      setIsReady(true);
-    });
+
+      syncAccessTokenCookieFromStorage();
+
+      try {
+        const profile = await getMyProfile();
+        if (cancelled) return;
+        const authUser = profileToAuthUser(profile);
+        if (!profile.isActive) {
+          clearStoredAccessToken();
+          clearStoredAuthUser();
+          setUser(null);
+          return;
+        }
+        setStoredAuthUser(authUser);
+        setUser(authUser);
+      } catch (err) {
+        if (cancelled) return;
+        if (err instanceof ApiRequestError && err.status === 401) {
+          clearStoredAccessToken();
+          clearStoredAuthUser();
+          setUser(null);
+        } else {
+          const stored = getStoredAuthUser();
+          if (stored) setUser(stored);
+        }
+      } finally {
+        if (!cancelled) setIsReady(true);
+      }
+    }
+
+    void bootstrap();
     return () => {
       cancelled = true;
     };
@@ -68,12 +126,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStoredAccessToken(data.accessToken);
     setStoredAuthUser(data.user);
     setUser(data.user);
-  }, []);
-
-  const logout = useCallback(() => {
-    clearStoredAccessToken();
-    clearStoredAuthUser();
-    setUser(null);
   }, []);
 
   const value = useMemo(
