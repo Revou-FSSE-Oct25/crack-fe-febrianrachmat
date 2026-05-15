@@ -182,6 +182,8 @@ GitHub Actions (`.github/workflows/ci.yml`) pada push/PR ke `main`:
 2. `npm run lint`
 3. `npm run build`
 
+**Coverage:** repo frontend belum memiliki unit test Jest/Vitest; pelaporan coverage otomatis ada di backend (`crack-be-febrianrachmat`) lewat `npm run test:cov` + ringkasan di GitHub Actions job summary.
+
 ---
 
 ## Monitoring API
