@@ -8,7 +8,7 @@ export default function Home() {
     <main className="pb-16">
       <Hero />
 
-      <section className="relative border-t border-slate-200/60 bg-gradient-to-b from-white via-slate-50/80 to-slate-50">
+      <section className="relative border-t border-slate-200/60 bg-gradient-to-b from-white via-slate-50/80 to-slate-50 dark:border-slate-700/60 dark:from-slate-900 dark:via-slate-900/95 dark:to-slate-950">
         <div
           className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-200/50 to-transparent"
           aria-hidden
@@ -45,7 +45,7 @@ export default function Home() {
           </div>
 
           <div className="mx-auto mt-14 max-w-4xl sm:mt-16">
-            <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-6 shadow-[0_1px_2px_rgb(15_23_42_/_0.04),0_12px_32px_rgb(15_23_42_/_0.06)] ring-1 ring-slate-900/[0.04] backdrop-blur-sm sm:p-8">
+            <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-6 shadow-[0_1px_2px_rgb(15_23_42_/_0.04),0_12px_32px_rgb(15_23_42_/_0.06)] ring-1 ring-slate-900/[0.04] backdrop-blur-sm sm:p-8 dark:border-slate-600/60 dark:bg-slate-800/90 dark:shadow-[0_8px_32px_rgb(0_0_0_/_0.35)] dark:ring-slate-900/40">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="space-y-2 text-center lg:max-w-md lg:text-left">
                   <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">

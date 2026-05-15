@@ -31,9 +31,12 @@ const AUTO_DISMISS_MS = 4500;
 
 function toastStyles(variant: ToastVariant): string {
   if (variant === "error") {
-    return "border-red-200/90 bg-red-50 text-red-900 ring-red-100";
+    return "border-red-200/90 bg-red-50 text-red-900 ring-red-100 dark:border-red-800/70 dark:bg-red-950/80 dark:text-red-100 dark:ring-red-900/50";
   }
-  return "border-emerald-200/90 bg-emerald-50 text-emerald-900 ring-emerald-100";
+  if (variant === "info") {
+    return "border-sky-200/90 bg-sky-50 text-sky-900 ring-sky-100 dark:border-sky-800/70 dark:bg-sky-950/80 dark:text-sky-100 dark:ring-sky-900/50";
+  }
+  return "border-emerald-200/90 bg-emerald-50 text-emerald-900 ring-emerald-100 dark:border-emerald-800/70 dark:bg-emerald-950/80 dark:text-emerald-100 dark:ring-emerald-900/50";
 }
 
 function ToastViewport({

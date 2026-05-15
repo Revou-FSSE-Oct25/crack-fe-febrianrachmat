@@ -9,19 +9,20 @@ import {
   IconUserCircle,
   IconXMark,
 } from "@/components/nav-icons";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 
 const iconBtn =
-  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 ring-1 ring-slate-200/90 bg-white/90 backdrop-blur-sm hover:bg-teal-50 hover:text-teal-800 hover:ring-teal-200/90 hover:shadow-sm transition-[box-shadow,colors,transform] duration-150 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600";
+  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 ring-1 ring-slate-200/90 bg-white/90 backdrop-blur-sm hover:bg-teal-50 hover:text-teal-800 hover:ring-teal-200/90 hover:shadow-sm transition-[box-shadow,colors,transform] duration-150 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 dark:bg-slate-800/90 dark:text-slate-200 dark:ring-slate-600/80 dark:hover:bg-slate-700 dark:hover:text-teal-200 dark:hover:ring-teal-700/60";
 
 const iconBtnDanger =
-  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 ring-1 ring-slate-200/90 bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:text-red-700 hover:ring-red-200/90 hover:shadow-sm transition-[box-shadow,colors,transform] duration-150 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500";
+  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-600 ring-1 ring-slate-200/90 bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:text-red-700 hover:ring-red-200/90 hover:shadow-sm transition-[box-shadow,colors,transform] duration-150 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500 dark:bg-slate-800/90 dark:text-slate-200 dark:ring-slate-600/80 dark:hover:bg-red-950/50 dark:hover:text-red-300 dark:hover:ring-red-800/60";
 
 const menuBtn =
-  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 ring-1 ring-slate-200/90 bg-white/90 backdrop-blur-sm hover:bg-slate-50 hover:ring-slate-300/90 transition-[box-shadow,colors,transform] duration-150 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 lg:hidden";
+  "inline-flex h-10 w-10 items-center justify-center rounded-xl text-slate-700 ring-1 ring-slate-200/90 bg-white/90 backdrop-blur-sm hover:bg-slate-50 hover:ring-slate-300/90 transition-[box-shadow,colors,transform] duration-150 active:scale-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600 lg:hidden dark:bg-slate-800/90 dark:text-slate-200 dark:ring-slate-600/80 dark:hover:bg-slate-700 dark:hover:ring-slate-500/80";
 
 function NavLink({
   href,
@@ -45,13 +46,13 @@ function NavLink({
         mobile
           ? `block rounded-xl px-4 py-3 text-base font-medium transition-colors ${
               active
-                ? "bg-teal-50 text-teal-900 ring-1 ring-teal-100"
-                : "text-slate-700 hover:bg-slate-50"
+                ? "bg-teal-50 text-teal-900 ring-1 ring-teal-100 dark:bg-teal-950/50 dark:text-teal-200 dark:ring-teal-800/70"
+                : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
             }`
           : `relative pb-0.5 text-sm font-medium transition-colors duration-150 ${
               active
-                ? "text-teal-800"
-                : "text-slate-600 hover:text-teal-700"
+                ? "text-teal-800 dark:text-teal-300"
+                : "text-slate-600 hover:text-teal-700 dark:text-slate-400 dark:hover:text-teal-300"
             }`
       }
     >
@@ -72,7 +73,7 @@ function UnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   const label = count > 99 ? "99+" : String(count);
   return (
-    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white dark:ring-slate-800">
       {label}
     </span>
   );
@@ -104,7 +105,7 @@ export default function Navbar() {
   }, [menuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl shadow-[0_1px_0_rgb(15_23_42_/_0.04)] supports-[backdrop-filter]:bg-white/70 relative">
+    <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl shadow-[0_1px_0_rgb(15_23_42_/_0.04)] supports-[backdrop-filter]:bg-white/70 relative dark:border-slate-700/70 dark:bg-slate-900/85 dark:shadow-[0_1px_0_rgb(0_0_0_/_0.35)] dark:supports-[backdrop-filter]:bg-slate-900/75">
       <nav
         className="max-w-7xl mx-auto flex items-center justify-between gap-3 px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5"
         aria-label="Utama"
@@ -181,6 +182,8 @@ export default function Navbar() {
             </Link>
           )}
 
+          <ThemeToggle />
+
           <button
             type="button"
             className={menuBtn}
@@ -204,7 +207,7 @@ export default function Navbar() {
           />
           <div
             id={menuId}
-            className="lg:hidden absolute left-0 right-0 top-full z-50 max-h-[min(70vh,calc(100dvh-5rem))] overflow-y-auto border-b border-slate-200/90 bg-white/95 px-4 py-4 shadow-lg shadow-slate-900/10 backdrop-blur-xl sm:px-6"
+            className="lg:hidden absolute left-0 right-0 top-full z-50 max-h-[min(70vh,calc(100dvh-5rem))] overflow-y-auto border-b border-slate-200/90 bg-white/95 px-4 py-4 shadow-lg shadow-slate-900/10 backdrop-blur-xl sm:px-6 dark:border-slate-700/80 dark:bg-slate-900/95 dark:shadow-black/30"
             role="dialog"
             aria-modal="true"
             aria-label="Navigasi"

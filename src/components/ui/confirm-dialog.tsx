@@ -68,7 +68,7 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby={description ? "confirm-dialog-desc" : undefined}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xl ring-1 ring-slate-900/5"
+        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xl ring-1 ring-slate-900/5 dark:border-slate-600/80 dark:bg-slate-800 dark:ring-slate-900/40"
       >
         <h2
           id="confirm-dialog-title"
@@ -79,7 +79,7 @@ export function ConfirmDialog({
         {description ? (
           <div
             id="confirm-dialog-desc"
-            className="mt-2 text-sm leading-relaxed text-slate-600"
+            className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400"
           >
             {description}
           </div>

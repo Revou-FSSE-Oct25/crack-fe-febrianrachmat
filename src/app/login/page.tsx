@@ -12,6 +12,7 @@ import {
   AlertBanner,
   btnPrimary,
   cardSurface,
+  labelClass,
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
@@ -19,8 +20,6 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-
-const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 function LoginPageContent() {
   const { login, user, isReady } = useAuth();

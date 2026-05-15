@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 
 const pill =
-  "inline-flex items-center rounded-full bg-white/90 px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200/90 shadow-sm hover:bg-teal-50 hover:text-teal-900 hover:ring-teal-200/90 hover:shadow transition-[box-shadow,colors] duration-150 active:scale-[0.98]";
+  "inline-flex items-center rounded-full bg-white/90 px-3 py-1.5 text-sm font-medium text-slate-700 ring-1 ring-slate-200/90 shadow-sm hover:bg-teal-50 hover:text-teal-900 hover:ring-teal-200/90 hover:shadow transition-[box-shadow,colors] duration-150 active:scale-[0.98] dark:bg-slate-800/90 dark:text-slate-200 dark:ring-slate-600/80 dark:hover:bg-slate-700 dark:hover:text-teal-200 dark:hover:ring-teal-700/60";
 
 const pillAdmin =
-  "inline-flex items-center rounded-full bg-teal-50/95 px-3 py-1.5 text-sm font-medium text-teal-900 ring-1 ring-teal-200/80 shadow-sm hover:bg-teal-100 hover:ring-teal-300/60 transition-[box-shadow,colors] duration-150 active:scale-[0.98]";
+  "inline-flex items-center rounded-full bg-teal-50/95 px-3 py-1.5 text-sm font-medium text-teal-900 ring-1 ring-teal-200/80 shadow-sm hover:bg-teal-100 hover:ring-teal-300/60 transition-[box-shadow,colors] duration-150 active:scale-[0.98] dark:bg-teal-950/50 dark:text-teal-200 dark:ring-teal-800/70 dark:hover:bg-teal-900/50";
 
 const pillPrimary =
   "inline-flex items-center justify-center rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-teal-900/20 hover:bg-teal-500 active:scale-[0.98] transition-[transform,colors,box-shadow] duration-150";
@@ -96,7 +96,7 @@ export default function AppShortcutBar() {
     if (isHome) return null;
     return (
       <div
-        className="border-b border-slate-200/80 bg-white/60 backdrop-blur-md"
+        className="border-b border-slate-200/80 bg-white/60 backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/60"
         aria-hidden
       >
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
@@ -109,7 +109,7 @@ export default function AppShortcutBar() {
   if (!user) {
     if (isHome) return null;
     return (
-      <div className="border-b border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-teal-50/50 backdrop-blur-sm">
+      <div className="border-b border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-teal-50/50 backdrop-blur-sm dark:border-slate-700/80 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-sm leading-snug text-slate-600">
             Siap konsultasi atau booking sesi fisioterapi?
@@ -191,7 +191,7 @@ export default function AppShortcutBar() {
   sections.push({ id: "quick", title: "Cepat", items: quickItems });
 
   return (
-    <div className="border-b border-slate-200/80 bg-white/85 shadow-[0_6px_24px_rgb(15_23_42_/_0.04)] backdrop-blur-md">
+    <div className="border-b border-slate-200/80 bg-white/85 shadow-[0_6px_24px_rgb(15_23_42_/_0.04)] backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/85 dark:shadow-[0_6px_24px_rgb(0_0_0_/_0.25)]">
       <div className="mx-auto max-w-7xl space-y-5 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="truncate text-sm text-slate-600" title={user.fullName}>
@@ -227,7 +227,7 @@ export default function AppShortcutBar() {
             {sections.map((s) => (
               <details
                 key={s.id}
-                className="group rounded-xl border border-slate-200/80 bg-slate-50/40 px-3 py-2 open:bg-white/90 open:shadow-sm"
+                className="group rounded-xl border border-slate-200/80 bg-slate-50/40 px-3 py-2 open:bg-white/90 open:shadow-sm dark:border-slate-700/80 dark:bg-slate-800/40 dark:open:bg-slate-800/90"
                 {...(s.defaultOpen ? { defaultOpen: true } : {})}
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-600 [&::-webkit-details-marker]:hidden">

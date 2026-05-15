@@ -15,7 +15,7 @@ const PROVIDER_LABELS: Record<OAuthProviderId, string> = {
 };
 
 const btnOAuth =
-  "flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50";
+  "flex w-full min-h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-700";
 
 type OAuthButtonsProps = {
   role?: "PATIENT" | "PHYSIOTHERAPIST";

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --kinova-teal: #0d9488;
   --kinova-teal-dark: #0f766e;
@@ -8,6 +10,15 @@
   --surface-card: #ffffff;
   --surface-elevated: 0 1px 2px rgb(15 23 42 / 0.04), 0 4px 12px rgb(15 23 42 / 0.06);
   --ring-focus: rgb(13 148 136 / 0.35);
+}
+
+.dark {
+  color-scheme: dark;
+  --kinova-teal-soft: #042f2e;
+  --surface: #0b1220;
+  --surface-card: #1e293b;
+  --surface-elevated: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.45);
+  --ring-focus: rgb(45 212 191 / 0.35);
 }
 
 @theme inline {
@@ -29,11 +40,82 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark body {
+  background-image:
+    radial-gradient(ellipse 120% 80% at 50% -20%, rgb(13 148 136 / 0.12), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgb(15 23 42 / 0.85), transparent);
+  color: #e2e8f0;
+}
+
 ::selection {
   background-color: rgb(204 251 241 / 0.9);
   color: #134e4a;
 }
 
+.dark ::selection {
+  background-color: rgb(13 148 136 / 0.45);
+  color: #ccfbf1;
+}
+
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* Light-only slate utilities used across pages */
+@layer utilities {
+  .dark .text-slate-900 {
+    color: var(--color-slate-50);
+  }
+  .dark .text-slate-800 {
+    color: var(--color-slate-100);
+  }
+  .dark .text-slate-700 {
+    color: var(--color-slate-200);
+  }
+  .dark .text-slate-600 {
+    color: var(--color-slate-400);
+  }
+  .dark .text-slate-500 {
+    color: var(--color-slate-400);
+  }
+  .dark .text-teal-900 {
+    color: var(--color-teal-200);
+  }
+  .dark .text-teal-800 {
+    color: var(--color-teal-300);
+  }
+  .dark .border-slate-200,
+  .dark .border-slate-200\/60,
+  .dark .border-slate-200\/70,
+  .dark .border-slate-200\/80,
+  .dark .border-slate-200\/90 {
+    border-color: color-mix(in oklab, var(--color-slate-600) 55%, transparent);
+  }
+  .dark .bg-white,
+  .dark .bg-white\/60,
+  .dark .bg-white\/70,
+  .dark .bg-white\/80,
+  .dark .bg-white\/85,
+  .dark .bg-white\/90,
+  .dark .bg-white\/95 {
+    background-color: color-mix(in oklab, var(--color-slate-800) 92%, transparent);
+  }
+  .dark .bg-slate-50,
+  .dark .bg-slate-50\/40,
+  .dark .bg-slate-50\/80,
+  .dark .bg-slate-50\/95 {
+    background-color: color-mix(in oklab, var(--color-slate-800) 65%, transparent);
+  }
+  .dark .bg-slate-100,
+  .dark .bg-slate-100\/80 {
+    background-color: var(--color-slate-700);
+  }
+  .dark .ring-slate-200\/60,
+  .dark .ring-slate-200\/80,
+  .dark .ring-slate-200\/90 {
+    --tw-ring-color: color-mix(in oklab, var(--color-slate-500) 45%, transparent);
+  }
+  .dark .hover\:bg-slate-50:hover {
+    background-color: var(--color-slate-700);
+  }
 }

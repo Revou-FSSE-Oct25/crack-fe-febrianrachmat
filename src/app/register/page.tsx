@@ -8,6 +8,7 @@ import {
   AlertBanner,
   btnPrimary,
   cardSurface,
+  labelClass,
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
@@ -19,8 +20,6 @@ import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-
-const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 const roleCardBase =
   "flex min-h-[52px] cursor-pointer items-start gap-3 rounded-xl border px-4 py-3.5 transition-[border-color,background,box-shadow] duration-150";
@@ -45,8 +44,8 @@ function RoleOption({
       htmlFor={id}
       className={`${roleCardBase} ${
         checked
-          ? "border-teal-300 bg-teal-50/80 ring-2 ring-teal-500/20"
-          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80"
+          ? "border-teal-300 bg-teal-50/80 ring-2 ring-teal-500/20 dark:border-teal-600 dark:bg-teal-950/50 dark:ring-teal-500/30"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 dark:border-slate-600 dark:bg-slate-800 dark:hover:border-slate-500 dark:hover:bg-slate-700/80"
       }`}
     >
       <input

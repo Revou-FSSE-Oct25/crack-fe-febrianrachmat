@@ -18,22 +18,25 @@ export const adminPageShell =
   "max-w-7xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
 
 export const cardSurface =
-  "rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm p-6 shadow-[0_1px_2px_rgb(15_23_42_/_0.04),0_8px_24px_rgb(15_23_42_/_0.06)] ring-1 ring-slate-900/[0.04] transition-shadow duration-200";
+  "rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm p-6 shadow-[0_1px_2px_rgb(15_23_42_/_0.04),0_8px_24px_rgb(15_23_42_/_0.06)] ring-1 ring-slate-900/[0.04] transition-shadow duration-200 dark:border-slate-600/60 dark:bg-slate-800/90 dark:shadow-[0_8px_24px_rgb(0_0_0_/_0.35)] dark:ring-slate-900/40";
 
 export const inputBase =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-[border-color,box-shadow] duration-150 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:opacity-60 disabled:bg-slate-50";
+  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 transition-[border-color,box-shadow] duration-150 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 disabled:opacity-60 disabled:bg-slate-50 dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:bg-slate-800 dark:focus:border-teal-400 dark:focus:ring-teal-400/25";
+
+export const labelClass =
+  "block text-sm font-medium text-slate-700 mb-1.5 dark:text-slate-300";
 
 export const btnPrimary =
-  "inline-flex items-center justify-center rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/15 hover:bg-teal-500 active:scale-[0.98] active:bg-teal-700 disabled:pointer-events-none disabled:opacity-50 transition-[transform,colors,box-shadow] duration-150";
+  "inline-flex items-center justify-center rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-900/15 hover:bg-teal-500 active:scale-[0.98] active:bg-teal-700 disabled:pointer-events-none disabled:opacity-50 transition-[transform,colors,box-shadow] duration-150 dark:shadow-teal-950/40";
 
 export const btnSecondary =
-  "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] disabled:opacity-50 transition-[transform,colors] duration-150";
+  "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] disabled:opacity-50 transition-[transform,colors] duration-150 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:border-slate-500";
 
 export const btnDanger =
   "inline-flex items-center justify-center rounded-xl bg-red-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-600 active:scale-[0.98] disabled:opacity-50 transition-[transform,colors] duration-150";
 
 export const btnOutline =
-  "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-[transform,colors] duration-150";
+  "inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-[transform,colors] duration-150 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:border-slate-500";
 
 export function PageHeader({
   eyebrow,
@@ -47,15 +50,15 @@ export function PageHeader({
   return (
     <header className="space-y-3">
       {eyebrow ? (
-        <p className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-800 ring-1 ring-teal-100">
+        <p className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-800 ring-1 ring-teal-100 dark:bg-teal-950/60 dark:text-teal-200 dark:ring-teal-800/80">
           {eyebrow}
         </p>
       ) : null}
-      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 text-balance">
+      <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 text-balance dark:text-slate-50">
         {title}
       </h1>
       {description ? (
-        <div className="max-w-2xl text-pretty text-sm leading-relaxed text-slate-600 sm:text-base">
+        <div className="max-w-2xl text-pretty text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-400">
           {description}
         </div>
       ) : null}
@@ -73,12 +76,12 @@ export function AdminBreadcrumb({
 }) {
   return (
     <nav
-      className="mb-6 border-b border-slate-200/90 pb-4"
+      className="mb-6 border-b border-slate-200/90 pb-4 dark:border-slate-700/80"
       aria-label="Navigasi admin"
     >
       <Link
         href={href}
-        className="inline-flex min-h-[40px] items-center rounded-xl px-2 py-1.5 text-sm font-semibold text-teal-800 outline-offset-2 ring-1 ring-transparent transition-[background,ring,colors] hover:bg-teal-50 hover:ring-teal-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600"
+        className="inline-flex min-h-[40px] items-center rounded-xl px-2 py-1.5 text-sm font-semibold text-teal-800 outline-offset-2 ring-1 ring-transparent transition-[background,ring,colors] hover:bg-teal-50 hover:ring-teal-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600 dark:text-teal-300 dark:hover:bg-teal-950/50 dark:hover:ring-teal-800/60"
       >
         {children}
       </Link>
@@ -97,8 +100,8 @@ export function AlertBanner({
 }) {
   const styles =
     variant === "error"
-      ? "border-red-200/90 bg-red-50/95 text-red-900 border-l-4 border-l-red-500"
-      : "border-emerald-200/90 bg-emerald-50/95 text-emerald-900 border-l-4 border-l-emerald-500";
+      ? "border-red-200/90 bg-red-50/95 text-red-900 border-l-4 border-l-red-500 dark:border-red-800/70 dark:bg-red-950/50 dark:text-red-100"
+      : "border-emerald-200/90 bg-emerald-50/95 text-emerald-900 border-l-4 border-l-emerald-500 dark:border-emerald-800/70 dark:bg-emerald-950/50 dark:text-emerald-100";
   return (
     <div
       role="alert"
@@ -170,12 +173,17 @@ export function CardGridSkeleton({ count = 6 }: { count?: number }) {
 }
 
 const statusChipTones = {
-  neutral: "bg-slate-100 text-slate-700 ring-slate-200/90",
-  warning: "bg-amber-50 text-amber-900 ring-amber-200/90",
-  info: "bg-sky-50 text-sky-900 ring-sky-200/90",
-  success: "bg-emerald-50 text-emerald-900 ring-emerald-200/90",
-  danger: "bg-red-50 text-red-900 ring-red-200/90",
-  brand: "bg-teal-50 text-teal-900 ring-teal-200/90",
+  neutral:
+    "bg-slate-100 text-slate-700 ring-slate-200/90 dark:bg-slate-700 dark:text-slate-200 dark:ring-slate-600/80",
+  warning:
+    "bg-amber-50 text-amber-900 ring-amber-200/90 dark:bg-amber-950/60 dark:text-amber-200 dark:ring-amber-800/70",
+  info: "bg-sky-50 text-sky-900 ring-sky-200/90 dark:bg-sky-950/60 dark:text-sky-200 dark:ring-sky-800/70",
+  success:
+    "bg-emerald-50 text-emerald-900 ring-emerald-200/90 dark:bg-emerald-950/60 dark:text-emerald-200 dark:ring-emerald-800/70",
+  danger:
+    "bg-red-50 text-red-900 ring-red-200/90 dark:bg-red-950/60 dark:text-red-200 dark:ring-red-800/70",
+  brand:
+    "bg-teal-50 text-teal-900 ring-teal-200/90 dark:bg-teal-950/60 dark:text-teal-200 dark:ring-teal-800/70",
 } as const;
 
 export function StatusChip({
@@ -212,7 +220,7 @@ export function EmptyState({
     <div
       className={`${cardSurface} text-center py-12 px-4 sm:px-6`}
     >
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-100">
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600 ring-1 ring-teal-100 dark:bg-teal-950/60 dark:text-teal-300 dark:ring-teal-800/70">
         <span className="text-xl" aria-hidden>
           ◇
         </span>
