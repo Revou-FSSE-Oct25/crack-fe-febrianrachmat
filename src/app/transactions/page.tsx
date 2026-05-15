@@ -24,6 +24,7 @@ import { useToast } from "@/contexts/toast-context";
 import { PaymentProofLink } from "@/components/PaymentProofLink";
 import { ApiRequestError } from "@/lib/api/client";
 import { hasTransactionPaymentProof } from "@/lib/api/payment-proof";
+import { validatePaymentProof, validateRefundReason } from "@/lib/validation";
 import { listMyBookings } from "@/lib/api/bookings";
 import { transactionReferenceLabel } from "@/lib/api/contract";
 import {
@@ -142,17 +143,12 @@ export default function TransactionsPage() {
       return;
     }
     const trimmedProofUrl = paymentProofUrl.trim();
-    if (!proofFile && !trimmedProofUrl) {
-      setError(
-        "Lampirkan bukti pembayaran: unggah file atau isi URL bukti (https).",
-      );
-      return;
-    }
-    if (
-      trimmedProofUrl &&
-      !trimmedProofUrl.startsWith("https://")
-    ) {
-      setError("URL bukti harus memakai https://");
+    const proofValidation = validatePaymentProof({
+      proofFile,
+      paymentProofUrl: trimmedProofUrl,
+    });
+    if (!proofValidation.ok) {
+      setError(proofValidation.message);
       return;
     }
     setCreating(true);
@@ -198,8 +194,9 @@ export default function TransactionsPage() {
 
   function requestRefundConfirm(id: string) {
     const reason = (refundReasonById[id] ?? "").trim();
-    if (reason.length < 5) {
-      setError("Alasan refund minimal 5 karakter.");
+    const refundValidation = validateRefundReason(reason);
+    if (!refundValidation.ok) {
+      setError(refundValidation.message);
       return;
     }
     setError(null);

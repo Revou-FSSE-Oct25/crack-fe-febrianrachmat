@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { validateCategoryName } from "@/lib/validation";
 import {
   createCategory,
   deleteCategory,
@@ -74,8 +75,9 @@ export default function AdminCategoriesPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     const name = createName.trim();
-    if (name.length < 3) {
-      setError("Nama minimal 3 karakter.");
+    const createValidation = validateCategoryName(name);
+    if (!createValidation.ok) {
+      setError(createValidation.message);
       return;
     }
     setCreating(true);
@@ -112,8 +114,9 @@ export default function AdminCategoriesPage() {
 
   async function handleSaveEdit(categoryId: string) {
     const name = editName.trim();
-    if (name.length < 3) {
-      setError("Nama minimal 3 karakter.");
+    const editValidation = validateCategoryName(name);
+    if (!editValidation.ok) {
+      setError(editValidation.message);
       return;
     }
     setSavingId(categoryId);

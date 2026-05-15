@@ -20,6 +20,7 @@ import { consultationStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { validateComplaint, validatePaymentProof } from "@/lib/validation";
 import {
   createConsultation,
   listMyConsultations,
@@ -99,8 +100,9 @@ export default function ConsultationsPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (complaint.trim().length < 10) {
-      setError("Keluhan minimal 10 karakter.");
+    const complaintValidation = validateComplaint(complaint);
+    if (!complaintValidation.ok) {
+      setError(complaintValidation.message);
       return;
     }
     if (!physiotherapistId) {
@@ -205,14 +207,12 @@ export default function ConsultationsPage() {
     const proof =
       proofByConsultationId[row.id] ?? ({ file: null, url: "" } satisfies ConsultationPayProof);
     const trimmedUrl = proof.url.trim();
-    if (!proof.file && !trimmedUrl) {
-      setError(
-        "Lampirkan bukti pembayaran: unggah file atau isi URL bukti (https).",
-      );
-      return;
-    }
-    if (trimmedUrl && !trimmedUrl.startsWith("https://")) {
-      setError("URL bukti harus memakai https://");
+    const proofValidation = validatePaymentProof({
+      proofFile: proof.file,
+      paymentProofUrl: trimmedUrl,
+    });
+    if (!proofValidation.ok) {
+      setError(proofValidation.message);
       return;
     }
     setError(null);

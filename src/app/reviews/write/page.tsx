@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { validateReviewWrite } from "@/lib/validation";
 import { listMyBookings } from "@/lib/api/bookings";
 import { createReview } from "@/lib/api/reviews";
 import Link from "next/link";
@@ -68,8 +69,13 @@ export default function WriteReviewPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!bookingId) {
-      setError("Pilih booking.");
+    const validation = validateReviewWrite({
+      bookingId,
+      rating,
+      comment,
+    });
+    if (!validation.ok) {
+      setError(validation.message);
       return;
     }
     setSubmitting(true);

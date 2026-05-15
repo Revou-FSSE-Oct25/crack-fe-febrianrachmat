@@ -15,6 +15,10 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
+import {
+  validateChangePassword,
+  validateProfileUpdate,
+} from "@/lib/validation";
 import type { UserProfile } from "@/lib/api/types";
 import {
   changePassword,
@@ -96,12 +100,13 @@ export default function ProfilePage() {
     e.preventDefault();
     setPasswordMsg(null);
     setError(null);
-    if (newPassword.length < 8) {
-      setError("Password baru minimal 8 karakter.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("Konfirmasi password tidak cocok.");
+    const validation = validateChangePassword({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    });
+    if (!validation.ok) {
+      setError(validation.message);
       return;
     }
     setChangingPassword(true);
@@ -130,6 +135,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setSavedMsg(null);
     setError(null);
+    const validation = validateProfileUpdate({ fullName, phoneNumber });
+    if (!validation.ok) {
+      setError(validation.message);
+      return;
+    }
     setSaving(true);
     try {
       const updated = await updateMyProfile({

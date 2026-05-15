@@ -197,6 +197,10 @@ Setelah `npm run prisma:seed` di backend — password default **`password123`**:
 
 ---
 
+## Validasi form
+
+Aturan validasi client-side (selaras DTO backend) ada di `src/lib/validation/`. Dipakai pada login, register, booking, transaksi, konsultasi, profil, ulasan, dan panel admin. Pesan error per field ditampilkan lewat `FieldError` pada form auth.
+
 ## Struktur repo
 
 ```

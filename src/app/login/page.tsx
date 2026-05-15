@@ -2,12 +2,15 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { FieldError, inputWithFieldError } from "@/components/ui/field-error";
+import type { FieldErrors } from "@/lib/validation";
+import { clearFieldError } from "@/lib/validation/form-helpers";
+import { validateLogin } from "@/lib/validation";
 import { buildRegisterHref, safeNextPath } from "@/lib/auth-next";
 import {
   AlertBanner,
   btnPrimary,
   cardSurface,
-  inputBase,
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
@@ -24,6 +27,7 @@ function LoginPageContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   const afterLoginPath = safeNextPath(searchParams.get("next")) ?? "/profile";
@@ -46,6 +50,13 @@ function LoginPageContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const validation = validateLogin({ email, password });
+    if (!validation.ok) {
+      setError(validation.message);
+      setFieldErrors(validation.fieldErrors ?? {});
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
     try {
       await login({ email: email.trim(), password });
@@ -85,7 +96,7 @@ function LoginPageContent() {
         </div>
 
         <div className={`${cardSurface} p-8 sm:p-9`}>
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5" noValidate>
             <div aria-live="polite">
               {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
             </div>
@@ -96,12 +107,16 @@ function LoginPageContent() {
               <input
                 id="login-email"
                 type="email"
-                required
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputBase}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError(setFieldErrors, "email");
+                }}
+                className={inputWithFieldError(Boolean(fieldErrors.email))}
+                aria-invalid={Boolean(fieldErrors.email)}
               />
+              <FieldError message={fieldErrors.email} />
             </div>
             <div>
               <label htmlFor="login-password" className={labelClass}>
@@ -110,13 +125,16 @@ function LoginPageContent() {
               <input
                 id="login-password"
                 type="password"
-                required
-                minLength={8}
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inputBase}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError(setFieldErrors, "password");
+                }}
+                className={inputWithFieldError(Boolean(fieldErrors.password))}
+                aria-invalid={Boolean(fieldErrors.password)}
               />
+              <FieldError message={fieldErrors.password} />
             </div>
             <button
               type="submit"

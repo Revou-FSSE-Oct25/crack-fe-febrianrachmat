@@ -15,6 +15,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
+  validateBroadcast,
+  validateDirectNotification,
+} from "@/lib/validation";
+import {
   broadcastNotification,
   sendNotificationToUser,
 } from "@/lib/api/notifications";
@@ -40,8 +44,9 @@ export default function AdminNotificationsPage() {
     e.preventDefault();
     const title = broadcastTitle.trim();
     const body = broadcastBody.trim();
-    if (title.length < 3 || body.length < 3) {
-      setError("Judul dan isi broadcast minimal 3 karakter.");
+    const validation = validateBroadcast({ title, body });
+    if (!validation.ok) {
+      setError(validation.message);
       return;
     }
 
@@ -66,12 +71,13 @@ export default function AdminNotificationsPage() {
     const uid = userId.trim();
     const title = userTitle.trim();
     const body = userBody.trim();
-    if (!uid) {
-      setError("User ID wajib diisi.");
-      return;
-    }
-    if (title.length < 3 || body.length < 3) {
-      setError("Judul dan isi notifikasi minimal 3 karakter.");
+    const validation = validateDirectNotification({
+      userId: uid,
+      title,
+      body,
+    });
+    if (!validation.ok) {
+      setError(validation.message);
       return;
     }
 

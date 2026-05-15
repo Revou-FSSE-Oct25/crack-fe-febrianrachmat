@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { validateRejectReason } from "@/lib/validation";
 import {
   listPendingPhysiotherapists,
   verifyPhysiotherapist,
@@ -114,8 +115,9 @@ export default function AdminPhysiotherapistsPage() {
 
   function requestReject(profileId: string) {
     const reason = (rejectReason[profileId] ?? "").trim();
-    if (reason.length < 5) {
-      setError("Alasan penolakan minimal 5 karakter.");
+    const validation = validateRejectReason(reason);
+    if (!validation.ok) {
+      setError(validation.message);
       return;
     }
     setError(null);

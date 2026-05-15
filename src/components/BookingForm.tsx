@@ -23,6 +23,7 @@ import {
   btnSecondary,
   inputBase,
 } from "@/components/ui/page-shell";
+import { validateBookingCreate } from "@/lib/validation";
 
 function todayISODate(): string {
   const d = new Date();
@@ -188,12 +189,20 @@ export default function BookingForm() {
     e.preventDefault();
     setSubmitError(null);
 
-    if (!physiotherapistId) {
-      setSubmitError("Pilih fisioterapis.");
+    const selectedSlot = slots.find((s) => s.id === slotId);
+    const validation = validateBookingCreate({
+      physiotherapistId,
+      slotId,
+      appointmentDateLocal,
+      hasSelectedSlot: Boolean(selectedSlot),
+      appointmentType,
+      clinicAddress,
+      homeVisitAddress,
+    });
+    if (!validation.ok) {
+      setSubmitError(validation.message);
       return;
     }
-
-    const selectedSlot = slots.find((s) => s.id === slotId);
 
     let appointmentDateIso: string | undefined;
     if (selectedSlot) {
@@ -205,28 +214,10 @@ export default function BookingForm() {
         return;
       }
       appointmentDateIso = d.toISOString();
-    } else {
-      setSubmitError(
-        "Pilih slot tersedia atau isi tanggal & waktu janji manual.",
-      );
-      return;
     }
 
     const clinic = clinicAddress.trim();
     const home = homeVisitAddress.trim();
-
-    if (appointmentType === "CLINIC_VISIT" && clinic.length < 10) {
-      setSubmitError(
-        "Alamat klinik wajib minimal 10 karakter untuk kunjungan klinik.",
-      );
-      return;
-    }
-    if (appointmentType === "HOME_VISIT" && home.length < 10) {
-      setSubmitError(
-        "Alamat kunjungan rumah wajib minimal 10 karakter untuk home visit.",
-      );
-      return;
-    }
 
     setSubmitLoading(true);
     try {

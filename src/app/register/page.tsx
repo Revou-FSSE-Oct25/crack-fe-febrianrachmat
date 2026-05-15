@@ -2,14 +2,17 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { FieldError, inputWithFieldError } from "@/components/ui/field-error";
 import {
   AlertBanner,
   btnPrimary,
   cardSurface,
-  inputBase,
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
+import type { FieldErrors } from "@/lib/validation";
+import { clearFieldError } from "@/lib/validation/form-helpers";
+import { validateRegister } from "@/lib/validation";
 import { buildLoginHref, safeNextPath } from "@/lib/auth-next";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -74,6 +77,7 @@ function RegisterPageContent() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState<"PATIENT" | "PHYSIOTHERAPIST">("PATIENT");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -93,6 +97,18 @@ function RegisterPageContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const validation = validateRegister({
+      fullName,
+      email,
+      password,
+      phoneNumber,
+    });
+    if (!validation.ok) {
+      setError(validation.message);
+      setFieldErrors(validation.fieldErrors ?? {});
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
     try {
       await register({
@@ -172,12 +188,16 @@ function RegisterPageContent() {
               <input
                 id="register-fullName"
                 type="text"
-                required
                 autoComplete="name"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className={inputBase}
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  clearFieldError(setFieldErrors, "fullName");
+                }}
+                className={inputWithFieldError(Boolean(fieldErrors.fullName))}
+                aria-invalid={Boolean(fieldErrors.fullName)}
               />
+              <FieldError message={fieldErrors.fullName} />
             </div>
 
             <div>
@@ -187,26 +207,36 @@ function RegisterPageContent() {
               <input
                 id="register-email"
                 type="email"
-                required
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputBase}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError(setFieldErrors, "email");
+                }}
+                className={inputWithFieldError(Boolean(fieldErrors.email))}
+                aria-invalid={Boolean(fieldErrors.email)}
               />
+              <FieldError message={fieldErrors.email} />
             </div>
 
             <div>
               <label htmlFor="register-phone" className={labelClass}>
-                Nomor telepon <span className="font-normal text-slate-500">(opsional)</span>
+                Nomor telepon{" "}
+                <span className="font-normal text-slate-500">(opsional)</span>
               </label>
               <input
                 id="register-phone"
                 type="tel"
                 autoComplete="tel"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className={inputBase}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value);
+                  clearFieldError(setFieldErrors, "phoneNumber");
+                }}
+                className={inputWithFieldError(Boolean(fieldErrors.phoneNumber))}
+                aria-invalid={Boolean(fieldErrors.phoneNumber)}
               />
+              <FieldError message={fieldErrors.phoneNumber} />
             </div>
 
             <div>
@@ -216,14 +246,21 @@ function RegisterPageContent() {
               <input
                 id="register-password"
                 type="password"
-                required
-                minLength={8}
                 autoComplete="new-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={inputBase}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  clearFieldError(setFieldErrors, "password");
+                }}
+                className={inputWithFieldError(Boolean(fieldErrors.password))}
+                aria-invalid={Boolean(fieldErrors.password)}
               />
-              <p className="mt-1.5 text-xs text-slate-500">Minimal 8 karakter.</p>
+              <FieldError message={fieldErrors.password} />
+              {!fieldErrors.password ? (
+                <p className="mt-1.5 text-xs text-slate-500">
+                  Minimal 8 karakter.
+                </p>
+              ) : null}
             </div>
 
             <button
@@ -255,3 +292,5 @@ export default function RegisterPage() {
     </Suspense>
   );
 }
+
+
