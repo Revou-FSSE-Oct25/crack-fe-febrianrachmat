@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
+import { buildRegisterHref, safeNextPath } from "@/lib/auth-next";
 import {
   AlertBanner,
   btnPrimary,
@@ -14,11 +15,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-function safeNextPath(next: string | null): string | null {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
-  return next;
-}
-
 const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
 function LoginPageContent() {
@@ -30,8 +26,8 @@ function LoginPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const afterLoginPath =
-    safeNextPath(searchParams.get("next")) ?? "/profile";
+  const afterLoginPath = safeNextPath(searchParams.get("next")) ?? "/profile";
+  const registerHref = buildRegisterHref(afterLoginPath);
 
   useEffect(() => {
     if (isReady && user) {
@@ -80,7 +76,7 @@ function LoginPageContent() {
           <p className="mt-3 text-sm text-slate-600">
             Belum punya akun?{" "}
             <Link
-              href="/register"
+              href={registerHref}
               className="font-semibold text-teal-700 hover:text-teal-600 underline-offset-2 hover:underline"
             >
               Daftar
@@ -90,7 +86,9 @@ function LoginPageContent() {
 
         <div className={`${cardSurface} p-8 sm:p-9`}>
           <form onSubmit={handleSubmit} className="space-y-5">
-            {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+            <div aria-live="polite">
+              {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+            </div>
             <div>
               <label htmlFor="login-email" className={labelClass}>
                 Email
@@ -123,7 +121,7 @@ function LoginPageContent() {
             <button
               type="submit"
               disabled={loading}
-              className={`${btnPrimary} w-full py-3`}
+              className={`${btnPrimary} w-full min-h-[48px] py-3`}
             >
               {loading ? "Memproses…" : "Masuk"}
             </button>

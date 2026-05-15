@@ -10,15 +10,64 @@ import {
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
+import { buildLoginHref, safeNextPath } from "@/lib/auth-next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
 const labelClass = "block text-sm font-medium text-slate-700 mb-1.5";
 
-export default function RegisterPage() {
+const roleCardBase =
+  "flex min-h-[52px] cursor-pointer items-start gap-3 rounded-xl border px-4 py-3.5 transition-[border-color,background,box-shadow] duration-150";
+
+function RoleOption({
+  id,
+  name,
+  checked,
+  onChange,
+  title,
+  description,
+}: {
+  id: string;
+  name: string;
+  checked: boolean;
+  onChange: () => void;
+  title: string;
+  description: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={`${roleCardBase} ${
+        checked
+          ? "border-teal-300 bg-teal-50/80 ring-2 ring-teal-500/20"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80"
+      }`}
+    >
+      <input
+        id={id}
+        type="radio"
+        name={name}
+        checked={checked}
+        onChange={onChange}
+        className="mt-1 h-4 w-4 shrink-0 border-slate-300 text-teal-600 focus:ring-teal-500"
+      />
+      <span>
+        <span className="block text-sm font-semibold text-slate-900">{title}</span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-slate-600">
+          {description}
+        </span>
+      </span>
+    </label>
+  );
+}
+
+function RegisterPageContent() {
   const { register, user, isReady } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const afterRegisterPath = safeNextPath(searchParams.get("next")) ?? "/profile";
+  const loginHref = buildLoginHref(afterRegisterPath);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,9 +78,9 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (isReady && user) {
-      router.replace("/profile");
+      router.replace(afterRegisterPath);
     }
-  }, [isReady, user, router]);
+  }, [isReady, user, router, afterRegisterPath]);
 
   if (!isReady) {
     return <PageLoading />;
@@ -53,7 +102,7 @@ export default function RegisterPage() {
         phoneNumber: phoneNumber.trim() || undefined,
         role,
       });
-      router.push("/profile");
+      router.push(afterRegisterPath);
     } catch (err) {
       const msg =
         err instanceof ApiRequestError
@@ -70,7 +119,7 @@ export default function RegisterPage() {
       className={`${pageShell} flex min-h-[calc(100vh-12rem)] flex-col items-center justify-center py-10 sm:py-14 pb-16`}
     >
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
             Akun baru
           </p>
@@ -80,7 +129,7 @@ export default function RegisterPage() {
           <p className="mt-3 text-sm text-slate-600">
             Sudah punya akun?{" "}
             <Link
-              href="/login"
+              href={loginHref}
               className="font-semibold text-teal-700 hover:text-teal-600 underline-offset-2 hover:underline"
             >
               Masuk
@@ -89,40 +138,83 @@ export default function RegisterPage() {
         </div>
 
         <div className={`${cardSurface} p-8 sm:p-9`}>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+            <div aria-live="polite">
+              {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+            </div>
+
+            <fieldset className="space-y-3">
+              <legend className={labelClass}>Jenis akun</legend>
+              <div className="grid gap-3 sm:grid-cols-1">
+                <RoleOption
+                  id="role-patient"
+                  name="role"
+                  checked={role === "PATIENT"}
+                  onChange={() => setRole("PATIENT")}
+                  title="Pasien"
+                  description="Booking kunjungan dan konsultasi dengan fisioterapis."
+                />
+                <RoleOption
+                  id="role-physio"
+                  name="role"
+                  checked={role === "PHYSIOTHERAPIST"}
+                  onChange={() => setRole("PHYSIOTHERAPIST")}
+                  title="Fisioterapis"
+                  description="Kelola jadwal, konsultasi, dan profil praktik Anda."
+                />
+              </div>
+            </fieldset>
+
             <div>
-              <label htmlFor="reg-name" className={labelClass}>
+              <label htmlFor="register-fullName" className={labelClass}>
                 Nama lengkap
               </label>
               <input
-                id="reg-name"
+                id="register-fullName"
+                type="text"
                 required
-                minLength={3}
+                autoComplete="name"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className={inputBase}
               />
             </div>
+
             <div>
-              <label htmlFor="reg-email" className={labelClass}>
+              <label htmlFor="register-email" className={labelClass}>
                 Email
               </label>
               <input
-                id="reg-email"
+                id="register-email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className={inputBase}
               />
             </div>
+
             <div>
-              <label htmlFor="reg-password" className={labelClass}>
+              <label htmlFor="register-phone" className={labelClass}>
+                Nomor telepon <span className="font-normal text-slate-500">(opsional)</span>
+              </label>
+              <input
+                id="register-phone"
+                type="tel"
+                autoComplete="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className={inputBase}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="register-password" className={labelClass}>
                 Kata sandi
               </label>
               <input
-                id="reg-password"
+                id="register-password"
                 type="password"
                 required
                 minLength={8}
@@ -131,38 +223,13 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className={inputBase}
               />
+              <p className="mt-1.5 text-xs text-slate-500">Minimal 8 karakter.</p>
             </div>
-            <div>
-              <label htmlFor="reg-phone" className={labelClass}>
-                Nomor telepon (opsional)
-              </label>
-              <input
-                id="reg-phone"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                className={inputBase}
-              />
-            </div>
-            <div>
-              <label htmlFor="reg-role" className={labelClass}>
-                Peran
-              </label>
-              <select
-                id="reg-role"
-                value={role}
-                onChange={(e) =>
-                  setRole(e.target.value as "PATIENT" | "PHYSIOTHERAPIST")
-                }
-                className={inputBase}
-              >
-                <option value="PATIENT">Pasien</option>
-                <option value="PHYSIOTHERAPIST">Fisioterapis</option>
-              </select>
-            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className={`${btnPrimary} w-full py-3`}
+              className={`${btnPrimary} w-full min-h-[48px] py-3`}
             >
               {loading ? "Memproses…" : "Daftar"}
             </button>
@@ -170,13 +237,21 @@ export default function RegisterPage() {
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-          Lihat{" "}
+          Dengan mendaftar, Anda menyetujui ringkasan{" "}
           <Link href="/kebijakan" className="text-teal-700 font-medium hover:underline">
             kebijakan produk & demo
-          </Link>{" "}
-          sebelum menggunakan akun demo.
+          </Link>
+          .
         </p>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
