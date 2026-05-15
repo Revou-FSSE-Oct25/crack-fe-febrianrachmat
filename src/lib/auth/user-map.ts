@@ -7,5 +7,6 @@ export function profileToAuthUser(profile: UserProfile): AuthUserResponse {
     email: profile.email,
     role: profile.role,
     isActive: profile.isActive,
+    emailVerified: profile.emailVerified,
   };
 }

@@ -17,12 +17,25 @@ export type AuthUserResponse = {
   email: string;
   role: UserRole;
   isActive: boolean;
+  emailVerified?: boolean;
 };
 
 export type LoginResponseData = {
   accessToken: string;
   user: AuthUserResponse;
 };
+
+export type RegisterResponseData =
+  | {
+      requiresEmailVerification: true;
+      email: string;
+      message: string;
+    }
+  | {
+      requiresEmailVerification: false;
+      accessToken: string;
+      user: AuthUserResponse;
+    };
 
 export type PaginationMeta = {
   page: number;
@@ -59,6 +72,7 @@ export type UserProfile = {
   avatarUrl?: string | null;
   role: UserRole;
   isActive: boolean;
+  emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
 };

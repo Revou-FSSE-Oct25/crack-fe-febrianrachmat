@@ -1,4 +1,8 @@
-import type { AuthMePayload, LoginResponseData } from "./types";
+import type {
+  AuthMePayload,
+  LoginResponseData,
+  RegisterResponseData,
+} from "./types";
 import { apiFetch } from "./client";
 
 /** POST /auth/register — body selaras `RegisterDto` */
@@ -16,8 +20,10 @@ export type LoginBody = {
   password: string;
 };
 
-export async function register(body: RegisterBody): Promise<LoginResponseData> {
-  return apiFetch<LoginResponseData>("/auth/register", {
+export async function register(
+  body: RegisterBody,
+): Promise<RegisterResponseData> {
+  return apiFetch<RegisterResponseData>("/auth/register", {
     method: "POST",
     body: JSON.stringify(body),
     skipAuth: true,

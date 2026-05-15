@@ -347,6 +347,18 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {profile && !profile.emailVerified ? (
+        <AlertBanner variant="error" className="max-w-lg mx-auto">
+          Email belum diverifikasi.{" "}
+          <Link
+            href={`/verify-email/sent?email=${encodeURIComponent(profile.email)}`}
+            className="font-semibold underline"
+          >
+            Kirim ulang link verifikasi
+          </Link>
+        </AlertBanner>
+      ) : null}
+
       {loading && !profile ? (
         <div className={`${cardSurface} mx-auto max-w-lg animate-pulse space-y-4`}>
           <div className="h-4 w-40 rounded bg-slate-200" />

@@ -64,10 +64,13 @@ function LoginPageContent() {
       await login({ email: email.trim(), password });
       router.push(afterLoginPath);
     } catch (err) {
-      const msg =
+      let msg =
         err instanceof ApiRequestError
           ? err.message
           : "Login gagal. Periksa email dan kata sandi.";
+      if (err instanceof ApiRequestError && err.status === 403) {
+        msg = `${msg} Kirim ulang link di halaman verifikasi email.`;
+      }
       setError(msg);
     } finally {
       setLoading(false);
@@ -99,8 +102,18 @@ function LoginPageContent() {
 
         <div className={`${cardSurface} p-8 sm:p-9`}>
           <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-            <div aria-live="polite">
+            <div aria-live="polite" className="space-y-3">
               {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+              {error?.includes("verifikasi") ? (
+                <p className="text-center text-sm">
+                  <Link
+                    href={`/verify-email/sent?email=${encodeURIComponent(email)}`}
+                    className="font-semibold text-teal-700 hover:underline"
+                  >
+                    Kirim ulang link verifikasi
+                  </Link>
+                </p>
+              ) : null}
             </div>
             <div>
               <label htmlFor="login-email" className={labelClass}>

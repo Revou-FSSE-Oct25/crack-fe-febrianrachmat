@@ -113,13 +113,19 @@ function RegisterPageContent() {
     setFieldErrors({});
     setLoading(true);
     try {
-      await register({
+      const result = await register({
         fullName: fullName.trim(),
         email: email.trim(),
         password,
         phoneNumber: phoneNumber.trim() || undefined,
         role,
       });
+      if (result.requiresEmailVerification) {
+        router.push(
+          `/verify-email/sent?email=${encodeURIComponent(result.email)}`,
+        );
+        return;
+      }
       router.push(afterRegisterPath);
     } catch (err) {
       const msg =
