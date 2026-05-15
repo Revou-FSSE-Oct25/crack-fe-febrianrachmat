@@ -40,6 +40,44 @@ export function IconArrowRightOnRectangle({ className }: IconProps) {
   );
 }
 
+export function IconBars3({ className }: IconProps) {
+  return (
+    <svg
+      className={`${base} ${className ?? ""}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+      />
+    </svg>
+  );
+}
+
+export function IconXMark({ className }: IconProps) {
+  return (
+    <svg
+      className={`${base} ${className ?? ""}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M6 18 18 6M6 6l12 12"
+      />
+    </svg>
+  );
+}
+
 export function IconArrowRightEndOnRectangle({ className }: IconProps) {
   return (
     <svg

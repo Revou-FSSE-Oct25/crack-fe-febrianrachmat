@@ -5,9 +5,17 @@ import type { ReactNode } from "react";
 export const pageShell =
   "max-w-4xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8";
 
+/** Lebar konten marketing / listing (selaras navbar max-w-7xl). */
+export const widePageShell =
+  "max-w-7xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8";
+
+/** Form satu kolom (ulasan singkat, dsb.); padding selaras `pageShell`. */
+export const formPageShell =
+  "max-w-lg mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-6 pb-16";
+
 /** Lebar admin (ringkasan, verifikasi, moderasi); padding selaras `pageShell`. */
 export const adminPageShell =
-  "max-w-6xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
+  "max-w-7xl mx-auto py-10 sm:py-14 px-4 sm:px-6 lg:px-8 space-y-8 pb-16";
 
 export const cardSurface =
   "rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm p-6 shadow-[0_1px_2px_rgb(15_23_42_/_0.04),0_8px_24px_rgb(15_23_42_/_0.06)] ring-1 ring-slate-900/[0.04] transition-shadow duration-200";
@@ -37,7 +45,7 @@ export function PageHeader({
   description?: ReactNode;
 }) {
   return (
-    <header className="space-y-2">
+    <header className="space-y-3">
       {eyebrow ? (
         <p className="inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-800 ring-1 ring-teal-100">
           {eyebrow}
@@ -47,11 +55,34 @@ export function PageHeader({
         {title}
       </h1>
       {description ? (
-        <div className="text-slate-600 text-sm sm:text-base max-w-2xl leading-relaxed text-pretty">
+        <div className="max-w-2xl text-pretty text-sm leading-relaxed text-slate-600 sm:text-base">
           {description}
         </div>
       ) : null}
     </header>
+  );
+}
+
+/** Breadcrumb admin — kembali ke dashboard. */
+export function AdminBreadcrumb({
+  href = "/admin/dashboard",
+  children = "← Dashboard",
+}: {
+  href?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <nav
+      className="mb-6 border-b border-slate-200/90 pb-4"
+      aria-label="Navigasi admin"
+    >
+      <Link
+        href={href}
+        className="inline-flex min-h-[40px] items-center rounded-xl px-2 py-1.5 text-sm font-semibold text-teal-800 outline-offset-2 ring-1 ring-transparent transition-[background,ring,colors] hover:bg-teal-50 hover:ring-teal-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-teal-600"
+      >
+        {children}
+      </Link>
+    </nav>
   );
 }
 
@@ -78,22 +109,12 @@ export function AlertBanner({
   );
 }
 
-export function SignInRequired({
-  message = "Silakan masuk untuk melanjutkan.",
-}: {
-  message?: string;
-}) {
-  return (
-    <main className={`${pageShell} text-center`}>
-      <div className={`${cardSurface} mx-auto max-w-md space-y-5 py-10`}>
-        <p className="text-slate-700 leading-relaxed">{message}</p>
-        <Link href="/login" className={btnPrimary}>
-          Masuk
-        </Link>
-      </div>
-    </main>
-  );
-}
+export { SignInRequired } from "@/components/ui/sign-in-required";
+export { ConfirmDialog } from "@/components/ui/confirm-dialog";
+export type { ConfirmDialogProps } from "@/components/ui/confirm-dialog";
+
+/** Bungkus daftar admin panjang agar tidak overflow di layar sempit. */
+export const adminScrollWrap = "min-w-0 overflow-x-auto";
 
 export function PageLoading({ label = "Memuat…" }: { label?: string }) {
   return (
@@ -128,12 +149,64 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
   );
 }
 
+/** Skeleton grid kartu (browse terapis, dsb.). */
+export function CardGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <ul
+      className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      aria-hidden
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={i} className={`${cardSurface} animate-pulse space-y-3`}>
+          <div className="h-5 w-3/4 rounded-lg bg-gradient-to-r from-slate-200 to-slate-100" />
+          <div className="h-3 w-1/2 rounded-lg bg-slate-100" />
+          <div className="h-3 w-full rounded-lg bg-slate-100" />
+          <div className="h-3 w-[90%] rounded-lg bg-slate-100" />
+          <div className="mt-2 h-4 w-24 rounded-lg bg-slate-100" />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const statusChipTones = {
+  neutral: "bg-slate-100 text-slate-700 ring-slate-200/90",
+  warning: "bg-amber-50 text-amber-900 ring-amber-200/90",
+  info: "bg-sky-50 text-sky-900 ring-sky-200/90",
+  success: "bg-emerald-50 text-emerald-900 ring-emerald-200/90",
+  danger: "bg-red-50 text-red-900 ring-red-200/90",
+  brand: "bg-teal-50 text-teal-900 ring-teal-200/90",
+} as const;
+
+export function StatusChip({
+  label,
+  tone = "neutral",
+}: {
+  label: string;
+  tone?: keyof typeof statusChipTones;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ${statusChipTones[tone]}`}
+    >
+      {label}
+    </span>
+  );
+}
+
+export type EmptyStateAction = {
+  label: string;
+  variant?: "primary" | "secondary";
+} & ({ href: string } | { onClick: () => void });
+
 export function EmptyState({
   title,
   hint,
+  actions,
 }: {
   title: string;
   hint?: ReactNode;
+  actions?: EmptyStateAction[];
 }) {
   return (
     <div
@@ -148,6 +221,37 @@ export function EmptyState({
       {hint ? (
         <div className="mt-2 text-sm text-slate-600 leading-relaxed max-w-md mx-auto">
           {hint}
+        </div>
+      ) : null}
+      {actions && actions.length > 0 ? (
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
+          {actions.map((action) => {
+            const className =
+              action.variant === "secondary"
+                ? `${btnSecondary} min-h-[44px] justify-center px-5`
+                : `${btnPrimary} min-h-[44px] justify-center px-5`;
+            if ("href" in action) {
+              return (
+                <Link
+                  key={`${action.label}-${action.href}`}
+                  href={action.href}
+                  className={className}
+                >
+                  {action.label}
+                </Link>
+              );
+            }
+            return (
+              <button
+                key={action.label}
+                type="button"
+                onClick={action.onClick}
+                className={className}
+              >
+                {action.label}
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </div>
