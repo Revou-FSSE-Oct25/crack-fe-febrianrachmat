@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { FieldError, inputWithFieldError } from "@/components/ui/field-error";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   AlertBanner,
   btnPrimary,
@@ -189,6 +190,7 @@ function RegisterPageContent() {
                 id="register-fullName"
                 type="text"
                 autoComplete="name"
+                placeholder="Contoh: Budi Santoso"
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);
@@ -208,6 +210,7 @@ function RegisterPageContent() {
                 id="register-email"
                 type="email"
                 autoComplete="email"
+                placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -228,6 +231,7 @@ function RegisterPageContent() {
                 id="register-phone"
                 type="tel"
                 autoComplete="tel"
+                placeholder="08123456789"
                 value={phoneNumber}
                 onChange={(e) => {
                   setPhoneNumber(e.target.value);
@@ -243,24 +247,19 @@ function RegisterPageContent() {
               <label htmlFor="register-password" className={labelClass}>
                 Kata sandi
               </label>
-              <input
+              <PasswordInput
                 id="register-password"
-                type="password"
                 autoComplete="new-password"
+                placeholder="Buat kata sandi Anda"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
+                onChange={(v) => {
+                  setPassword(v);
                   clearFieldError(setFieldErrors, "password");
                 }}
-                className={inputWithFieldError(Boolean(fieldErrors.password))}
-                aria-invalid={Boolean(fieldErrors.password)}
+                hasError={Boolean(fieldErrors.password)}
+                errorMessage={fieldErrors.password}
+                hint="Minimal 8 karakter."
               />
-              <FieldError message={fieldErrors.password} />
-              {!fieldErrors.password ? (
-                <p className="mt-1.5 text-xs text-slate-500">
-                  Minimal 8 karakter.
-                </p>
-              ) : null}
             </div>
 
             <button

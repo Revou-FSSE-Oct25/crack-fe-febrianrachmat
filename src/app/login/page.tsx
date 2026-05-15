@@ -3,6 +3,7 @@
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { FieldError, inputWithFieldError } from "@/components/ui/field-error";
+import { PasswordInput } from "@/components/ui/password-input";
 import type { FieldErrors } from "@/lib/validation";
 import { clearFieldError } from "@/lib/validation/form-helpers";
 import { validateLogin } from "@/lib/validation";
@@ -108,6 +109,7 @@ function LoginPageContent() {
                 id="login-email"
                 type="email"
                 autoComplete="email"
+                placeholder="nama@email.com"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -122,19 +124,18 @@ function LoginPageContent() {
               <label htmlFor="login-password" className={labelClass}>
                 Kata sandi
               </label>
-              <input
+              <PasswordInput
                 id="login-password"
-                type="password"
                 autoComplete="current-password"
+                placeholder="Masukkan kata sandi Anda"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
+                onChange={(v) => {
+                  setPassword(v);
                   clearFieldError(setFieldErrors, "password");
                 }}
-                className={inputWithFieldError(Boolean(fieldErrors.password))}
-                aria-invalid={Boolean(fieldErrors.password)}
+                hasError={Boolean(fieldErrors.password)}
+                errorMessage={fieldErrors.password}
               />
-              <FieldError message={fieldErrors.password} />
             </div>
             <button
               type="submit"
