@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   listMyBookings,
@@ -91,7 +92,7 @@ export default function BookingsPage() {
         IN_PROGRESS: "Sesi dimulai.",
         COMPLETED: "Booking ditandai selesai.",
       };
-      if (labels[status]) toast.success(labels[status]);
+      if (labels[status]) actionSuccessWithNotify(toast, labels[status]);
       await load();
     } catch (err) {
       setError(
@@ -107,7 +108,7 @@ export default function BookingsPage() {
     try {
       await updateBookingStatus(cancelConfirmId, { status: "CANCELLED" });
       setCancelConfirmId(null);
-      toast.success("Booking dibatalkan.");
+      actionSuccessWithNotify(toast, "Booking dibatalkan.");
       await load();
     } catch (err) {
       setError(

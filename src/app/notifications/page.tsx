@@ -19,6 +19,7 @@ import {
   widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
+import { requestUnreadRefresh } from "@/lib/notifications/unread-refresh";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -79,6 +80,7 @@ export default function NotificationsPage() {
   async function markOne(id: string) {
     try {
       await markNotificationRead(id);
+      requestUnreadRefresh();
       await load(page);
     } catch (err) {
       setError(
@@ -90,6 +92,7 @@ export default function NotificationsPage() {
   async function markAll() {
     try {
       await markAllNotificationsRead();
+      requestUnreadRefresh();
       await load(page);
     } catch (err) {
       setError(

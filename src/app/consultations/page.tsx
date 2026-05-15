@@ -19,6 +19,7 @@ import {
 import { consultationStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
 import { validateComplaint, validatePaymentProof } from "@/lib/validation";
 import {
@@ -130,8 +131,9 @@ export default function ConsultationsPage() {
       });
       setComplaint("");
       setSlaTier("STANDARD");
-      toast.success(
-        "Permintaan konsultasi terkirim. Tunggu terapis menerima, lalu lakukan pembayaran.",
+      actionSuccessWithNotify(
+        toast,
+        "Permintaan konsultasi terkirim. Fisioterapis mendapat notifikasi.",
       );
       await load();
     } catch (err) {
@@ -167,7 +169,7 @@ export default function ConsultationsPage() {
         ACCEPTED: "Permintaan diterima. Pasien dapat membayar.",
         COMPLETED: "Konsultasi ditandai selesai.",
       };
-      if (labels[status]) toast.success(labels[status]);
+      if (labels[status]) actionSuccessWithNotify(toast, labels[status]);
       await load();
     } catch (err) {
       setError(
@@ -229,7 +231,8 @@ export default function ConsultationsPage() {
         delete next[row.id];
         return next;
       });
-      toast.success(
+      actionSuccessWithNotify(
+        toast,
         "Pembayaran terkirim. Admin akan mengonfirmasi; pantau di halaman Transaksi.",
       );
       await load();

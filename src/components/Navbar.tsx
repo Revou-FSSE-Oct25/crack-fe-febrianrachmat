@@ -5,9 +5,11 @@ import {
   IconArrowRightEndOnRectangle,
   IconArrowRightOnRectangle,
   IconBars3,
+  IconBell,
   IconUserCircle,
   IconXMark,
 } from "@/components/nav-icons";
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
@@ -66,8 +68,19 @@ function NavLink({
   );
 }
 
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  const label = count > 99 ? "99+" : String(count);
+  return (
+    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white ring-2 ring-white">
+      {label}
+    </span>
+  );
+}
+
 export default function Navbar() {
   const { user, isReady, logout } = useAuth();
+  const { unreadCount } = useUnreadNotifications();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuId = useId();
@@ -122,6 +135,20 @@ export default function Navbar() {
             </>
           ) : user ? (
             <>
+              <Link
+                href="/notifications"
+                className={`${iconBtn} relative`}
+                aria-label={
+                  unreadCount > 0
+                    ? `Notifikasi, ${unreadCount} belum dibaca`
+                    : "Notifikasi"
+                }
+                title="Notifikasi"
+              >
+                <IconBell />
+                <UnreadBadge count={unreadCount} />
+                <span className="sr-only">Notifikasi</span>
+              </Link>
               <Link
                 href="/profile"
                 className={iconBtn}
@@ -196,6 +223,16 @@ export default function Navbar() {
               <NavLink href="/about" mobile onNavigate={() => setMenuOpen(false)}>
                 Tentang
               </NavLink>
+              {user ? (
+                <NavLink
+                  href="/notifications"
+                  mobile
+                  onNavigate={() => setMenuOpen(false)}
+                >
+                  Notifikasi
+                  {unreadCount > 0 ? ` (${unreadCount})` : ""}
+                </NavLink>
+              ) : null}
               <NavLink
                 href="/therapists"
                 mobile

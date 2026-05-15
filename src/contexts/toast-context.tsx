@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 
-type ToastVariant = "success" | "error";
+type ToastVariant = "success" | "error" | "info";
 
 type ToastItem = {
   id: string;
@@ -22,6 +22,7 @@ type ToastItem = {
 type ToastContextValue = {
   success: (message: string) => void;
   error: (message: string) => void;
+  info: (message: string) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -108,6 +109,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     () => ({
       success: (message: string) => push(message, "success"),
       error: (message: string) => push(message, "error"),
+      info: (message: string) => push(message, "info"),
     }),
     [push],
   );

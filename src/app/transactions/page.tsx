@@ -21,6 +21,7 @@ import {
 import { transactionStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { PaymentProofLink } from "@/components/PaymentProofLink";
 import { ApiRequestError } from "@/lib/api/client";
 import { hasTransactionPaymentProof } from "@/lib/api/payment-proof";
@@ -163,7 +164,10 @@ export default function TransactionsPage() {
       setBookingId("");
       setPaymentProofUrl("");
       setProofFile(null);
-      toast.success("Transaksi dibuat. Menunggu konfirmasi admin.");
+      actionSuccessWithNotify(
+        toast,
+        "Transaksi dibuat. Menunggu konfirmasi admin.",
+      );
       await load();
     } catch (err) {
       setError(
@@ -179,7 +183,7 @@ export default function TransactionsPage() {
     setError(null);
     try {
       await confirmTransactionPaidByAdmin(id);
-      toast.success("Pembayaran dikonfirmasi.");
+      actionSuccessWithNotify(toast, "Pembayaran dikonfirmasi.");
       await load();
     } catch (err) {
       setError(

@@ -78,6 +78,25 @@ export function IconXMark({ className }: IconProps) {
   );
 }
 
+export function IconBell({ className }: IconProps) {
+  return (
+    <svg
+      className={`${base} ${className ?? ""}`}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      aria-hidden
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M14.857 17.082h4.964M4.5 19.5h15m-11.25-9.75A3.375 3.375 0 0 1 12 6.375c1.657 0 3.102.755 4.07 1.95m-4.07-1.95v.75m0 0v.75A3.375 3.375 0 0 1 6.375 12H5.25m10.125 0H18.75m0 0h1.125c.621 0 1.125.504 1.125 1.125v.375c0 .621-.504 1.125-1.125 1.125H5.25c-.621 0-1.125-.504-1.125-1.125V13.125c0-.621.504-1.125 1.125-1.125h1.125"
+      />
+    </svg>
+  );
+}
+
 export function IconArrowRightEndOnRectangle({ className }: IconProps) {
   return (
     <svg

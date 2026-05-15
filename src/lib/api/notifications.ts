@@ -15,6 +15,12 @@ function paginationQuery(params: { page?: number; limit?: number }): string {
   return s ? `?${s}` : "";
 }
 
+export async function getUnreadNotificationCount(): Promise<{
+  unreadCount: number;
+}> {
+  return apiFetch<{ unreadCount: number }>("/notifications/me/unread-count");
+}
+
 export async function listMyNotifications(params?: {
   page?: number;
   limit?: number;

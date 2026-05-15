@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   listAvailabilitySlotsForProfile,
@@ -232,7 +233,10 @@ export default function BookingForm() {
           appointmentType === "HOME_VISIT" ? home : undefined,
         notes: notes.trim() || undefined,
       });
-      toast.success("Booking berhasil dibuat.");
+      actionSuccessWithNotify(
+        toast,
+        "Booking berhasil dibuat. Pihak terkait akan mendapat notifikasi.",
+      );
       setSlotId("");
       setAppointmentDateLocal("");
       setNotes("");

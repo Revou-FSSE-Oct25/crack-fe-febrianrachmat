@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
+import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   validateBroadcast,
@@ -54,7 +55,7 @@ export default function AdminNotificationsPage() {
     setError(null);
     try {
       await broadcastNotification({ title, body });
-      toast.success("Broadcast notifikasi berhasil dikirim.");
+      actionSuccessWithNotify(toast, "Broadcast notifikasi berhasil dikirim.");
       setBroadcastTitle("");
       setBroadcastBody("");
     } catch (err) {
@@ -85,7 +86,7 @@ export default function AdminNotificationsPage() {
     setError(null);
     try {
       await sendNotificationToUser(uid, { title, body });
-      toast.success("Notifikasi ke user berhasil dikirim.");
+      actionSuccessWithNotify(toast, "Notifikasi ke user berhasil dikirim.");
       setUserTitle("");
       setUserBody("");
     } catch (err) {
