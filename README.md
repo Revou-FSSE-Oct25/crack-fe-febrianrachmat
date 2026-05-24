@@ -208,6 +208,8 @@ Untuk uji OAuth lokal, set callback backend ke `http://localhost:3000/auth/callb
 
 **E2E lokal:** jalankan embedded Postgres + API backend, `npm run prisma:seed`, lalu di folder FE: `E2E_RUN=1 npm run test:e2e:local` (Next dev di port 3001, API di `NEXT_PUBLIC_API_URL`).
 
+Skenario E2E: booking visit (`e2e/booking-visit-payment.spec.ts`), browse terapis (`e2e/therapist-browse.spec.ts`), konsultasi + konfirmasi admin (`e2e/consultation-payment.spec.ts`).
+
 ---
 
 ## Deploy (Railway)
