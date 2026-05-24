@@ -202,6 +202,11 @@ Untuk uji OAuth lokal, set callback backend ke `http://localhost:3000/auth/callb
 | `npm run build` | Production build |
 | `npm run start` | Jalankan build produksi |
 | `npm run lint` | ESLint |
+| `npm test` | Unit test helper (Node test runner) |
+| `npm run test:e2e` | Playwright E2E (skip tanpa `E2E_RUN=1`) |
+| `npm run test:e2e:local` | E2E lokal — butuh BE + DB seed + `npm run dev` |
+
+**E2E lokal:** jalankan embedded Postgres + API backend, `npm run prisma:seed`, lalu di folder FE: `E2E_RUN=1 npm run test:e2e:local` (Next dev di port 3001, API di `NEXT_PUBLIC_API_URL`).
 
 ---
 

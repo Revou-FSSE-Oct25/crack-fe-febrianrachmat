@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { loginViaUi } from "./helpers/auth";
+import { clearSession } from "./helpers/session";
 
 /**
  * Requires:
@@ -27,10 +28,7 @@ test.describe("Booking visit payment UX", () => {
       ).toBeVisible({ timeout: 10_000 });
     }
 
-    await page.context().clearCookies();
-    await page.evaluate(() => {
-      localStorage.clear();
-    });
+    await clearSession(page);
 
     await loginViaUi(page, "patient2@demo.local", PASSWORD, "/bookings");
     await expect(
