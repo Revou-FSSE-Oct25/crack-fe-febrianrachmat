@@ -47,6 +47,7 @@ export function requiredRolesForPath(pathname: string): ProxyUserRole[] | null {
   ];
   const authPrefixes = [
     "/profile",
+    "/calendar",
     "/bookings",
     "/consultations",
     "/transactions",

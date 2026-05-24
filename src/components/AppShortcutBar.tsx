@@ -152,6 +152,7 @@ export default function AppShortcutBar() {
 
   const activityItems: ShortcutLink[] = [
     { href: "/consultations", label: "Konsultasi" },
+    { href: "/calendar", label: "Kalender" },
     { href: "/bookings", label: "Daftar booking" },
     ...(showTransactions ? [{ href: "/transactions", label: "Transaksi" }] : []),
     { href: "/notifications", label: "Notifikasi" },

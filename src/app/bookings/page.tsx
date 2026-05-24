@@ -158,6 +158,12 @@ export default function BookingsPage() {
           description={pageDescription}
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+          <Link
+            href="/calendar"
+            className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[10rem]`}
+          >
+            Kalender
+          </Link>
           {isPatient ? (
             <>
               <Link
