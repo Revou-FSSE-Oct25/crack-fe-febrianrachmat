@@ -116,6 +116,9 @@ export type PhysiotherapistBrowseItem = {
   verificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
   /** ISO timestamp; if in the future, therapist recently sent a dashboard heartbeat. */
   onlineUntil?: string | null;
+  /** Average star rating from visible reviews (browse API). */
+  averageRating?: number | null;
+  reviewCount?: number;
   user: {
     id: string;
     fullName: string;

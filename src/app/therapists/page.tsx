@@ -1,10 +1,21 @@
 "use client";
 
+import { TherapistStarRating } from "@/components/therapists/TherapistStarRating";
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { listCategories } from "@/lib/api/categories";
-import type { Category, PhysiotherapistBrowseItem } from "@/lib/api/types";
+import type { Category, PhysiotherapistBrowseItem, PaginationMeta } from "@/lib/api/types";
+import { formatIdr } from "@/lib/format/currency";
+import {
+  DEFAULT_THERAPIST_BROWSE,
+  parseTherapistBrowseParams,
+  serializeTherapistBrowseParams,
+  THERAPIST_BROWSE_PAGE_SIZE,
+  THERAPIST_BROWSE_SORT_VALUES,
+  type TherapistBrowseParams,
+  type TherapistBrowseSort,
+} from "@/lib/therapists/browse-params";
 import {
   AlertBanner,
   btnOutline,
@@ -19,61 +30,73 @@ import {
   widePageShell,
 } from "@/components/ui/page-shell";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+
+const SORT_LABELS: Record<TherapistBrowseSort, string> = {
+  newest: "Terbaru",
+  name_asc: "Nama A–Z",
+  name_desc: "Nama Z–A",
+  visit_fee_asc: "Tarif visit terendah",
+  visit_fee_desc: "Tarif visit tertinggi",
+  consultation_fee_asc: "Tarif konsultasi terendah",
+  consultation_fee_desc: "Tarif konsultasi tertinggi",
+  rating_desc: "Rating tertinggi",
+  rating_asc: "Rating terendah",
+};
 
 function isTherapistOnlineNow(t: PhysiotherapistBrowseItem): boolean {
   if (!t.onlineUntil) return false;
   return new Date(t.onlineUntil) > new Date();
 }
 
-function formatVisitRupiah(value: string | number | null | undefined): string {
-  if (value == null || value === "") return "—";
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return "—";
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
+function hasActiveBrowseFilters(params: TherapistBrowseParams): boolean {
+  return (
+    Boolean(params.search.trim()) ||
+    Boolean(params.categoryId) ||
+    params.onlineOnly ||
+    params.sort !== "newest" ||
+    params.minRating != null
+  );
 }
 
-export default function TherapistsBrowsePage() {
+function TherapistsBrowsePageContent() {
   const { user, isReady } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [filters, setFilters] = useState<TherapistBrowseParams>(
+    DEFAULT_THERAPIST_BROWSE,
+  );
   const [items, setItems] = useState<PhysiotherapistBrowseItem[]>([]);
+  const [meta, setMeta] = useState<PaginationMeta | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryId, setCategoryId] = useState("");
-  const [onlineOnly, setOnlineOnly] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(
-    async (overrides?: {
-      categoryId?: string;
-      search?: string;
-      onlineOnly?: boolean;
-    }) => {
-      const cat = overrides?.categoryId ?? categoryId;
-      const search = overrides?.search ?? searchInput;
-      const online = overrides?.onlineOnly ?? onlineOnly;
-
+    async (params: TherapistBrowseParams) => {
       setLoading(true);
       setError(null);
       try {
         const [cats, browse] = await Promise.all([
           listCategories(),
           browsePhysiotherapists({
-            categoryId: cat || undefined,
-            search: search.trim() || undefined,
-            onlineNow: online ? true : undefined,
-            limit: 30,
-            page: 1,
+            categoryId: params.categoryId || undefined,
+            search: params.search.trim() || undefined,
+            onlineNow: params.onlineOnly ? true : undefined,
+            sort: params.sort,
+            minRating: params.minRating ?? undefined,
+            page: params.page,
+            limit: THERAPIST_BROWSE_PAGE_SIZE,
           }),
         ]);
         setCategories(cats);
         setItems(browse.items);
+        setMeta(browse.meta);
       } catch (err) {
         setItems([]);
+        setMeta(null);
         setError(
           err instanceof ApiRequestError ? err.message : "Gagal memuat data.",
         );
@@ -81,24 +104,41 @@ export default function TherapistsBrowsePage() {
         setLoading(false);
       }
     },
-    [categoryId, searchInput, onlineOnly],
+    [],
   );
 
   useEffect(() => {
     if (!isReady || !user) return;
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, user, categoryId, onlineOnly]);
+    const parsed = parseTherapistBrowseParams(searchParams);
+    setFilters(parsed);
+    void load(parsed);
+  }, [isReady, user, searchParams, load]);
 
-  function resetFilters() {
-    setCategoryId("");
-    setSearchInput("");
-    setOnlineOnly(false);
-    void load({ categoryId: "", search: "", onlineOnly: false });
+  function applyBrowse(next: TherapistBrowseParams, replaceUrl = true) {
+    const normalized: TherapistBrowseParams = {
+      ...next,
+      page: next.page < 1 ? 1 : next.page,
+    };
+    if (replaceUrl) {
+      const qs = serializeTherapistBrowseParams(normalized);
+      router.replace(qs ? `/therapists?${qs}` : "/therapists");
+    } else {
+      void load(normalized);
+    }
   }
 
-  const hasActiveFilters =
-    Boolean(categoryId) || Boolean(searchInput.trim()) || onlineOnly;
+  function resetFilters() {
+    applyBrowse(DEFAULT_THERAPIST_BROWSE);
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    applyBrowse({ ...filters, page: 1 });
+  }
+
+  const total = meta?.total ?? 0;
+  const totalPages = meta?.totalPages ?? 0;
+  const currentPage = meta?.page ?? filters.page;
 
   if (!isReady) {
     return <PageLoading />;
@@ -110,6 +150,8 @@ export default function TherapistsBrowsePage() {
     );
   }
 
+  const activeFilters = hasActiveBrowseFilters(filters);
+
   return (
     <main className={`${widePageShell} space-y-8 pb-16`}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -118,9 +160,9 @@ export default function TherapistsBrowsePage() {
           title="Cari fisioterapis"
           description={
             <>
-              Profil yang tampil sudah <strong>APPROVED</strong>. Centang
-              &quot;Hanya online&quot; untuk terapis yang sedang aktif di
-              dashboard (heartbeat ~5 menit).
+              Profil yang tampil sudah <strong>APPROVED</strong>. Gunakan sort,
+              rating, dan filter online untuk menemukan terapis yang sesuai
+              sebelum membuat janji atau konsultasi.
             </>
           }
         />
@@ -143,7 +185,7 @@ export default function TherapistsBrowsePage() {
           >
             Filter &amp; pencarian
           </h2>
-          {hasActiveFilters ? (
+          {activeFilters ? (
             <button
               type="button"
               onClick={resetFilters}
@@ -155,75 +197,139 @@ export default function TherapistsBrowsePage() {
         </div>
 
         <form
-          className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void load();
-          }}
+          className="flex flex-col gap-4"
+          onSubmit={handleSubmit}
         >
-          <div className="min-w-[160px] lg:flex-1 lg:max-w-xs">
-            <label
-              htmlFor="therapist-category"
-              className="mb-1.5 block text-sm font-medium text-slate-700"
+          <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
+            <div className="min-w-[160px] lg:flex-1 lg:max-w-xs">
+              <label
+                htmlFor="therapist-category"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Kategori
+              </label>
+              <select
+                id="therapist-category"
+                className={inputBase}
+                value={filters.categoryId}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, categoryId: e.target.value }))
+                }
+              >
+                <option value="">Semua</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-[200px] flex-1">
+              <label
+                htmlFor="therapist-search"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Cari
+              </label>
+              <input
+                id="therapist-search"
+                className={inputBase}
+                placeholder="Nama atau kata kunci"
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, search: e.target.value }))
+                }
+              />
+            </div>
+            <div className="min-w-[180px] lg:max-w-[14rem]">
+              <label
+                htmlFor="therapist-sort"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Urutkan
+              </label>
+              <select
+                id="therapist-sort"
+                className={inputBase}
+                value={filters.sort}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    sort: e.target.value as TherapistBrowseSort,
+                  }))
+                }
+              >
+                {THERAPIST_BROWSE_SORT_VALUES.map((value) => (
+                  <option key={value} value={value}>
+                    {SORT_LABELS[value]}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="min-w-[140px] lg:max-w-[10rem]">
+              <label
+                htmlFor="therapist-min-rating"
+                className="mb-1.5 block text-sm font-medium text-slate-700"
+              >
+                Rating min.
+              </label>
+              <select
+                id="therapist-min-rating"
+                className={inputBase}
+                value={filters.minRating ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFilters((prev) => ({
+                    ...prev,
+                    minRating: v === "" ? null : Number(v),
+                  }));
+                }}
+              >
+                <option value="">Semua</option>
+                {[5, 4, 3, 2, 1].map((n) => (
+                  <option key={n} value={n}>
+                    {n}+ bintang
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`${btnPrimary} min-h-[44px] w-full justify-center sm:w-auto sm:min-w-[9rem] lg:self-end`}
             >
-              Kategori
-            </label>
-            <select
-              id="therapist-category"
-              className={inputBase}
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-            >
-              <option value="">Semua</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              {loading ? "Memuat…" : "Terapkan"}
+            </button>
           </div>
-          <div className="min-w-[200px] flex-1">
-            <label
-              htmlFor="therapist-search"
-              className="mb-1.5 block text-sm font-medium text-slate-700"
-            >
-              Cari
-            </label>
-            <input
-              id="therapist-search"
-              className={inputBase}
-              placeholder="Nama atau kata kunci"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className={`${btnPrimary} min-h-[44px] w-full justify-center sm:w-auto sm:min-w-[9rem] lg:self-end`}
-          >
-            {loading ? "Memuat…" : "Terapkan"}
-          </button>
-        </form>
 
-        <label className="flex min-h-[44px] cursor-pointer select-none items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={onlineOnly}
-            onChange={(e) => setOnlineOnly(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-          />
-          Hanya terapis online sekarang
-        </label>
+          <label className="flex min-h-[44px] cursor-pointer select-none items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={filters.onlineOnly}
+              onChange={(e) => {
+                const onlineOnly = e.target.checked;
+                const next = { ...filters, onlineOnly, page: 1 };
+                setFilters(next);
+                applyBrowse(next);
+              }}
+              className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+            />
+            Hanya terapis online sekarang
+          </label>
+        </form>
       </section>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
-      {!loading && items.length > 0 ? (
+      {!loading && total > 0 ? (
         <p className="text-sm text-slate-600" role="status">
-          Menampilkan <strong className="text-slate-900">{items.length}</strong>{" "}
-          fisioterapis
-          {hasActiveFilters ? " (sesuai filter)" : ""}.
+          Menampilkan{" "}
+          <strong className="text-slate-900">
+            {(currentPage - 1) * THERAPIST_BROWSE_PAGE_SIZE + 1}–
+            {Math.min(currentPage * THERAPIST_BROWSE_PAGE_SIZE, total)}
+          </strong>{" "}
+          dari <strong className="text-slate-900">{total}</strong> fisioterapis
+          {activeFilters ? " (sesuai filter)" : ""}.
         </p>
       ) : null}
 
@@ -232,9 +338,9 @@ export default function TherapistsBrowsePage() {
       ) : items.length === 0 ? (
         <EmptyState
           title="Tidak ada hasil"
-          hint="Coba ubah filter atau kosongkan pencarian, lalu terapkan lagi."
+          hint="Coba ubah filter, rating minimum, atau urutan sort, lalu terapkan lagi."
           actions={
-            hasActiveFilters
+            activeFilters
               ? [
                   {
                     label: "Reset filter",
@@ -257,53 +363,104 @@ export default function TherapistsBrowsePage() {
           }
         />
       ) : (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((t) => (
-            <li key={t.id}>
-              <Link
-                href={`/therapists/${t.id}`}
-                className={`${cardSurface} group flex h-full flex-col transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-teal-200/90 hover:shadow-[0_8px_30px_rgb(15_23_42_/_0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600`}
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h3 className="text-lg font-semibold text-slate-900 group-hover:text-teal-900">
-                    {t.user.fullName}
-                  </h3>
-                  {isTherapistOnlineNow(t) ? (
-                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/80">
-                      <span
-                        className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"
-                        aria-hidden
-                      />
-                      Online
-                    </span>
+        <>
+          <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((t) => (
+              <li key={t.id}>
+                <Link
+                  href={`/therapists/${t.id}`}
+                  className={`${cardSurface} group flex h-full flex-col transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-teal-200/90 hover:shadow-[0_8px_30px_rgb(15_23_42_/_0.08)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <h3 className="text-lg font-semibold text-slate-900 group-hover:text-teal-900">
+                      {t.user.fullName}
+                    </h3>
+                    {isTherapistOnlineNow(t) ? (
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200/80">
+                        <span
+                          className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500"
+                          aria-hidden
+                        />
+                        Online
+                      </span>
+                    ) : null}
+                  </div>
+                  {t.category ? (
+                    <p className="mt-1 text-sm font-medium text-teal-700">
+                      {t.category.name}
+                    </p>
                   ) : null}
-                </div>
-                {t.category ? (
-                  <p className="mt-1 text-sm font-medium text-teal-700">
-                    {t.category.name}
+                  <div className="mt-2">
+                    <TherapistStarRating
+                      averageRating={t.averageRating}
+                      reviewCount={t.reviewCount}
+                    />
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Visit {formatIdr(t.visitFee)} · Konsultasi{" "}
+                    {formatIdr(t.consultationFee)}
                   </p>
-                ) : null}
-                <p className="mt-2 text-xs text-slate-500">
-                  Visit {formatVisitRupiah(t.visitFee)} · Konsultasi{" "}
-                  {formatVisitRupiah(t.consultationFee)}
-                </p>
-                {t.bio ? (
-                  <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
-                    {t.bio}
-                  </p>
-                ) : (
-                  <p className="mt-3 flex-1 text-sm italic text-slate-400">
-                    Belum ada bio singkat.
-                  </p>
-                )}
-                <span className="mt-5 inline-flex text-sm font-semibold text-teal-700 group-hover:text-teal-800">
-                  Lihat detail &amp; ulasan →
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  {t.bio ? (
+                    <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-slate-600">
+                      {t.bio}
+                    </p>
+                  ) : (
+                    <p className="mt-3 flex-1 text-sm italic text-slate-400">
+                      Belum ada bio singkat.
+                    </p>
+                  )}
+                  <span className="mt-5 inline-flex text-sm font-semibold text-teal-700 group-hover:text-teal-800">
+                    Lihat detail &amp; ulasan →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          {totalPages > 1 ? (
+            <nav
+              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-slate-100 pt-6"
+              aria-label="Paginasi fisioterapis"
+            >
+              <p className="text-sm text-slate-600">
+                Halaman{" "}
+                <strong className="text-slate-900">{currentPage}</strong> dari{" "}
+                <strong className="text-slate-900">{totalPages}</strong>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={loading || currentPage <= 1}
+                  onClick={() =>
+                    applyBrowse({ ...filters, page: currentPage - 1 })
+                  }
+                  className={`${btnOutline} min-h-[44px] px-4 disabled:opacity-50`}
+                >
+                  Sebelumnya
+                </button>
+                <button
+                  type="button"
+                  disabled={loading || currentPage >= totalPages}
+                  onClick={() =>
+                    applyBrowse({ ...filters, page: currentPage + 1 })
+                  }
+                  className={`${btnPrimary} min-h-[44px] px-4 disabled:opacity-50`}
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </nav>
+          ) : null}
+        </>
       )}
     </main>
+  );
+}
+
+export default function TherapistsBrowsePage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <TherapistsBrowsePageContent />
+    </Suspense>
   );
 }
