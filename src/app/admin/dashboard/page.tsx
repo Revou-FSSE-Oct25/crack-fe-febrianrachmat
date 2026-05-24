@@ -15,6 +15,10 @@ import {
   getAdminDashboardOverview,
   type AdminDashboardOverview,
 } from "@/lib/api/admin-dashboard";
+import {
+  getAdminOperationsQueue,
+  type AdminOperationsQueue,
+} from "@/lib/api/admin-operations";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -172,9 +176,41 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
   );
 }
 
+function OperationsQueueBanner({ queue }: { queue: AdminOperationsQueue }) {
+  const { counts } = queue;
+  const urgent =
+    counts.pendingTransactions + counts.pendingPhysiotherapistVerifications;
+  if (urgent === 0) return null;
+
+  return (
+    <div
+      className={`${cardSurface} border-l-4 border-l-amber-500 bg-amber-50/50 p-5`}
+    >
+      <h2 className="text-sm font-semibold text-amber-950">
+        Antrian operasional
+      </h2>
+      <p className="mt-1 text-sm text-amber-900/90">
+        {counts.pendingTransactions > 0
+          ? `${counts.pendingTransactions} transaksi menunggu konfirmasi bayar. `
+          : null}
+        {counts.pendingPhysiotherapistVerifications > 0
+          ? `${counts.pendingPhysiotherapistVerifications} verifikasi fisioterapis menunggu.`
+          : null}
+      </p>
+      <Link
+        href="/admin/operations"
+        className="mt-4 inline-flex text-sm font-semibold text-teal-800 hover:text-teal-900"
+      >
+        Buka panel operasional →
+      </Link>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const { user, isReady } = useAuth();
   const [data, setData] = useState<AdminDashboardOverview | null>(null);
+  const [queue, setQueue] = useState<AdminOperationsQueue | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -182,10 +218,15 @@ export default function AdminDashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const overview = await getAdminDashboardOverview();
+      const [overview, operationsQueue] = await Promise.all([
+        getAdminDashboardOverview(),
+        getAdminOperationsQueue(),
+      ]);
       setData(overview);
+      setQueue(operationsQueue);
     } catch (err) {
       setData(null);
+      setQueue(null);
       setError(
         err instanceof ApiRequestError
           ? err.message
@@ -250,12 +291,20 @@ export default function AdminDashboardPage() {
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
+      {queue ? <OperationsQueueBanner queue={queue} /> : null}
+
       {loading && !data ? (
         <DashboardSkeleton />
       ) : data ? (
         <>
           <OverviewCards data={data} />
           <div className="flex flex-wrap gap-3 sm:gap-4 border-t border-slate-200 pt-8">
+            <Link
+              href="/admin/operations"
+              className={`${btnOutline} min-h-[44px] items-center justify-center border-amber-200 bg-amber-50 text-amber-950`}
+            >
+              Operasional →
+            </Link>
             <Link
               href="/admin/physiotherapists"
               className={`${btnOutline} min-h-[44px] items-center justify-center`}
