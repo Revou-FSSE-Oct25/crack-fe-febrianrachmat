@@ -25,6 +25,11 @@ import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { PaymentProofLink } from "@/components/PaymentProofLink";
 import { ApiRequestError } from "@/lib/api/client";
 import { hasTransactionPaymentProof } from "@/lib/api/payment-proof";
+import {
+  bookingHasOpenTransaction,
+  isBookingPayable,
+} from "@/lib/booking-flow";
+import { formatIdr } from "@/lib/format/currency";
 import { validatePaymentProof, validateRefundReason } from "@/lib/validation";
 import { listMyBookings } from "@/lib/api/bookings";
 import { transactionReferenceLabel } from "@/lib/api/contract";
@@ -37,29 +42,26 @@ import {
   type Transaction,
 } from "@/lib/api/transactions";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 type PendingBookingPay = {
   id: string;
   visitFeeSnapshot: string | number;
 };
 
-function formatIdrSnapshot(
-  value: string | number | null | undefined,
-): string {
-  if (value == null || value === "") return "—";
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return String(value);
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<PageLoading />}>
+      <TransactionsPageContent />
+    </Suspense>
+  );
 }
 
-export default function TransactionsPage() {
+function TransactionsPageContent() {
   const { user, isReady } = useAuth();
   const toast = useToast();
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<Transaction[]>([]);
   const [pendingBookings, setPendingBookings] = useState<PendingBookingPay[]>(
     [],
@@ -87,6 +89,20 @@ export default function TransactionsPage() {
     try {
       const list = await listTransactions({ page: 1, limit: 50 });
       setRows(list);
+      if (user?.role === "PATIENT") {
+        const bookings = await listMyBookings({ page: 1, limit: 50 });
+        const opts: PendingBookingPay[] = bookings
+          .filter(
+            (b) =>
+              isBookingPayable(b.status) &&
+              !bookingHasOpenTransaction(b.id, list),
+          )
+          .map((b) => ({
+            id: b.id,
+            visitFeeSnapshot: b.visitFeeSnapshot,
+          }));
+        setPendingBookings(opts);
+      }
     } catch (err) {
       setError(
         err instanceof ApiRequestError ? err.message : "Gagal memuat transaksi.",
@@ -94,7 +110,7 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     if (!isReady || !user) return;
@@ -106,36 +122,11 @@ export default function TransactionsPage() {
   }, [isReady, user, load]);
 
   useEffect(() => {
-    if (!isReady || user?.role !== "PATIENT") return;
-    let cancelled = false;
-    Promise.all([
-      listMyBookings({ page: 1, limit: 50 }),
-      listTransactions({ page: 1, limit: 50 }),
-    ])
-      .then(([bookings, transactions]) => {
-        if (cancelled) return;
-        const bookedWithOpenTx = new Set(
-          transactions
-            .filter((t) => t.bookingId && (t.status === "PENDING" || t.status === "PAID"))
-            .map((t) => t.bookingId as string),
-        );
-        const opts: PendingBookingPay[] = bookings
-          .filter(
-            (b) =>
-              b.status === "PENDING" &&
-              !bookedWithOpenTx.has(b.id),
-          )
-          .map((b) => ({
-            id: b.id,
-            visitFeeSnapshot: b.visitFeeSnapshot,
-          }));
-        setPendingBookings(opts);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [isReady, user?.role]);
+    const fromQuery = searchParams.get("bookingId");
+    if (fromQuery) {
+      setBookingId(fromQuery);
+    }
+  }, [searchParams]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -285,7 +276,7 @@ export default function TransactionsPage() {
           description={
             user.role === "ADMIN"
               ? "Konfirmasi pembayaran dummy dan refund untuk transaksi yang memenuhi syarat."
-              : "Buat permintaan pembayaran untuk booking Anda. Nominal mengikuti tarif visit terapis saat booking dibuat. Konfirmasi lunas oleh admin."
+              : "Bayar kunjungan setelah fisioterapis mengonfirmasi booking. Nominal mengikuti tarif visit saat booking dibuat. Konfirmasi lunas oleh admin."
           }
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
@@ -329,10 +320,19 @@ export default function TransactionsPage() {
                 <option value="">— Pilih booking —</option>
                 {pendingBookings.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.id.slice(0, 8)}… · {formatIdrSnapshot(b.visitFeeSnapshot)}
+                    {b.id.slice(0, 8)}… · {formatIdr(b.visitFeeSnapshot)}
                   </option>
                 ))}
               </select>
+              {pendingBookings.length === 0 ? (
+                <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200/80 rounded-xl px-3 py-2 mt-2 leading-relaxed">
+                  Belum ada booking yang dikonfirmasi terapis. Cek status di{" "}
+                  <Link href="/bookings" className="font-medium underline">
+                    Daftar booking
+                  </Link>
+                  .
+                </p>
+              ) : null}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
@@ -422,7 +422,7 @@ export default function TransactionsPage() {
             title="Belum ada transaksi"
             hint={
               user.role === "PATIENT"
-                ? "Setelah booking selesai, buat transaksi pembayaran dari formulir di atas."
+                ? "Setelah terapis mengonfirmasi booking, buat transaksi pembayaran dari formulir di atas."
                 : "Transaksi dari pasien akan muncul di sini untuk dikonfirmasi."
             }
             actions={
@@ -449,7 +449,7 @@ export default function TransactionsPage() {
                       tone={transactionStatusMeta(t.status).tone}
                     />
                     <p className="text-sm text-slate-600">
-                      {t.paymentMethod} · {formatIdrSnapshot(t.amount)}
+                      {t.paymentMethod} · {formatIdr(t.amount)}
                     </p>
                     <p className="text-xs text-slate-600">
                       {transactionReferenceLabel(t)}

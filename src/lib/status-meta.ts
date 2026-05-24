@@ -54,6 +54,26 @@ export function therapistVerificationStatusMeta(status: string): StatusMeta {
   }
 }
 
+export function consultationStatusMetaForDisplay(
+  status: string,
+  options?: { patientLabel?: string },
+): StatusMeta {
+  if (options?.patientLabel) {
+    const tone: StatusTone =
+      status === "IN_PROGRESS"
+        ? "brand"
+        : status === "COMPLETED"
+          ? "success"
+          : status === "CANCELLED"
+            ? "danger"
+            : options.patientLabel.includes("admin")
+              ? "warning"
+              : "info";
+    return { label: options.patientLabel, tone };
+  }
+  return consultationStatusMeta(status);
+}
+
 export function consultationStatusMeta(status: string): StatusMeta {
   switch (status) {
     case "REQUESTED":

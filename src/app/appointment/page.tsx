@@ -8,7 +8,7 @@ export default function AppointmentPage() {
         <PageHeader
           eyebrow="Booking"
           title="Buat janji temu"
-          description="Pilih fisioterapis, tipe kunjungan, dan slot atau waktu manual. Hanya akun pasien yang dapat mengirim form ini."
+          description="Pilih fisioterapis, tipe kunjungan, dan slot atau waktu manual. Setelah terapis mengonfirmasi, bayar kunjungan di halaman Transaksi dengan bukti pembayaran."
         />
         <div className={`${cardSurface} p-6 sm:p-8`}>
           <BookingForm />

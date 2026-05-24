@@ -17,6 +17,7 @@ import type {
   PhysiotherapistBrowseItem,
 } from "@/lib/api/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   AlertBanner,
@@ -48,6 +49,7 @@ function formatVisitRupiah(value: string | number | null | undefined): string {
 export default function BookingForm() {
   const { user, isReady } = useAuth();
   const toast = useToast();
+  const router = useRouter();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [therapists, setTherapists] = useState<PhysiotherapistBrowseItem[]>(
@@ -235,11 +237,12 @@ export default function BookingForm() {
       });
       actionSuccessWithNotify(
         toast,
-        "Booking berhasil dibuat. Pihak terkait akan mendapat notifikasi.",
+        "Booking dibuat. Menunggu konfirmasi fisioterapis — setelah dikonfirmasi, bayar di halaman Transaksi dengan bukti pembayaran.",
       );
       setSlotId("");
       setAppointmentDateLocal("");
       setNotes("");
+      router.push("/bookings");
     } catch (err) {
       setSubmitError(
         err instanceof ApiRequestError ? err.message : "Booking gagal.",

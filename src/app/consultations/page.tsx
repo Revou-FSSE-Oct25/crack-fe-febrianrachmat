@@ -16,7 +16,15 @@ import {
   widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
-import { consultationStatusMeta } from "@/lib/status-meta";
+import {
+  consultationHasOpenTransaction,
+  consultationPatientActionHint,
+  consultationStatusLabelForPatient,
+  consultationTherapistActionHint,
+  getOpenTransactionForConsultation,
+} from "@/lib/booking-flow";
+import { formatIdr } from "@/lib/format/currency";
+import { consultationStatusMetaForDisplay } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
@@ -32,24 +40,15 @@ import {
 } from "@/lib/api/consultations";
 import { browsePhysiotherapists } from "@/lib/api/physiotherapists";
 import { createOrGetConversation } from "@/lib/api/chat";
-import { createTransaction } from "@/lib/api/transactions";
+import type { Transaction } from "@/lib/api/contract";
+import {
+  createTransaction,
+  listTransactions,
+} from "@/lib/api/transactions";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-
-function formatRupiah(
-  value: string | number | null | undefined,
-): string {
-  if (!value) return "—";
-  const n = Number(value);
-  if (!Number.isFinite(n)) return String(value);
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 type ConsultationPayProof = { file: File | null; url: string };
 
@@ -58,6 +57,7 @@ export default function ConsultationsPage() {
   const toast = useToast();
   const router = useRouter();
   const [rows, setRows] = useState<Consultation[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [therapists, setTherapists] = useState<PhysiotherapistBrowseItem[]>(
     [],
   );
@@ -82,8 +82,14 @@ export default function ConsultationsPage() {
       const list = await listMyConsultations({ page: 1, limit: 50 });
       setRows(list);
       if (user?.role === "PATIENT") {
-        const browse = await browsePhysiotherapists({ limit: 50, page: 1 });
+        const [browse, txList] = await Promise.all([
+          browsePhysiotherapists({ limit: 50, page: 1 }),
+          listTransactions({ page: 1, limit: 50 }),
+        ]);
         setTherapists(browse.items);
+        setTransactions(txList);
+      } else {
+        setTransactions([]);
       }
     } catch (err) {
       setError(
@@ -271,7 +277,13 @@ export default function ConsultationsPage() {
         <PageHeader
           eyebrow="Telehealth"
           title="Konsultasi"
-          description="Ajukan keluhan awal, bayar setelah terapis menerima, lalu mulai sesi chat profesional."
+          description={
+            user.role === "PHYSIOTHERAPIST"
+              ? "Terima permintaan pasien, tunggu pembayaran & konfirmasi admin, lalu sesi chat aktif."
+              : user.role === "ADMIN"
+                ? "Pantau permintaan konsultasi online di seluruh platform."
+                : "Ajukan keluhan awal, bayar setelah terapis menerima, lalu mulai sesi chat setelah admin mengonfirmasi pembayaran."
+          }
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
           <Link
@@ -321,10 +333,10 @@ export default function ConsultationsPage() {
                   <option key={t.id} value={t.id}>
                     {t.user.fullName}
                     {t.consultationFee != null && t.consultationFee !== ""
-                      ? ` · online ${formatRupiah(String(t.consultationFee))}`
+                      ? ` · online ${formatIdr(String(t.consultationFee))}`
                       : ""}
                     {t.visitFee != null && t.visitFee !== ""
-                      ? ` · visit ${formatRupiah(String(t.visitFee))}`
+                      ? ` · visit ${formatIdr(String(t.visitFee))}`
                       : ""}
                   </option>
                 ))}
@@ -421,15 +433,38 @@ export default function ConsultationsPage() {
         ) : (
           <ul className="space-y-4">
             {rows.map((c) => {
-              const statusMeta = consultationStatusMeta(c.status);
               const isPatient = user.role === "PATIENT";
               const isPt = user.role === "PHYSIOTHERAPIST";
               const isAdmin = user.role === "ADMIN";
+              const openTx = getOpenTransactionForConsultation(
+                c.id,
+                transactions,
+              );
+              const statusMeta = isPatient
+                ? consultationStatusMetaForDisplay(c.status, {
+                    patientLabel: consultationStatusLabelForPatient(
+                      c.status,
+                      openTx,
+                    ),
+                  })
+                : consultationStatusMetaForDisplay(c.status);
+              const actionHint = isPatient
+                ? consultationPatientActionHint(c.status, openTx)
+                : isPt
+                  ? consultationTherapistActionHint(c.status, openTx)
+                  : null;
 
               const canChat =
                 c.status === "IN_PROGRESS" ||
                 (isAdmin && c.status !== "CANCELLED");
-              const canPay = isPatient && c.status === "ACCEPTED";
+              const canPay =
+                isPatient &&
+                c.status === "ACCEPTED" &&
+                !consultationHasOpenTransaction(c.id, transactions);
+              const waitingAdminPay =
+                isPatient &&
+                c.status === "ACCEPTED" &&
+                openTx?.status === "PENDING";
               const canCancel =
                 isPatient &&
                 (c.status === "REQUESTED" || c.status === "ACCEPTED");
@@ -453,7 +488,7 @@ export default function ConsultationsPage() {
                       </span>
                       <span className="text-xs text-slate-500">·</span>
                       <span className="text-xs text-slate-700">
-                        Biaya: <strong>{formatRupiah(c.feeSnapshot)}</strong>
+                        Biaya: <strong>{formatIdr(c.feeSnapshot)}</strong>
                       </span>
                       <span className="text-xs text-slate-500">·</span>
                       <span className="text-xs text-slate-600">
@@ -466,26 +501,22 @@ export default function ConsultationsPage() {
                     <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
                       {c.complaint}
                     </p>
-                    {c.status === "REQUESTED" && isPatient && (
-                      <p className="text-xs text-slate-500">
-                        Menunggu terapis menerima. Pembayaran dibuka setelah
-                        diterima.
+                    {actionHint ? (
+                      <p className="text-xs text-slate-600 leading-relaxed rounded-xl bg-slate-50 border border-slate-100 px-3 py-2">
+                        {actionHint}
                       </p>
-                    )}
-                    {c.status === "ACCEPTED" && isPatient && (
-                      <p className="text-xs text-slate-500">
-                        Terapis sudah menerima. Unggah bukti transfer atau tautan
-                        https, lalu bayar untuk membuka sesi chat.
-                      </p>
-                    )}
-                    {c.status === "IN_PROGRESS" && (
-                      <p className="text-xs text-emerald-700">
-                        Pembayaran dikonfirmasi. Chat aktif.
-                      </p>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap gap-2 shrink-0 md:justify-end">
+                    {waitingAdminPay && (
+                      <Link
+                        href="/transactions"
+                        className={`${btnSecondary} min-h-[44px] justify-center px-4 text-center`}
+                      >
+                        Lihat status pembayaran
+                      </Link>
+                    )}
                     {canPay && (
                       <div className="w-full md:w-auto md:max-w-xs space-y-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                         <p className="text-xs font-medium text-slate-700">
@@ -524,7 +555,7 @@ export default function ConsultationsPage() {
                         >
                           {payingId === c.id
                             ? "Memproses…"
-                            : `Bayar ${formatRupiah(c.feeSnapshot)}`}
+                            : `Bayar ${formatIdr(c.feeSnapshot)}`}
                         </button>
                       </div>
                     )}
