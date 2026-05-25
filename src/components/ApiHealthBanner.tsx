@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ApiHealthStatus } from "@/lib/api/health";
 
 type HealthPayload = ApiHealthStatus & { unreachable?: boolean };
+
+const DEGRADED: HealthPayload = {
+  status: "degraded",
+  database: "disconnected",
+  unreachable: true,
+};
 
 async function fetchClientHealth(): Promise<HealthPayload> {
   const res = await fetch("/api/health", { cache: "no-store" });
@@ -14,34 +20,34 @@ async function fetchClientHealth(): Promise<HealthPayload> {
     error?: { message?: string };
   };
   if (json.data) return json.data;
-  return {
-    status: "degraded",
-    database: "disconnected",
-    unreachable: true,
-  };
+  return DEGRADED;
 }
 
 export default function ApiHealthBanner() {
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
-  const poll = useCallback(async () => {
-    try {
-      setHealth(await fetchClientHealth());
-    } catch {
-      setHealth({
-        status: "degraded",
-        database: "disconnected",
-        unreachable: true,
-      });
-    }
-  }, []);
-
   useEffect(() => {
-    void poll();
-    const id = window.setInterval(() => void poll(), 90_000);
-    return () => window.clearInterval(id);
-  }, [poll]);
+    let cancelled = false;
+
+    async function refresh() {
+      try {
+        const next = await fetchClientHealth();
+        if (!cancelled) setHealth(next);
+      } catch {
+        if (!cancelled) setHealth(DEGRADED);
+      }
+    }
+
+    const initialId = window.setTimeout(() => void refresh(), 0);
+    const intervalId = window.setInterval(() => void refresh(), 90_000);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(initialId);
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   if (dismissed || !health) return null;
 
