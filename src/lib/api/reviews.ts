@@ -4,10 +4,17 @@ import { asPublicReviews, asReviews } from "./contract";
 
 export type { PublicReview, Review };
 
-/** Selaras `CreateReviewDto` */
+/** Selaras `CreateReviewDto` — kirim tepat satu dari bookingId atau consultationId. */
 export type CreateReviewBody = {
-  bookingId: string;
+  bookingId?: string;
+  consultationId?: string;
   rating: number;
+  comment?: string;
+};
+
+/** Selaras `UpdateReviewDto` */
+export type UpdateReviewBody = {
+  rating?: number;
   comment?: string;
 };
 
@@ -51,6 +58,17 @@ export async function listMyReviews(params?: {
     `/reviews/me${paginationQuery(params ?? {})}`,
   );
   return asReviews(raw);
+}
+
+export async function updateMyReview(
+  reviewId: string,
+  body: UpdateReviewBody,
+): Promise<Review> {
+  const raw = await apiFetch<unknown>(`/reviews/${reviewId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  return asReviews([raw])[0]!;
 }
 
 export async function deleteMyReview(

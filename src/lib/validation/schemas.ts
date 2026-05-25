@@ -216,13 +216,17 @@ export function validateRefundReason(reason: string): ValidationResult {
 }
 
 export function validateReviewWrite(input: {
-  bookingId: string;
+  targetType: "booking" | "consultation";
+  targetId: string;
   rating: number;
   comment: string;
 }): ValidationResult {
   const fieldErrors: FieldErrors = {};
-  if (!input.bookingId) {
-    fieldErrors.bookingId = "Pilih booking.";
+  if (!input.targetId) {
+    fieldErrors.targetId =
+      input.targetType === "booking"
+        ? "Pilih booking."
+        : "Pilih konsultasi.";
   }
   if (!Number.isFinite(input.rating) || input.rating < 1 || input.rating > 5) {
     fieldErrors.rating = "Rating antara 1 dan 5.";
@@ -232,6 +236,24 @@ export function validateReviewWrite(input: {
   }
   if (Object.keys(fieldErrors).length > 0) {
     return validationFailed("Periksa formulir ulasan.", fieldErrors);
+  }
+  return { ok: true };
+}
+
+export function validateReviewUpdate(input: {
+  rating: number;
+  comment: string;
+  changeComment: boolean;
+}): ValidationResult {
+  const fieldErrors: FieldErrors = {};
+  if (!Number.isFinite(input.rating) || input.rating < 1 || input.rating > 5) {
+    fieldErrors.rating = "Rating antara 1 dan 5.";
+  }
+  if (input.changeComment && input.comment.trim().length > 0 && input.comment.trim().length < 10) {
+    fieldErrors.comment = "Komentar minimal 10 karakter jika diisi.";
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return validationFailed("Periksa perubahan ulasan.", fieldErrors);
   }
   return { ok: true };
 }

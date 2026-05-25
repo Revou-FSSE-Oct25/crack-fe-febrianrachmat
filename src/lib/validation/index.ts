@@ -16,4 +16,5 @@ export {
   validateRegister,
   validateRejectReason,
   validateReviewWrite,
+  validateReviewUpdate,
 } from "./schemas";

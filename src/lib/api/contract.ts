@@ -169,10 +169,14 @@ export function asBookings(data: unknown): Booking[] {
   });
 }
 
-/** GET /reviews/me, POST /reviews — Prisma Review. */
+export type ReviewSourceType = "BOOKING" | "CONSULTATION";
+
+/** GET /reviews/me, POST /reviews — Prisma Review + sourceType. */
 export type Review = {
   id: string;
-  bookingId: string;
+  bookingId: string | null;
+  consultationId: string | null;
+  sourceType: ReviewSourceType;
   patientId: string;
   physiotherapistId: string;
   rating: number;
@@ -190,15 +194,31 @@ export type PublicReview = {
   comment: string | null;
   createdAt: string;
   patientName: string;
+  sourceType: ReviewSourceType;
 };
+
+function parseReviewSourceType(raw: unknown): ReviewSourceType {
+  if (raw === "CONSULTATION" || raw === "BOOKING") return raw;
+  return "BOOKING";
+}
 
 export function asReviews(data: unknown): Review[] {
   if (!Array.isArray(data)) return [];
   return data.map((item) => {
     const r = asRecord(item);
+    const consultationId =
+      r.consultationId != null ? String(r.consultationId) : null;
+    const bookingId = r.bookingId != null ? String(r.bookingId) : null;
     return {
       id: String(r.id ?? ""),
-      bookingId: String(r.bookingId ?? ""),
+      bookingId,
+      consultationId,
+      sourceType:
+        r.sourceType != null
+          ? parseReviewSourceType(r.sourceType)
+          : consultationId != null
+            ? "CONSULTATION"
+            : "BOOKING",
       patientId: String(r.patientId ?? ""),
       physiotherapistId: String(r.physiotherapistId ?? ""),
       rating: Number(r.rating ?? 0),
@@ -219,12 +239,22 @@ export function asPublicReviews(data: unknown): PublicReview[] {
     const patient = r.patient as
       | { user?: { fullName?: string } }
       | undefined;
+    const consultationId =
+      r.consultationId != null ? String(r.consultationId) : null;
     return {
       id: String(r.id ?? ""),
       rating: Number(r.rating ?? 0),
       comment: r.comment != null ? String(r.comment) : null,
       createdAt: String(r.createdAt ?? ""),
-      patientName: String(patient?.user?.fullName ?? "Pasien"),
+      patientName: String(
+        r.patientName ?? patient?.user?.fullName ?? "Pasien",
+      ),
+      sourceType:
+        r.sourceType != null
+          ? parseReviewSourceType(r.sourceType)
+          : consultationId != null
+            ? "CONSULTATION"
+            : "BOOKING",
     };
   });
 }

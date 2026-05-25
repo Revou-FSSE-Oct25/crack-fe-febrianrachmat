@@ -70,7 +70,7 @@ Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 | Buat janji (visit) | `/appointment`, `/bookings` | Create booking, cancel |
 | Konsultasi online | `/consultations` | Create, bayar, chat, cancel |
 | Pembayaran | `/transactions` | Create transaksi + upload bukti |
-| Ulasan | `/reviews`, `/reviews/write` | Create, list, delete sendiri |
+| Ulasan | `/reviews`, `/reviews/write` | Create/edit untuk booking & konsultasi selesai |
 | Chat & notifikasi | `/chat`, `/notifications` | Read, kirim pesan; mark read |
 | Profil | `/profile` | Read, update, ganti password, upload avatar, data medis pasien |
 

@@ -24,6 +24,7 @@ import {
   moderateReview,
   type Review,
 } from "@/lib/api/reviews";
+import { reviewSourceLabel } from "@/lib/reviews/labels";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -157,7 +158,7 @@ export default function AdminReviewsPage() {
       ) : rows.length === 0 ? (
         <EmptyState
           title="Belum ada ulasan"
-          hint="Ulasan muncul setelah pasien menyelesaikan booking dan mengirim penilaian."
+          hint="Ulasan muncul setelah pasien menyelesaikan kunjungan atau konsultasi online dan mengirim penilaian."
           actions={[
             { href: "/admin/dashboard", label: "Kembali ke dashboard" },
             {
@@ -179,9 +180,17 @@ export default function AdminReviewsPage() {
                   <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                     {rev.id}
                   </p>
+                  <p className="text-xs text-teal-800 font-medium">
+                    {reviewSourceLabel(rev.sourceType)}
+                  </p>
                   <p className="text-xs text-slate-500">
-                    Booking:{" "}
-                    <span className="font-mono break-all">{rev.bookingId}</span>
+                    {rev.sourceType === "CONSULTATION" ? "Konsultasi" : "Booking"}
+                    :{" "}
+                    <span className="font-mono break-all">
+                      {rev.sourceType === "CONSULTATION"
+                        ? rev.consultationId
+                        : rev.bookingId}
+                    </span>
                   </p>
                   <p className="text-xs text-slate-500">
                     {new Date(rev.createdAt).toLocaleString("id-ID")}

@@ -8,7 +8,9 @@ import {
   listPublicReviewsForPhysiotherapist,
   type PublicReview,
 } from "@/lib/api/reviews";
+import { reviewSourceLabel } from "@/lib/reviews/labels";
 import type { PhysiotherapistBrowseItem } from "@/lib/api/types";
+import { TherapistStarRating } from "@/components/therapists/TherapistStarRating";
 import {
   AlertBanner,
   btnOutline,
@@ -133,11 +135,18 @@ export default function TherapistDetailPage() {
             eyebrow="Profil terapis"
             title={therapist.user.fullName}
             description={
-              therapist.category ? (
-                <span className="text-teal-700 font-medium">
-                  {therapist.category.name}
-                </span>
-              ) : null
+              <span className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                {therapist.category ? (
+                  <span className="text-teal-700 font-medium">
+                    {therapist.category.name}
+                  </span>
+                ) : null}
+                <TherapistStarRating
+                  averageRating={therapist.averageRating}
+                  reviewCount={therapist.reviewCount}
+                  className="text-base"
+                />
+              </span>
             }
           />
 
@@ -319,10 +328,21 @@ export default function TherapistDetailPage() {
 
       {!loading && therapist ? (
         <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-slate-900">Ulasan publik</h2>
-          <p className="text-xs text-slate-500">
-            Ulasan dari pasien setelah sesi booking selesai.
-          </p>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">
+                Ulasan publik
+              </h2>
+              <p className="text-xs text-slate-500 mt-1">
+                Ulasan dari pasien setelah kunjungan atau konsultasi online
+                selesai.
+              </p>
+            </div>
+            <TherapistStarRating
+              averageRating={therapist.averageRating}
+              reviewCount={therapist.reviewCount}
+            />
+          </div>
           {reviews.length === 0 ? (
             <div className={`${cardSurface} text-center py-8 text-slate-600 text-sm`}>
               Belum ada ulasan.
@@ -332,9 +352,14 @@ export default function TherapistDetailPage() {
               {reviews.map((r) => (
                 <li key={r.id} className={cardSurface}>
                   <div className="flex justify-between gap-2 items-start">
-                    <span className="font-semibold text-slate-900">
-                      {r.patientName}
-                    </span>
+                    <div>
+                      <span className="font-semibold text-slate-900">
+                        {r.patientName}
+                      </span>
+                      <p className="text-xs text-teal-800 font-medium mt-0.5">
+                        {reviewSourceLabel(r.sourceType)}
+                      </p>
+                    </div>
                     <span className="text-amber-700 font-medium text-sm shrink-0">
                       {r.rating}/5
                     </span>
