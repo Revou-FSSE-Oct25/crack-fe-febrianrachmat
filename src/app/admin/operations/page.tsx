@@ -24,6 +24,8 @@ import { useToast } from "@/contexts/toast-context";
 import {
   adminOperationReferenceLabel,
   getAdminOperationsQueue,
+  downloadAdminBookingsCsv,
+  downloadAdminTransactionsCsv,
   listAdminOperationBookings,
   listAdminOperationTransactions,
   type AdminOperationBooking,
@@ -106,6 +108,8 @@ export default function AdminOperationsPage() {
   >({});
   const [refundConfirmId, setRefundConfirmId] = useState<string | null>(null);
   const [refundingId, setRefundingId] = useState<string | null>(null);
+  const [exportingTx, setExportingTx] = useState(false);
+  const [exportingBk, setExportingBk] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -170,6 +174,44 @@ export default function AdminOperationsPage() {
     }
     setError(null);
     setRefundConfirmId(id);
+  }
+
+  async function handleExportTransactions() {
+    setExportingTx(true);
+    setError(null);
+    try {
+      await downloadAdminTransactionsCsv({
+        status: txStatus || undefined,
+      });
+      toast.success("CSV transaksi diunduh.");
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Gagal mengunduh CSV transaksi.",
+      );
+    } finally {
+      setExportingTx(false);
+    }
+  }
+
+  async function handleExportBookings() {
+    setExportingBk(true);
+    setError(null);
+    try {
+      await downloadAdminBookingsCsv({
+        status: bookingStatus || undefined,
+      });
+      toast.success("CSV booking diunduh.");
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Gagal mengunduh CSV booking.",
+      );
+    } finally {
+      setExportingBk(false);
+    }
   }
 
   async function confirmRefund() {
@@ -327,7 +369,19 @@ export default function AdminOperationsPage() {
                 <option value="">Semua</option>
               </select>
             </label>
+            <button
+              type="button"
+              disabled={exportingTx || loading}
+              onClick={() => void handleExportTransactions()}
+              className={`${btnOutline} min-h-[40px] px-4 text-sm`}
+            >
+              {exportingTx ? "Mengekspor…" : "Unduh CSV"}
+            </button>
           </div>
+          <p className="text-xs text-slate-500">
+            CSV mengikuti filter status (maks. 10.000 baris). Cocok untuk laporan
+            demo di Excel/Sheets.
+          </p>
 
           {loading ? (
             <ListSkeleton rows={4} />
@@ -437,10 +491,19 @@ export default function AdminOperationsPage() {
                 <option value="">Semua</option>
               </select>
             </label>
+            <button
+              type="button"
+              disabled={exportingBk || loading}
+              onClick={() => void handleExportBookings()}
+              className={`${btnOutline} min-h-[40px] px-4 text-sm`}
+            >
+              {exportingBk ? "Mengekspor…" : "Unduh CSV"}
+            </button>
           </div>
           <p className="text-sm text-slate-600">
             Admin memantau alur; konfirmasi booking dilakukan oleh fisioterapis di
-            halaman Daftar booking.
+            halaman Daftar booking. CSV mengikuti filter status di atas (maks. 10.000
+            baris).
           </p>
           {loading ? (
             <ListSkeleton rows={4} />

@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 import type { BookingStatus, TransactionStatus } from "./contract";
+import { downloadCsvExport } from "./download-csv";
 
 export type AdminOperationsQueue = {
   counts: {
@@ -100,6 +101,33 @@ export async function listAdminOperationBookings(params?: {
 }): Promise<Paginated<AdminOperationBooking>> {
   return apiFetch<Paginated<AdminOperationBooking>>(
     `/admin/operations/bookings${paginationQuery(params ?? {})}`,
+  );
+}
+
+function exportStatusQuery(status?: string): string {
+  if (!status) return "";
+  const q = new URLSearchParams();
+  q.set("status", status);
+  return `?${q.toString()}`;
+}
+
+/** Unduh CSV transaksi (filter status sama dengan daftar operasional). */
+export async function downloadAdminTransactionsCsv(params?: {
+  status?: TransactionStatus;
+}): Promise<void> {
+  await downloadCsvExport(
+    `/admin/operations/transactions/export${exportStatusQuery(params?.status)}`,
+    "transactions-export.csv",
+  );
+}
+
+/** Unduh CSV booking (filter status sama dengan daftar operasional). */
+export async function downloadAdminBookingsCsv(params?: {
+  status?: BookingStatus;
+}): Promise<void> {
+  await downloadCsvExport(
+    `/admin/operations/bookings/export${exportStatusQuery(params?.status)}`,
+    "bookings-export.csv",
   );
 }
 
