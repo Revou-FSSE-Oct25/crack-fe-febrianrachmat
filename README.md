@@ -19,6 +19,7 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | **Swagger (semua endpoint)** | https://crack-be-febrianrachmat-production.up.railway.app/docs |
 | **Database ERD** | https://dbdiagram.io/d/Crack-Physio-6a05b6997a923b9472b2f884 |
 | **Status dari FE** | `{FRONTEND_URL}/status` |
+| **Panduan demo** | `{FRONTEND_URL}/demo` |
 
 > Set `NEXT_PUBLIC_API_URL` ke base URL backend (bukan connection string Postgres).  
 > Di service **backend** Railway, set `CORS_ORIGINS` (atau `FRONTEND_URL`) ke URL frontend produksi (pisah koma jika ada preview).  
@@ -49,6 +50,7 @@ Aplikasi web untuk platform **booking & konsultasi fisioterapi** (demo produk mi
 | **Toast** | Notifikasi singkat pojok layar setelah aksi sukses/gagal/info. |
 | **Notifikasi in-app** | Ikon bell + badge jumlah belum dibaca (polling ~60 detik + refresh setelah aksi booking/konsultasi/dll.). Halaman `/notifications`. |
 | **Pintasan** | `AppShortcutBar` di bawah navbar untuk user login (per role: pasien / PT / admin). |
+| **Keandalan demo** | Banner jika API/DB tidak sehat; timeout fetch 20 detik; kartu **Coba lagi** di halaman alur kritis; `/status` + `/demo`. |
 
 Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 
@@ -58,7 +60,7 @@ Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 
 ### Publik (tanpa login)
 
-- Landing, layanan, tentang, kebijakan produk (`/kebijakan`)
+- Landing, layanan, tentang, kebijakan produk (`/kebijakan`), panduan demo (`/demo`), status API (`/status`)
 - Login & registrasi (`PATIENT` / `PHYSIOTHERAPIST`) — email/password **atau** OAuth (jika provider dikonfigurasi di backend)
 - Callback OAuth: `/auth/callback` (menerima token dari backend, lalu menyimpan sesi)
 
@@ -204,7 +206,7 @@ Untuk uji OAuth lokal, set callback backend ke `http://localhost:3000/auth/callb
 | `npm run build` | Production build |
 | `npm run start` | Jalankan build produksi |
 | `npm run lint` | ESLint |
-| `npm test` | Unit test helper (Node test runner) |
+| `npm test` | Unit test helper (`booking-flow`, `fetch-reliable`, dll.) |
 | `npm run test:e2e` | Playwright E2E (skip tanpa `E2E_RUN=1`) |
 | `npm run test:e2e:local` | E2E lokal — butuh BE + DB seed + `npm run dev` |
 
@@ -220,7 +222,7 @@ Skenario E2E: booking visit (`e2e/booking-visit-payment.spec.ts`), browse terapi
 2. **Variables:** `NEXT_PUBLIC_API_URL`, `JWT_SECRET` (sama dengan BE).
 3. **Build:** `npm run build` — **Start:** `npm run start` (atau gunakan Nixpacks default Next.js).
 4. Di backend, set `CORS_ORIGINS` = URL publik service frontend Railway; untuk OAuth set juga `FRONTEND_URL` dan `API_PUBLIC_URL`.
-5. Verifikasi: buka `/status` pada URL FE dan `/health` pada URL BE; uji login (email + OAuth jika dikonfigurasi) dan toggle dark mode di navbar.
+5. Verifikasi: buka `/status` dan `/demo` pada URL FE; `/health` pada URL BE; uji login akun demo (`password123`) dan toggle dark mode di navbar.
 
 ---
 

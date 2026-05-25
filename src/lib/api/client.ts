@@ -1,5 +1,6 @@
 import { notifyUnauthorized } from "@/lib/auth/session";
 import { getStoredAccessToken } from "@/lib/auth/storage";
+import { fetchWithTimeout } from "./fetch-reliable";
 import { getApiBaseUrl } from "./config";
 import type { PaginationMeta } from "./types";
 
@@ -82,7 +83,7 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { headers, rest } = buildAuthHeaders(options);
 
-  const res = await fetch(buildUrl(path), {
+  const res = await fetchWithTimeout(buildUrl(path), {
     ...rest,
     headers,
   });
@@ -168,7 +169,7 @@ async function fetchWithFullResponse(
 ): Promise<unknown> {
   const { headers, rest } = buildAuthHeaders(options);
 
-  const res = await fetch(buildUrl(path), {
+  const res = await fetchWithTimeout(buildUrl(path), {
     ...rest,
     headers,
   });

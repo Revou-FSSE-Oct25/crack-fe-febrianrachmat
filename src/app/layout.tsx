@@ -1,4 +1,5 @@
 import "./globals.css";
+import ApiHealthBanner from "@/components/ApiHealthBanner";
 import AppShortcutBar from "@/components/AppShortcutBar";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -26,6 +27,7 @@ export default function RootLayout({
         className={`${plusJakarta.className} min-h-screen flex flex-col text-slate-900 antialiased dark:text-slate-100`}
       >
         <Providers>
+          <ApiHealthBanner />
           <Navbar />
           <AppShortcutBar />
           <div className="flex-1 w-full">{children}</div>

@@ -15,10 +15,12 @@ import {
   widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
+import { LoadErrorCard } from "@/components/ui/load-error-card";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
+import { friendlyFetchError } from "@/lib/api/fetch-reliable";
 import {
   listMyBookings,
   updateBookingStatus,
@@ -57,13 +59,14 @@ export default function BookingsPage() {
     new Set(),
   );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const list = await listMyBookings({ page: 1, limit: 50 });
       setRows(list);
@@ -80,8 +83,10 @@ export default function BookingsPage() {
         setOpenTxBookingIds(new Set());
       }
     } catch (err) {
-      setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat booking.",
+      setLoadError(
+        err instanceof ApiRequestError
+          ? err.message
+          : friendlyFetchError(err),
       );
     } finally {
       setLoading(false);
@@ -198,9 +203,13 @@ export default function BookingsPage() {
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
+      {loadError && !loading ? (
+        <LoadErrorCard message={loadError} onRetry={() => void load()} />
+      ) : null}
+
       {loading ? (
         <ListSkeleton rows={4} />
-      ) : rows.length === 0 ? (
+      ) : loadError ? null : rows.length === 0 ? (
         <EmptyState
           title="Belum ada booking"
           hint={

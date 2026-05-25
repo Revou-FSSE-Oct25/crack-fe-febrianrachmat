@@ -71,6 +71,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/demo" className={footerLink}>
+                  Panduan demo
+                </Link>
+              </li>
+              <li>
                 <Link href="/status" className={footerLink}>
                   Status layanan
                 </Link>

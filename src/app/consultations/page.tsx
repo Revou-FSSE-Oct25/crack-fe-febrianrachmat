@@ -16,6 +16,7 @@ import {
   widePageShell,
   SignInRequired,
 } from "@/components/ui/page-shell";
+import { LoadErrorCard } from "@/components/ui/load-error-card";
 import {
   consultationHasOpenTransaction,
   consultationPatientActionHint,
@@ -29,6 +30,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
+import { friendlyFetchError } from "@/lib/api/fetch-reliable";
 import { validateComplaint, validatePaymentProof } from "@/lib/validation";
 import {
   createConsultation,
@@ -62,6 +64,7 @@ export default function ConsultationsPage() {
     [],
   );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
@@ -77,7 +80,7 @@ export default function ConsultationsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const list = await listMyConsultations({ page: 1, limit: 50 });
       setRows(list);
@@ -92,8 +95,10 @@ export default function ConsultationsPage() {
         setTransactions([]);
       }
     } catch (err) {
-      setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat data.",
+      setLoadError(
+        err instanceof ApiRequestError
+          ? err.message
+          : friendlyFetchError(err),
       );
     } finally {
       setLoading(false);
@@ -302,6 +307,9 @@ export default function ConsultationsPage() {
       </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {loadError && !loading ? (
+        <LoadErrorCard message={loadError} onRetry={() => void load()} />
+      ) : null}
 
       {user.role === "PATIENT" && (
         <section
@@ -403,7 +411,7 @@ export default function ConsultationsPage() {
         </h2>
         {loading ? (
           <ListSkeleton rows={3} />
-        ) : rows.length === 0 ? (
+        ) : loadError ? null : rows.length === 0 ? (
           <EmptyState
             title="Belum ada konsultasi"
             hint={

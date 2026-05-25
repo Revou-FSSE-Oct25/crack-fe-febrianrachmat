@@ -16,6 +16,7 @@ import {
   PageLoading,
   pageShell,
 } from "@/components/ui/page-shell";
+import { DemoAccountPicker } from "@/components/auth/DemoAccountPicker";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -146,9 +147,26 @@ function LoginPageContent() {
             </button>
           </form>
           <OAuthButtons nextPath={afterLoginPath} />
+          <DemoAccountPicker
+            onPick={(pickedEmail, pickedPassword) => {
+              setEmail(pickedEmail);
+              setPassword(pickedPassword);
+              setError(null);
+              setFieldErrors({});
+            }}
+          />
         </div>
 
-        <p className="mt-8 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+        <p className="mt-6 text-center text-sm">
+          <Link
+            href="/demo"
+            className="font-semibold text-teal-700 hover:underline dark:text-teal-300"
+          >
+            Panduan demo lengkap
+          </Link>
+        </p>
+
+        <p className="mt-4 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
           Dengan masuk, Anda menyetujui ringkasan{" "}
           <Link href="/kebijakan" className="text-teal-700 font-medium hover:underline">
             kebijakan produk & demo
