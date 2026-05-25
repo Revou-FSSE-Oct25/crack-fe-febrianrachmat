@@ -324,6 +324,12 @@ export default function AdminDashboardPage() {
               Moderasi ulasan →
             </Link>
             <Link
+              href="/admin/audit-logs"
+              className={`${btnOutline} min-h-[44px] items-center justify-center`}
+            >
+              Audit log →
+            </Link>
+            <Link
               href="/transactions"
               className={`${btnOutline} min-h-[44px] items-center justify-center`}
             >

@@ -92,6 +92,7 @@ Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 | Verifikasi PT | `/admin/physiotherapists` | Approve / reject |
 | Kategori layanan | `/admin/categories` | Full CRUD |
 | Moderasi ulasan | `/admin/reviews` | Sembunyikan / tampilkan |
+| Audit log | `/admin/audit-logs` | Read jejak aksi admin & sistem |
 | Broadcast notifikasi | `/admin/notifications` | Kirim ke satu user atau broadcast |
 | Transaksi | `/transactions` | Konfirmasi bayar, refund |
 | Konsultasi & booking | `/consultations`, `/bookings` | Read (monitoring) |

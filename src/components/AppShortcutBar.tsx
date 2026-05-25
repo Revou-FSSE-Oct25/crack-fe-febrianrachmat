@@ -146,6 +146,7 @@ export default function AppShortcutBar() {
         { href: "/admin/physiotherapists", label: "Verifikasi PT", admin: true },
         { href: "/admin/categories", label: "Kategori", admin: true },
         { href: "/admin/reviews", label: "Ulasan", admin: true },
+        { href: "/admin/audit-logs", label: "Audit log", admin: true },
         { href: "/admin/notifications", label: "Broadcast", admin: true },
       ],
     });
