@@ -73,7 +73,7 @@ Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 | Konsultasi online | `/consultations` | Create, bayar, chat, cancel |
 | Pembayaran | `/transactions` | Create transaksi + upload bukti |
 | Ulasan | `/reviews`, `/reviews/write` | Create/edit untuk booking & konsultasi selesai |
-| Chat & notifikasi | `/chat`, `/notifications` | Read, kirim pesan; mark read |
+| Chat & notifikasi | `/chat`, `/notifications` | Chat live via SSE; kirim pesan; mark read notifikasi |
 | Profil | `/profile` | Read, update, ganti password, upload avatar, data medis pasien |
 
 ### Fisioterapis (`PHYSIOTHERAPIST`)
@@ -84,7 +84,7 @@ Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 | Jadwal slot | `/physiotherapist/availability` | Create / update / delete slot |
 | Booking pasien | `/bookings` | Update status (konfirmasi → selesai) |
 | Konsultasi | `/consultations` | Terima, mulai, selesai |
-| Chat & notifikasi | `/chat`, `/notifications` | Read, kirim pesan |
+| Chat & notifikasi | `/chat`, `/notifications` | Chat live via SSE; kirim pesan |
 
 ### Admin (`ADMIN`)
 

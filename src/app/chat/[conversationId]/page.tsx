@@ -4,6 +4,10 @@ import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMessages, sendMessage } from "@/lib/api/chat";
 import {
+  subscribeChatMessageStream,
+  type ChatStreamMessage,
+} from "@/lib/api/chat-sse";
+import {
   AlertBanner,
   btnPrimary,
   cardSurface,
@@ -24,21 +28,36 @@ type MsgRow = {
   sender: { fullName: string; id: string };
 };
 
+function asMsgRow(item: Record<string, unknown> | ChatStreamMessage): MsgRow {
+  const sender = item.sender as Record<string, unknown> | undefined;
+  return {
+    id: String(item.id ?? ""),
+    content: String(item.content ?? ""),
+    createdAt: String(item.createdAt ?? ""),
+    sender: {
+      id: String(sender?.id ?? ""),
+      fullName: String(sender?.fullName ?? ""),
+    },
+  };
+}
+
 function asMsgRows(data: unknown): MsgRow[] {
   if (!Array.isArray(data)) return [];
-  return data.map((item) => {
-    const r = item as Record<string, unknown>;
-    const sender = r.sender as Record<string, unknown> | undefined;
-    return {
-      id: String(r.id ?? ""),
-      content: String(r.content ?? ""),
-      createdAt: String(r.createdAt ?? ""),
-      sender: {
-        id: String(sender?.id ?? ""),
-        fullName: String(sender?.fullName ?? ""),
-      },
-    };
-  });
+  return data.map((item) => asMsgRow(item as Record<string, unknown>));
+}
+
+function appendUniqueMessage(prev: MsgRow[], incoming: MsgRow): MsgRow[] {
+  if (prev.some((m) => m.id === incoming.id)) return prev;
+  return [...prev, incoming].sort(
+    (a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+}
+
+function latestSince(messages: MsgRow[]): string | undefined {
+  if (messages.length === 0) return undefined;
+  const last = messages[messages.length - 1];
+  return last?.createdAt || undefined;
 }
 
 export default function ChatConversationPage() {
@@ -51,6 +70,7 @@ export default function ChatConversationPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [streamLive, setStreamLive] = useState(false);
 
   const load = useCallback(
     async (opts?: { silent?: boolean }) => {
@@ -77,11 +97,41 @@ export default function ChatConversationPage() {
   useEffect(() => {
     if (!isReady || !user || !conversationId) return;
     void load();
-    const t = setInterval(() => {
-      void load({ silent: true });
-    }, 10000);
-    return () => clearInterval(t);
   }, [isReady, user, conversationId, load]);
+
+  useEffect(() => {
+    if (!isReady || !user || !conversationId || loading) return;
+
+    const abort = new AbortController();
+    setStreamLive(true);
+
+    subscribeChatMessageStream({
+      conversationId,
+      since: latestSince(messages),
+      signal: abort.signal,
+      onMessage: (incoming) => {
+        setMessages((prev) => appendUniqueMessage(prev, asMsgRow(incoming)));
+        setStreamLive(true);
+      },
+      onError: (err) => {
+        if (abort.signal.aborted) return;
+        setStreamLive(false);
+        setError(
+          err instanceof ApiRequestError
+            ? err.message
+            : "Koneksi live chat terputus. Muat ulang halaman jika pesan tidak masuk.",
+        );
+      },
+    });
+
+    return () => {
+      abort.abort();
+      setStreamLive(false);
+    };
+    // Reconnect when conversation changes or initial history finishes loading.
+    // `messages` is intentionally omitted to avoid reconnecting on every new message.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isReady, user, conversationId, loading]);
 
   const [locked, setLocked] = useState(false);
 
@@ -92,10 +142,16 @@ export default function ChatConversationPage() {
     setSending(true);
     setError(null);
     try {
-      await sendMessage(conversationId, { content: trimmed });
+      const created = await sendMessage(conversationId, { content: trimmed });
       setText("");
       setLocked(false);
-      await load({ silent: true });
+      if (created && typeof created === "object") {
+        setMessages((prev) =>
+          appendUniqueMessage(prev, asMsgRow(created as Record<string, unknown>)),
+        );
+      } else {
+        await load({ silent: true });
+      }
     } catch (err) {
       const msg =
         err instanceof ApiRequestError ? err.message : "Gagal mengirim pesan.";
@@ -132,8 +188,19 @@ export default function ChatConversationPage() {
         eyebrow="Percakapan"
         title="Chat"
         description={
-          <span className="font-mono text-xs text-slate-500 break-all">
-            {conversationId}
+          <span className="flex flex-col gap-1 text-xs text-slate-500">
+            <span className="font-mono break-all">{conversationId}</span>
+            {streamLive ? (
+              <span className="inline-flex items-center gap-1.5 text-teal-700">
+                <span
+                  className="h-2 w-2 rounded-full bg-teal-500 animate-pulse"
+                  aria-hidden
+                />
+                Live (SSE)
+              </span>
+            ) : (
+              <span className="text-amber-700">Live terputus — muat ulang jika perlu</span>
+            )}
           </span>
         }
       />
