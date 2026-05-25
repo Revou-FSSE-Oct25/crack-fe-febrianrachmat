@@ -8,18 +8,17 @@ import { clearSession } from "./helpers/session";
  * - Seeded DB (`npm run prisma:seed` in crack-be-febrianrachmat)
  * - Demo password: password123
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? "password123";
+import { E2E_PASSWORD, requireE2eRun } from "./helpers/require-e2e";
 
 test.describe("Booking visit payment UX", () => {
+  test.beforeEach(() => {
+    requireE2eRun();
+  });
+
   test("PT confirms booking then patient sees pay CTA and payable dropdown", async ({
     page,
   }) => {
-    test.skip(
-      !process.env.E2E_RUN,
-      "Set E2E_RUN=1 with backend + seeded DB running",
-    );
-
-    await loginViaUi(page, "physio2@demo.local", PASSWORD, "/bookings");
+    await loginViaUi(page, "physio2@demo.local", E2E_PASSWORD, "/bookings");
     const confirmBtn = page.getByRole("button", { name: "Konfirmasi" }).first();
     if (await confirmBtn.isVisible()) {
       await confirmBtn.click();
@@ -30,7 +29,7 @@ test.describe("Booking visit payment UX", () => {
 
     await clearSession(page);
 
-    await loginViaUi(page, "patient2@demo.local", PASSWORD, "/bookings");
+    await loginViaUi(page, "patient2@demo.local", E2E_PASSWORD, "/bookings");
     await expect(
       page
         .getByRole("link", { name: "Bayar kunjungan" })
@@ -40,7 +39,7 @@ test.describe("Booking visit payment UX", () => {
 
     await page.goto("/transactions");
     await expect(
-      page.getByText("Buat transaksi", { exact: false }),
+      page.getByRole("heading", { name: /Buat transaksi/i }),
     ).toBeVisible();
     await expect(
       page.getByText(/Menunggu konfirmasi admin|Daftar transaksi/i).first(),

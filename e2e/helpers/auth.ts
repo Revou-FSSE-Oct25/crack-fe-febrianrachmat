@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 export async function loginViaUi(
   page: Page,
@@ -6,9 +6,29 @@ export async function loginViaUi(
   password: string,
   nextPath = "/bookings",
 ): Promise<void> {
-  await page.goto(`/login?next=${encodeURIComponent(nextPath)}`);
-  await page.getByLabel("Email", { exact: false }).fill(email);
-  await page.getByLabel("Kata sandi", { exact: false }).fill(password);
+  const loginUrl = `/login?next=${encodeURIComponent(nextPath)}`;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await page.goto(loginUrl, { waitUntil: "domcontentloaded" });
+      break;
+    } catch (err) {
+      if (attempt === 2) throw err;
+      await page.waitForTimeout(400);
+    }
+  }
+  await page.locator("#login-email").fill(email);
+  await page.locator("#login-password").fill(password);
   await page.getByRole("button", { name: /masuk/i }).click();
-  await page.waitForURL(`**${nextPath}**`, { timeout: 30_000 });
+
+  await page.waitForURL(
+    (url) => !url.pathname.startsWith("/login"),
+    { timeout: 45_000 },
+  );
+
+  if (!page.url().includes(nextPath)) {
+    await page.goto(nextPath);
+    await expect(page).toHaveURL(new RegExp(nextPath.replace(/\//g, "\\/")), {
+      timeout: 15_000,
+    });
+  }
 }

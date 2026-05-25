@@ -211,9 +211,24 @@ Untuk uji OAuth lokal, set callback backend ke `http://localhost:3000/auth/callb
 | `npm run test:e2e` | Playwright E2E (skip tanpa `E2E_RUN=1`) |
 | `npm run test:e2e:local` | E2E lokal — butuh BE + DB seed + `npm run dev` |
 
-**E2E lokal:** jalankan embedded Postgres + API backend, `npm run prisma:seed`, lalu di folder FE: `E2E_RUN=1 npm run test:e2e:local` (Next dev di port 3001, API di `NEXT_PUBLIC_API_URL`).
+**E2E lokal:**
 
-Skenario E2E: booking visit (`e2e/booking-visit-payment.spec.ts`), browse terapis (`e2e/therapist-browse.spec.ts`), konsultasi + konfirmasi admin (`e2e/consultation-payment.spec.ts`).
+1. Backend: Postgres (embedded `:5433` atau Docker) + `npm run start:dev` (port 3000).
+2. Set `JWT_SECRET` **sama** di BE dan FE (Playwright memakai default `e2e-test-jwt-secret-min-32-chars-long` jika tidak di-set).
+3. FE: `E2E_RUN=1 npm run test:e2e:local` — Playwright menjalankan `prisma:seed` otomatis di `e2e/global-setup.ts` (lewati dengan `E2E_SKIP_SEED=1` jika DB sudah di-seed manual).
+4. Pertama kali: `npx playwright install chromium`.
+
+Skenario E2E (butuh `E2E_RUN=1`):
+
+| File | Cakupan |
+| --- | --- |
+| `e2e/demo-guide.spec.ts` | Statis — panduan demo & login (tanpa API) |
+| `e2e/booking-visit-payment.spec.ts` | Booking visit + CTA bayar |
+| `e2e/therapist-browse.spec.ts` | Browse & profil fisioterapis |
+| `e2e/consultation-payment.spec.ts` | Konsultasi pay-first + chat |
+| `e2e/chat-sse.spec.ts` | Indikator Live (SSE) di percakapan |
+| `e2e/admin-features.spec.ts` | Audit log, analytics, export CSV |
+| `e2e/review-write.spec.ts` | Form ulasan booking & konsultasi |
 
 ---
 

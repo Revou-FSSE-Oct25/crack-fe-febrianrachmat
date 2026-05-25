@@ -7,15 +7,12 @@ import { loginViaUi } from "./helpers/auth";
  * - Seeded DB (`npm run prisma:seed` in crack-be-febrianrachmat)
  * - Demo password: password123
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? "password123";
+import { E2E_PASSWORD, requireE2eRun } from "./helpers/require-e2e";
 
 test.describe("Therapist browse discovery", () => {
   test.beforeEach(async ({ page }) => {
-    test.skip(
-      !process.env.E2E_RUN,
-      "Set E2E_RUN=1 with backend + seeded DB running",
-    );
-    await loginViaUi(page, "patient1@demo.local", PASSWORD, "/therapists");
+    requireE2eRun();
+    await loginViaUi(page, "patient1@demo.local", E2E_PASSWORD, "/therapists");
   });
 
   test("applies sort filter, syncs URL, and opens therapist profile", async ({
