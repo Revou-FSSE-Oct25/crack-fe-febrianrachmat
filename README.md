@@ -89,6 +89,7 @@ Bahasa UI saat ini: **Bahasa Indonesia** (belum ada multi-language).
 | Fitur | Route | CRUD / aksi |
 | --- | --- | --- |
 | Dashboard | `/admin/dashboard` | Read ringkasan |
+| Analytics | `/admin/analytics` | Tren & breakdown (7–90 hari) |
 | Verifikasi PT | `/admin/physiotherapists` | Approve / reject |
 | Kategori layanan | `/admin/categories` | Full CRUD |
 | Moderasi ulasan | `/admin/reviews` | Sembunyikan / tampilkan |

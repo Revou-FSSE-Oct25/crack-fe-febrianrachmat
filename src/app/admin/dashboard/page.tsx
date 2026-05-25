@@ -15,27 +15,13 @@ import {
   getAdminDashboardOverview,
   type AdminDashboardOverview,
 } from "@/lib/api/admin-dashboard";
+import { formatIdr, parseMoney } from "@/lib/format/currency";
 import {
   getAdminOperationsQueue,
   type AdminOperationsQueue,
 } from "@/lib/api/admin-operations";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-
-function parseMoney(v: string | number): number {
-  if (typeof v === "number") return v;
-  const n = parseFloat(v);
-  return Number.isFinite(n) ? n : 0;
-}
-
-function formatIdr(n: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(n);
-}
 
 function DashboardSkeleton() {
   return (
@@ -109,6 +95,23 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
         </Link>
       </section>
 
+      <section className={`${cardSurface} border-l-4 border-l-indigo-500`}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Konsultasi online
+        </h2>
+        <p className="mt-4 text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+          {data.consultations.total}
+        </p>
+        <ul className="mt-4 space-y-2 text-sm border-t border-slate-100 pt-4 max-h-36 overflow-y-auto">
+          {data.consultations.byStatus.map((row) => (
+            <li key={row.status} className="flex justify-between gap-2">
+              <span className="text-slate-600">{row.status}</span>
+              <span className="tabular-nums font-medium">{row._count._all}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
       <section className={`${cardSurface} border-l-4 border-l-sky-500`}>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Booking
@@ -161,16 +164,48 @@ function OverviewCards({ data }: { data: AdminDashboardOverview }) {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           Ulasan
         </h2>
-        <dl className="mt-5 space-y-2.5 text-slate-800 text-sm">
+        <p className="mt-3 text-2xl font-bold text-slate-900">
+          {data.reviews.averageRating != null
+            ? `${data.reviews.averageRating.toFixed(1)} ★`
+            : "—"}
+          <span className="text-sm font-normal text-slate-500 ml-1">rata-rata</span>
+        </p>
+        <dl className="mt-4 space-y-2.5 text-slate-800 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-slate-600">Total</dt>
             <dd className="font-semibold tabular-nums">{data.reviews.total}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-slate-600">Publik</dt>
+            <dd className="tabular-nums">{data.reviews.visible}</dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-slate-600">Disembunyikan</dt>
             <dd className="tabular-nums">{data.reviews.hidden}</dd>
           </div>
         </dl>
+        <Link
+          href="/admin/analytics"
+          className="mt-4 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+        >
+          Lihat analytics lengkap →
+        </Link>
+      </section>
+
+      <section className={`${cardSurface} border-l-4 border-l-slate-500`}>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Audit log
+        </h2>
+        <p className="mt-4 text-3xl font-bold tabular-nums text-slate-900">
+          {data.auditLogs.total}
+        </p>
+        <p className="text-xs text-slate-500 mt-1">Total entri tersimpan</p>
+        <Link
+          href="/admin/audit-logs"
+          className="mt-4 inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
+        >
+          Buka audit log →
+        </Link>
       </section>
     </div>
   );
@@ -299,6 +334,12 @@ export default function AdminDashboardPage() {
         <>
           <OverviewCards data={data} />
           <div className="flex flex-wrap gap-3 sm:gap-4 border-t border-slate-200 pt-8">
+            <Link
+              href="/admin/analytics"
+              className={`${btnOutline} min-h-[44px] items-center justify-center border-teal-200 bg-teal-50 text-teal-950`}
+            >
+              Analytics →
+            </Link>
             <Link
               href="/admin/operations"
               className={`${btnOutline} min-h-[44px] items-center justify-center border-amber-200 bg-amber-50 text-amber-950`}

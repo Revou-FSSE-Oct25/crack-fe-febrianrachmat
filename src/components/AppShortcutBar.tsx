@@ -142,6 +142,7 @@ export default function AppShortcutBar() {
       defaultOpen: true,
       items: [
         { href: "/admin/dashboard", label: "Dashboard", admin: true },
+        { href: "/admin/analytics", label: "Analytics", admin: true },
         { href: "/admin/operations", label: "Operasional", admin: true },
         { href: "/admin/physiotherapists", label: "Verifikasi PT", admin: true },
         { href: "/admin/categories", label: "Kategori", admin: true },
