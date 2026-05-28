@@ -28,6 +28,10 @@ export async function createBooking(body: CreateBookingBody): Promise<unknown> {
 export type UpdateBookingStatusBody = {
   status: BookingStatus;
 };
+export type RescheduleBookingBody = {
+  slotId?: string;
+  appointmentDate?: string;
+};
 
 function paginationQuery(params: { page?: number; limit?: number }): string {
   const q = new URLSearchParams();
@@ -52,6 +56,16 @@ export async function updateBookingStatus(
   body: UpdateBookingStatusBody,
 ): Promise<unknown> {
   return apiFetch<unknown>(`/bookings/${bookingId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function rescheduleBooking(
+  bookingId: string,
+  body: RescheduleBookingBody,
+): Promise<unknown> {
+  return apiFetch<unknown>(`/bookings/${bookingId}/reschedule`, {
     method: "PATCH",
     body: JSON.stringify(body),
   });

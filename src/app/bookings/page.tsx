@@ -6,6 +6,7 @@ import {
   btnPrimary,
   btnSecondary,
   cardSurface,
+  inputBase,
   EmptyState,
   ListSkeleton,
   PageHeader,
@@ -22,7 +23,12 @@ import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
 import { friendlyFetchError } from "@/lib/api/fetch-reliable";
 import {
+  listAvailabilitySlotsForProfile,
+  type AvailabilitySlotItem,
+} from "@/lib/api/availability-slots";
+import {
   listMyBookings,
+  rescheduleBooking,
   updateBookingStatus,
   type UpdateBookingStatusBody,
 } from "@/lib/api/bookings";
@@ -51,6 +57,24 @@ function bookingVisitAddress(b: Booking): string | null {
   return b.clinicAddress;
 }
 
+function toLocalDatetimeInputValue(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = date.getFullYear();
+  const m = pad(date.getMonth() + 1);
+  const d = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const mm = pad(date.getMinutes());
+  return `${y}-${m}-${d}T${hh}:${mm}`;
+}
+
+function formatIdDateTime(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleString("id-ID");
+}
+
 export default function BookingsPage() {
   const { user, isReady } = useAuth();
   const toast = useToast();
@@ -63,6 +87,16 @@ export default function BookingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancelConfirmId, setCancelConfirmId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(
+    null,
+  );
+  const [rescheduleSlotId, setRescheduleSlotId] = useState("");
+  const [rescheduleDateLocal, setRescheduleDateLocal] = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<AvailabilitySlotItem[]>(
+    [],
+  );
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,6 +131,22 @@ export default function BookingsPage() {
     if (!isReady || !user) return;
     void load();
   }, [isReady, user, load]);
+
+  useEffect(() => {
+    if (!rescheduleBookingId) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !rescheduleLoading) {
+        setRescheduleBookingId(null);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [rescheduleBookingId, rescheduleLoading]);
 
   async function patchStatus(id: string, status: UpdateBookingStatusBody["status"]) {
     setError(null);
@@ -134,6 +184,73 @@ export default function BookingsPage() {
     }
   }
 
+  async function startReschedule(booking: Booking) {
+    setError(null);
+    setRescheduleBookingId(booking.id);
+    setRescheduleSlotId("");
+    setRescheduleDateLocal(toLocalDatetimeInputValue(booking.appointmentDate));
+    setRescheduleSlots([]);
+    setRescheduleSlotsLoading(true);
+    try {
+      const resp = await listAvailabilitySlotsForProfile(booking.physiotherapistId, {
+        page: 1,
+        limit: 50,
+      });
+      setRescheduleSlots(resp.items);
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Gagal memuat slot reschedule.",
+      );
+    } finally {
+      setRescheduleSlotsLoading(false);
+    }
+  }
+
+  async function submitReschedule() {
+    if (!rescheduleBookingId) return;
+    setError(null);
+    const selectedSlot = rescheduleSlots.find((s) => s.id === rescheduleSlotId);
+    if (!selectedSlot && !rescheduleDateLocal) {
+      setError("Pilih slot baru atau isi waktu janji manual.");
+      return;
+    }
+    let appointmentDate: string | undefined;
+    if (!selectedSlot && rescheduleDateLocal) {
+      const parsed = new Date(rescheduleDateLocal);
+      if (Number.isNaN(parsed.getTime())) {
+        setError("Waktu reschedule tidak valid.");
+        return;
+      }
+      if (parsed <= new Date()) {
+        setError("Waktu reschedule harus di masa depan.");
+        return;
+      }
+      appointmentDate = parsed.toISOString();
+    }
+
+    setRescheduleLoading(true);
+    try {
+      await rescheduleBooking(rescheduleBookingId, {
+        slotId: selectedSlot?.id,
+        appointmentDate: selectedSlot ? undefined : appointmentDate,
+      });
+      actionSuccessWithNotify(toast, "Booking berhasil di-reschedule.");
+      setRescheduleBookingId(null);
+      setRescheduleSlotId("");
+      setRescheduleDateLocal("");
+      setRescheduleSlots([]);
+      await load();
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError ? err.message : "Gagal reschedule booking.",
+      );
+    } finally {
+      setRescheduleLoading(false);
+    }
+  }
+
   if (!isReady) {
     return <PageLoading />;
   }
@@ -147,6 +264,21 @@ export default function BookingsPage() {
   const terminal = new Set(["COMPLETED", "CANCELLED"]);
   const isPatient = user.role === "PATIENT";
   const isPt = user.role === "PHYSIOTHERAPIST";
+  const activeRescheduleBooking = rows.find((r) => r.id === rescheduleBookingId) ?? null;
+  const selectedRescheduleSlot =
+    rescheduleSlots.find((slot) => slot.id === rescheduleSlotId) ?? null;
+
+  let rescheduleNextTimeLabel = "Belum dipilih";
+  if (selectedRescheduleSlot) {
+    rescheduleNextTimeLabel = formatIdDateTime(selectedRescheduleSlot.startTime);
+  } else if (rescheduleDateLocal) {
+    const parsedManual = new Date(rescheduleDateLocal);
+    if (!Number.isNaN(parsedManual.getTime())) {
+      rescheduleNextTimeLabel = parsedManual.toLocaleString("id-ID");
+    } else {
+      rescheduleNextTimeLabel = "Format waktu belum valid";
+    }
+  }
 
   const pageDescription = isPatient
     ? "Alur kunjungan: buat janji → terapis konfirmasi → bayar dengan bukti di Transaksi → sesi kunjungan."
@@ -248,6 +380,8 @@ export default function BookingsPage() {
               isPatient &&
               b.status === "CONFIRMED" &&
               !hasOpenTx;
+            const canReschedule =
+              (b.status === "PENDING" || b.status === "CONFIRMED") && !hasOpenTx;
 
             return (
               <li key={b.id} className={`${cardSurface} space-y-3`}>
@@ -298,6 +432,23 @@ export default function BookingsPage() {
                       Batalkan booking
                     </button>
                   )}
+                  {canReschedule && (
+                    <button
+                      type="button"
+                      onClick={() => void startReschedule(b)}
+                      className={`${btnOutline} min-h-[44px] justify-center px-4`}
+                    >
+                      Reschedule
+                    </button>
+                  )}
+                  {isPatient &&
+                    (b.status === "PENDING" || b.status === "CONFIRMED") &&
+                    hasOpenTx && (
+                      <p className="text-xs text-amber-700 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+                        Reschedule dinonaktifkan karena transaksi booking ini masih
+                        aktif.
+                      </p>
+                    )}
                   {canPatientPay && (
                     <Link
                       href={`/transactions?bookingId=${encodeURIComponent(b.id)}`}
@@ -361,6 +512,93 @@ export default function BookingsPage() {
           if (!actionLoading) setCancelConfirmId(null);
         }}
       />
+      {rescheduleBookingId ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center sm:p-6"
+          role="presentation"
+        >
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
+            aria-label="Tutup reschedule"
+            disabled={rescheduleLoading}
+            onClick={() => setRescheduleBookingId(null)}
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reschedule-title"
+            className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xl ring-1 ring-slate-900/5"
+          >
+            <h2 id="reschedule-title" className="text-lg font-semibold text-slate-900">
+              Reschedule booking
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Pilih slot baru atau atur waktu manual.
+            </p>
+            <div className="mt-4 space-y-3">
+              {activeRescheduleBooking ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
+                  <p className="text-slate-600">
+                    Jadwal lama:{" "}
+                    <span className="font-medium text-slate-900">
+                      {formatIdDateTime(activeRescheduleBooking.appointmentDate)}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-slate-600">
+                    Jadwal baru:{" "}
+                    <span className="font-medium text-slate-900">
+                      {rescheduleNextTimeLabel}
+                    </span>
+                  </p>
+                </div>
+              ) : null}
+              {rescheduleSlotsLoading ? (
+                <p className="text-sm text-slate-500">Memuat slot terbaru…</p>
+              ) : (
+                <select
+                  value={rescheduleSlotId}
+                  onChange={(e) => setRescheduleSlotId(e.target.value)}
+                  className={inputBase}
+                >
+                  <option value="">Tanpa slot (isi waktu manual)</option>
+                  {rescheduleSlots.map((slot) => (
+                    <option key={slot.id} value={slot.id}>
+                      {new Date(slot.startTime).toLocaleString("id-ID")} -{" "}
+                      {new Date(slot.endTime).toLocaleTimeString("id-ID")}
+                    </option>
+                  ))}
+                </select>
+              )}
+              <input
+                type="datetime-local"
+                value={rescheduleDateLocal}
+                onChange={(e) => setRescheduleDateLocal(e.target.value)}
+                disabled={Boolean(rescheduleSlotId)}
+                className={inputBase}
+              />
+            </div>
+            <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setRescheduleBookingId(null)}
+                disabled={rescheduleLoading}
+                className={`${btnSecondary} min-h-[44px] justify-center px-5`}
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitReschedule()}
+                disabled={rescheduleLoading}
+                className={`${btnPrimary} min-h-[44px] justify-center px-5`}
+              >
+                {rescheduleLoading ? "Menyimpan..." : "Simpan jadwal baru"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
