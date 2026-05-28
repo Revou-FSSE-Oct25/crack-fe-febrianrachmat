@@ -170,7 +170,7 @@ export default function MyReviewsPage() {
         <PageHeader
           eyebrow="Ulasan"
           title="Ulasan saya"
-          description="Kelola ulasan setelah kunjungan atau konsultasi online selesai. Anda dapat mengubah rating dan komentar."
+          description="Kelola ulasan setelah kunjungan atau konsultasi online selesai. Ulasan dapat diubah/hapus maksimal 72 jam setelah dikirim."
         />
         <Link
           href="/reviews/write"
@@ -278,6 +278,13 @@ export default function MyReviewsPage() {
                           : ""}
                       </p>
                     ) : null}
+                    <p className="text-xs text-slate-500">
+                      Batas ubah/hapus:{" "}
+                      {new Date(rev.editableUntil).toLocaleString("id-ID")}
+                      {!rev.isEditableByPatient
+                        ? " (periode edit sudah berakhir atau sedang dimoderasi)"
+                        : ""}
+                    </p>
                     {rev.comment ? (
                       <p className="text-slate-800 text-sm leading-relaxed whitespace-pre-wrap">
                         {rev.comment}
@@ -296,6 +303,7 @@ export default function MyReviewsPage() {
                       <button
                         type="button"
                         onClick={() => startEdit(rev)}
+                        disabled={!rev.isEditableByPatient}
                         className={`${btnSecondary} min-h-[44px] text-sm`}
                       >
                         Edit ulasan
@@ -303,7 +311,7 @@ export default function MyReviewsPage() {
                       <button
                         type="button"
                         onClick={() => setDeleteConfirmId(rev.id)}
-                        disabled={deletingId === rev.id}
+                        disabled={deletingId === rev.id || !rev.isEditableByPatient}
                         className={`${btnOutline} min-h-[44px] text-sm text-red-800 border-red-200 hover:bg-red-50`}
                       >
                         Hapus ulasan

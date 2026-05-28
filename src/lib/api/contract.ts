@@ -183,6 +183,8 @@ export type Review = {
   comment: string | null;
   isHidden: boolean;
   moderationNote: string | null;
+  editableUntil: string;
+  isEditableByPatient: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -226,6 +228,9 @@ export function asReviews(data: unknown): Review[] {
       isHidden: Boolean(r.isHidden),
       moderationNote:
         r.moderationNote != null ? String(r.moderationNote) : null,
+      editableUntil: String(r.editableUntil ?? r.createdAt ?? ""),
+      isEditableByPatient:
+        r.isEditableByPatient != null ? Boolean(r.isEditableByPatient) : false,
       createdAt: String(r.createdAt ?? ""),
       updatedAt: String(r.updatedAt ?? ""),
     };
