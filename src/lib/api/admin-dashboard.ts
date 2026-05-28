@@ -52,6 +52,27 @@ export type AdminDashboardAnalytics = {
     newBookings: number[];
     newConsultations: number[];
     paidRevenue: number[];
+    bookingCompleted: number[];
+    bookingCancelled: number[];
+    bookingNoShowEstimated: number[];
+  };
+  operationalKpis: {
+    bookingSuccessRate: number;
+    cancelRate: number;
+    noShowRate: number;
+    repeatPatientRate: number;
+    totals: {
+      completed: number;
+      cancelled: number;
+      noShowEstimated: number;
+    };
+  };
+  operationalWeekly: {
+    bucketDays: number;
+    bookingCompleted: number[];
+    bookingCancelled: number[];
+    bookingNoShowEstimated: number[];
+    totalOperational: number[];
   };
   reviews: {
     averageRating: number | null;
@@ -69,6 +90,11 @@ export type AdminDashboardAnalytics = {
     fullName: string;
     averageRating: number | null;
     reviewCount: number;
+  }>;
+  topPhysiotherapistsByCompletedBookings: Array<{
+    physiotherapistId: string;
+    fullName: string;
+    completedBookingCount: number;
   }>;
   auditLogsInPeriod: number;
 };
@@ -187,6 +213,41 @@ function mapAnalytics(raw: unknown): AdminDashboardAnalytics {
       newBookings: mapNumberArray(trends.newBookings),
       newConsultations: mapNumberArray(trends.newConsultations),
       paidRevenue: mapNumberArray(trends.paidRevenue),
+      bookingCompleted: mapNumberArray(trends.bookingCompleted),
+      bookingCancelled: mapNumberArray(trends.bookingCancelled),
+      bookingNoShowEstimated: mapNumberArray(trends.bookingNoShowEstimated),
+    },
+    operationalKpis: {
+      bookingSuccessRate: Number(asRecord(r.operationalKpis).bookingSuccessRate ?? 0),
+      cancelRate: Number(asRecord(r.operationalKpis).cancelRate ?? 0),
+      noShowRate: Number(asRecord(r.operationalKpis).noShowRate ?? 0),
+      repeatPatientRate: Number(asRecord(r.operationalKpis).repeatPatientRate ?? 0),
+      totals: {
+        completed: Number(
+          asRecord(asRecord(r.operationalKpis).totals).completed ?? 0,
+        ),
+        cancelled: Number(
+          asRecord(asRecord(r.operationalKpis).totals).cancelled ?? 0,
+        ),
+        noShowEstimated: Number(
+          asRecord(asRecord(r.operationalKpis).totals).noShowEstimated ?? 0,
+        ),
+      },
+    },
+    operationalWeekly: {
+      bucketDays: Number(asRecord(r.operationalWeekly).bucketDays ?? 7),
+      bookingCompleted: mapNumberArray(
+        asRecord(r.operationalWeekly).bookingCompleted,
+      ),
+      bookingCancelled: mapNumberArray(
+        asRecord(r.operationalWeekly).bookingCancelled,
+      ),
+      bookingNoShowEstimated: mapNumberArray(
+        asRecord(r.operationalWeekly).bookingNoShowEstimated,
+      ),
+      totalOperational: mapNumberArray(
+        asRecord(r.operationalWeekly).totalOperational,
+      ),
     },
     reviews: {
       averageRating:
@@ -205,6 +266,18 @@ function mapAnalytics(raw: unknown): AdminDashboardAnalytics {
         paymentMix.paidConsultationRevenue as string | number,
     },
     topTherapistsByRating: top,
+    topPhysiotherapistsByCompletedBookings: Array.isArray(
+      r.topPhysiotherapistsByCompletedBookings,
+    )
+      ? r.topPhysiotherapistsByCompletedBookings.map((row) => {
+          const t = asRecord(row);
+          return {
+            physiotherapistId: String(t.physiotherapistId ?? ""),
+            fullName: String(t.fullName ?? ""),
+            completedBookingCount: Number(t.completedBookingCount ?? 0),
+          };
+        })
+      : [],
     auditLogsInPeriod: Number(r.auditLogsInPeriod ?? 0),
   };
 }
