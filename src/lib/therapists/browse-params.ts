@@ -18,6 +18,13 @@ export type TherapistBrowseParams = {
   onlineOnly: boolean;
   sort: TherapistBrowseSort;
   minRating: number | null;
+  minExperienceYears: number | null;
+  minVisitFee: number | null;
+  maxVisitFee: number | null;
+  minConsultationFee: number | null;
+  maxConsultationFee: number | null;
+  availableDay: number | null;
+  availableHour: number | null;
   page: number;
 };
 
@@ -27,6 +34,13 @@ export const DEFAULT_THERAPIST_BROWSE: TherapistBrowseParams = {
   onlineOnly: false,
   sort: "newest",
   minRating: null,
+  minExperienceYears: null,
+  minVisitFee: null,
+  maxVisitFee: null,
+  minConsultationFee: null,
+  maxConsultationFee: null,
+  availableDay: null,
+  availableHour: null,
   page: 1,
 };
 
@@ -56,6 +70,20 @@ export function parseTherapistBrowseParams(
     minRatingParsed <= 5
       ? minRatingParsed
       : null;
+  const parseOptionalInt = (key: string, min: number, max?: number) => {
+    const raw = searchParams.get(key);
+    const parsed = raw != null && raw !== "" ? Number.parseInt(raw, 10) : NaN;
+    if (!Number.isFinite(parsed) || parsed < min) return null;
+    if (max != null && parsed > max) return null;
+    return parsed;
+  };
+  const minExperienceYears = parseOptionalInt("minExperienceYears", 0);
+  const minVisitFee = parseOptionalInt("minVisitFee", 0);
+  const maxVisitFee = parseOptionalInt("maxVisitFee", 0);
+  const minConsultationFee = parseOptionalInt("minConsultationFee", 0);
+  const maxConsultationFee = parseOptionalInt("maxConsultationFee", 0);
+  const availableDay = parseOptionalInt("availableDay", 0, 6);
+  const availableHour = parseOptionalInt("availableHour", 0, 23);
   const pageRaw = searchParams.get("page");
   const pageParsed =
     pageRaw != null && pageRaw !== "" ? Number.parseInt(pageRaw, 10) : 1;
@@ -67,6 +95,13 @@ export function parseTherapistBrowseParams(
     onlineOnly,
     sort,
     minRating,
+    minExperienceYears,
+    minVisitFee,
+    maxVisitFee,
+    minConsultationFee,
+    maxConsultationFee,
+    availableDay,
+    availableHour,
     page,
   };
 }
@@ -81,6 +116,21 @@ export function serializeTherapistBrowseParams(
   if (params.onlineOnly) q.set("online", "1");
   if (params.sort !== "newest") q.set("sort", params.sort);
   if (params.minRating != null) q.set("minRating", String(params.minRating));
+  if (params.minExperienceYears != null) {
+    q.set("minExperienceYears", String(params.minExperienceYears));
+  }
+  if (params.minVisitFee != null) q.set("minVisitFee", String(params.minVisitFee));
+  if (params.maxVisitFee != null) q.set("maxVisitFee", String(params.maxVisitFee));
+  if (params.minConsultationFee != null) {
+    q.set("minConsultationFee", String(params.minConsultationFee));
+  }
+  if (params.maxConsultationFee != null) {
+    q.set("maxConsultationFee", String(params.maxConsultationFee));
+  }
+  if (params.availableDay != null) q.set("availableDay", String(params.availableDay));
+  if (params.availableHour != null) {
+    q.set("availableHour", String(params.availableHour));
+  }
   if (params.page > 1) q.set("page", String(params.page));
   return q.toString();
 }
@@ -95,6 +145,13 @@ export function therapistBrowseParamsEqual(
     a.onlineOnly === b.onlineOnly &&
     a.sort === b.sort &&
     a.minRating === b.minRating &&
+    a.minExperienceYears === b.minExperienceYears &&
+    a.minVisitFee === b.minVisitFee &&
+    a.maxVisitFee === b.maxVisitFee &&
+    a.minConsultationFee === b.minConsultationFee &&
+    a.maxConsultationFee === b.maxConsultationFee &&
+    a.availableDay === b.availableDay &&
+    a.availableHour === b.availableHour &&
     a.page === b.page
   );
 }

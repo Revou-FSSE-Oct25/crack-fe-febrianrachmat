@@ -10,6 +10,13 @@ export type BrowsePhysiotherapistsParams = {
   onlineNow?: boolean;
   sort?: TherapistBrowseSort;
   minRating?: number;
+  minExperienceYears?: number;
+  minVisitFee?: number;
+  maxVisitFee?: number;
+  minConsultationFee?: number;
+  maxConsultationFee?: number;
+  availableDay?: number;
+  availableHour?: number;
   page?: number;
   limit?: number;
 };
@@ -66,6 +73,21 @@ function toQuery(params: BrowsePhysiotherapistsParams): string {
   if (params.onlineNow === true) q.set("onlineNow", "true");
   if (params.sort) q.set("sort", params.sort);
   if (params.minRating != null) q.set("minRating", String(params.minRating));
+  if (params.minExperienceYears != null) {
+    q.set("minExperienceYears", String(params.minExperienceYears));
+  }
+  if (params.minVisitFee != null) q.set("minVisitFee", String(params.minVisitFee));
+  if (params.maxVisitFee != null) q.set("maxVisitFee", String(params.maxVisitFee));
+  if (params.minConsultationFee != null) {
+    q.set("minConsultationFee", String(params.minConsultationFee));
+  }
+  if (params.maxConsultationFee != null) {
+    q.set("maxConsultationFee", String(params.maxConsultationFee));
+  }
+  if (params.availableDay != null) q.set("availableDay", String(params.availableDay));
+  if (params.availableHour != null) {
+    q.set("availableHour", String(params.availableHour));
+  }
   if (params.page != null) q.set("page", String(params.page));
   if (params.limit != null) q.set("limit", String(params.limit));
   const s = q.toString();

@@ -44,6 +44,15 @@ const SORT_LABELS: Record<TherapistBrowseSort, string> = {
   rating_desc: "Rating tertinggi",
   rating_asc: "Rating terendah",
 };
+const DAY_OPTIONS = [
+  { value: 0, label: "Minggu" },
+  { value: 1, label: "Senin" },
+  { value: 2, label: "Selasa" },
+  { value: 3, label: "Rabu" },
+  { value: 4, label: "Kamis" },
+  { value: 5, label: "Jumat" },
+  { value: 6, label: "Sabtu" },
+] as const;
 
 function isTherapistOnlineNow(t: PhysiotherapistBrowseItem): boolean {
   if (!t.onlineUntil) return false;
@@ -56,7 +65,14 @@ function hasActiveBrowseFilters(params: TherapistBrowseParams): boolean {
     Boolean(params.categoryId) ||
     params.onlineOnly ||
     params.sort !== "newest" ||
-    params.minRating != null
+    params.minRating != null ||
+    params.minExperienceYears != null ||
+    params.minVisitFee != null ||
+    params.maxVisitFee != null ||
+    params.minConsultationFee != null ||
+    params.maxConsultationFee != null ||
+    params.availableDay != null ||
+    params.availableHour != null
   );
 }
 
@@ -87,6 +103,13 @@ function TherapistsBrowsePageContent() {
             onlineNow: params.onlineOnly ? true : undefined,
             sort: params.sort,
             minRating: params.minRating ?? undefined,
+            minExperienceYears: params.minExperienceYears ?? undefined,
+            minVisitFee: params.minVisitFee ?? undefined,
+            maxVisitFee: params.maxVisitFee ?? undefined,
+            minConsultationFee: params.minConsultationFee ?? undefined,
+            maxConsultationFee: params.maxConsultationFee ?? undefined,
+            availableDay: params.availableDay ?? undefined,
+            availableHour: params.availableHour ?? undefined,
             page: params.page,
             limit: THERAPIST_BROWSE_PAGE_SIZE,
           }),
@@ -300,6 +323,124 @@ function TherapistsBrowsePageContent() {
             >
               {loading ? "Memuat…" : "Terapkan"}
             </button>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Min pengalaman (tahun)
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputBase}
+                value={filters.minExperienceYears ?? ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    minExperienceYears:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Visit fee (min)
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputBase}
+                value={filters.minVisitFee ?? ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    minVisitFee: e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Visit fee (max)
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputBase}
+                value={filters.maxVisitFee ?? ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    maxVisitFee: e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Konsultasi fee (max)
+              </label>
+              <input
+                type="number"
+                min={0}
+                className={inputBase}
+                value={filters.maxConsultationFee ?? ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    maxConsultationFee:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Hari tersedia (UTC)
+              </label>
+              <select
+                className={inputBase}
+                value={filters.availableDay ?? ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    availableDay: e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+              >
+                <option value="">Semua hari</option>
+                {DAY_OPTIONS.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Jam tersedia (UTC)
+              </label>
+              <select
+                className={inputBase}
+                value={filters.availableHour ?? ""}
+                onChange={(e) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    availableHour:
+                      e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+              >
+                <option value="">Semua jam</option>
+                {Array.from({ length: 24 }).map((_, h) => (
+                  <option key={h} value={h}>
+                    {String(h).padStart(2, "0")}:00
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <label className="flex min-h-[44px] cursor-pointer select-none items-center gap-2.5 rounded-xl border border-slate-100 bg-slate-50/50 px-3 py-2 text-sm text-slate-700">
