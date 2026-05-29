@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 import {
   parseTherapistBrowseParams,
   serializeTherapistBrowseParams,
@@ -16,20 +15,20 @@ describe("therapist browse URL params", () => {
       page: 2,
     });
     const parsed = parseTherapistBrowseParams(new URLSearchParams(serialized));
-    assert.equal(parsed.search, "lutut");
-    assert.equal(parsed.categoryId, "cat-1");
-    assert.equal(parsed.onlineOnly, true);
-    assert.equal(parsed.sort, "rating_desc");
-    assert.equal(parsed.minRating, 4);
-    assert.equal(parsed.page, 2);
+    expect(parsed.search).toBe("lutut");
+    expect(parsed.categoryId).toBe("cat-1");
+    expect(parsed.onlineOnly).toBe(true);
+    expect(parsed.sort).toBe("rating_desc");
+    expect(parsed.minRating).toBe(4);
+    expect(parsed.page).toBe(2);
   });
 
   it("falls back to defaults for invalid sort and page", () => {
     const parsed = parseTherapistBrowseParams(
       new URLSearchParams("sort=invalid&page=0&minRating=9"),
     );
-    assert.equal(parsed.sort, "newest");
-    assert.equal(parsed.page, 1);
-    assert.equal(parsed.minRating, null);
+    expect(parsed.sort).toBe("newest");
+    expect(parsed.page).toBe(1);
+    expect(parsed.minRating).toBe(null);
   });
 });

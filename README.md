@@ -248,9 +248,10 @@ GitHub Actions (`.github/workflows/ci.yml`) pada push/PR ke `main`:
 
 1. `npm ci`
 2. `npm run lint`
-3. `npm run build`
+3. `npm run test:cov` — unit test Vitest + Testing Library (`src/lib/**`, komponen kritis); ringkasan coverage di GitHub Actions job summary
+4. `npm run build`
 
-**Coverage:** repo frontend belum memiliki unit test Jest/Vitest; pelaporan coverage otomatis ada di backend (`crack-be-febrianrachmat`) lewat `npm run test:cov` + ringkasan di GitHub Actions job summary.
+**Coverage:** `npm run test:cov` melaporkan coverage untuk `src/lib/**` dan `src/components/**` (selaras pola backend). E2E Playwright (`npm run test:e2e`) dijalankan terpisah, bukan di CI default.
 
 ---
 

@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "vitest";
 import { mapStreamPayload, parseSseBuffer } from "./chat-sse";
 
 describe("chat-sse", () => {
@@ -8,10 +7,10 @@ describe("chat-sse", () => {
       'data: {"id":"1","content":"hi","createdAt":"2026-05-25T00:00:00.000Z","sender":{"id":"u","fullName":"A"}}\n\n' +
       "event: ping\ndata: \n\n";
     const { events, rest } = parseSseBuffer(raw);
-    assert.equal(events.length, 2);
-    assert.equal(events[0]?.data?.includes('"id":"1"'), true);
-    assert.equal(events[1]?.event, "ping");
-    assert.equal(rest, "");
+    expect(events).toHaveLength(2);
+    expect(events[0]?.data).toContain('"id":"1"');
+    expect(events[1]?.event).toBe("ping");
+    expect(rest).toBe("");
   });
 
   it("mapStreamPayload maps message JSON", () => {
@@ -23,7 +22,7 @@ describe("chat-sse", () => {
         sender: { id: "u1", fullName: "Pat" },
       }),
     );
-    assert.equal(msg?.id, "m1");
-    assert.equal(msg?.sender.fullName, "Pat");
+    expect(msg?.id).toBe("m1");
+    expect(msg?.sender.fullName).toBe("Pat");
   });
 });
