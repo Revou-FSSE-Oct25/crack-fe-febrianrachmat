@@ -2,6 +2,10 @@ import { chmodSync, existsSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join } from "node:path";
 
+if (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true") {
+  process.exit(0);
+}
+
 if (!existsSync(".git")) {
   process.exit(0);
 }
@@ -18,4 +22,4 @@ try {
   /* Windows may ignore mode; hook still runs via sh */
 }
 
-execSync("git config core.hooksPath .githooks", { stdio: "inherit" });
+execSync("git config --local core.hooksPath .githooks", { stdio: "inherit" });
