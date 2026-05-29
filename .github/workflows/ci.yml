@@ -25,8 +25,7 @@ jobs:
         run: |
           node -v
           npm -v
-          npm install -g npm@11
-          npm ci --ignore-scripts
+          npm install --ignore-scripts --no-audit --no-fund
 
       - name: Lint
         run: npm run lint
