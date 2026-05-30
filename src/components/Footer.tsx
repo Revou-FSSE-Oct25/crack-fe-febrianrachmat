@@ -1,3 +1,6 @@
+"use client";
+
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 
 const footerLink =
@@ -6,6 +9,7 @@ const footerLink =
 const footerHeading = "text-xs font-semibold uppercase tracking-wider text-teal-200/90";
 
 export default function Footer() {
+  const { t } = useLanguage();
   return (
     <footer className="relative mt-auto overflow-hidden border-t border-teal-950/20 bg-gradient-to-b from-teal-800 via-teal-900 to-slate-950 text-white">
       <div
@@ -21,63 +25,62 @@ export default function Footer() {
           <div className="lg:col-span-5">
             <p className="text-lg font-bold tracking-tight text-white">Kinova</p>
             <p className="mt-3 max-w-sm text-sm text-teal-100/90 leading-relaxed">
-              Movement &amp; Recovery Center — pendamping pemulihan gerak Anda
-              dengan alur booking dan konsultasi yang jelas.
+              {t("footer.tagline")}
             </p>
           </div>
 
           <div className="sm:col-span-1 lg:col-span-3">
-            <p className={footerHeading}>Navigasi</p>
+            <p className={footerHeading}>{t("footer.navHeading")}</p>
             <ul className="mt-4 flex flex-col gap-2.5">
               <li>
                 <Link href="/services" className={footerLink}>
-                  Layanan
+                  {t("footer.services")}
                 </Link>
               </li>
               <li>
                 <Link href="/about" className={footerLink}>
-                  Tentang
+                  {t("footer.about")}
                 </Link>
               </li>
               <li>
                 <Link href="/therapists" className={footerLink}>
-                  Fisioterapis
+                  {t("footer.physio")}
                 </Link>
               </li>
               <li>
                 <Link href="/appointment" className={footerLink}>
-                  Janji temu
+                  {t("footer.appointment")}
                 </Link>
               </li>
             </ul>
           </div>
 
           <div className="sm:col-span-1 lg:col-span-4">
-            <p className={footerHeading}>Akun &amp; kebijakan</p>
+            <p className={footerHeading}>{t("footer.accountHeading")}</p>
             <ul className="mt-4 flex flex-col gap-2.5">
               <li>
                 <Link href="/login" className={footerLink}>
-                  Masuk
+                  {t("footer.login")}
                 </Link>
               </li>
               <li>
                 <Link href="/register" className={footerLink}>
-                  Daftar
+                  {t("footer.register")}
                 </Link>
               </li>
               <li>
                 <Link href="/kebijakan" className={footerLink}>
-                  Kebijakan produk &amp; demo
+                  {t("footer.policy")}
                 </Link>
               </li>
               <li>
                 <Link href="/demo" className={footerLink}>
-                  Panduan demo
+                  {t("footer.demoGuide")}
                 </Link>
               </li>
               <li>
                 <Link href="/status" className={footerLink}>
-                  Status layanan
+                  {t("footer.serviceStatus")}
                 </Link>
               </li>
             </ul>
@@ -85,7 +88,7 @@ export default function Footer() {
         </div>
 
         <p className="mt-12 border-t border-white/10 pt-8 text-center text-xs text-teal-200/85">
-          © {new Date().getFullYear()} Kinova. Hak cipta dilindungi.
+          © {new Date().getFullYear()} Kinova. {t("footer.copyright")}
         </p>
       </div>
     </footer>

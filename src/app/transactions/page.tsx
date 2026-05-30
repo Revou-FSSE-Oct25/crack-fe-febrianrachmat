@@ -21,6 +21,7 @@ import {
 import { LoadErrorCard } from "@/components/ui/load-error-card";
 import { transactionStatusMeta } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { PaymentProofLink } from "@/components/PaymentProofLink";
@@ -62,6 +63,7 @@ export default function TransactionsPage() {
 
 function TransactionsPageContent() {
   const { user, isReady } = useAuth();
+  const { t, language } = useLanguage();
   const toast = useToast();
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<Transaction[]>([]);
@@ -136,7 +138,7 @@ function TransactionsPageContent() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!bookingId) {
-      setError("Pilih booking.");
+      setError(t("booking.tx.error.pickBooking"));
       return;
     }
     const trimmedProofUrl = paymentProofUrl.trim();
@@ -160,14 +162,13 @@ function TransactionsPageContent() {
       setBookingId("");
       setPaymentProofUrl("");
       setProofFile(null);
-      actionSuccessWithNotify(
-        toast,
-        "Transaksi dibuat. Menunggu konfirmasi admin.",
-      );
+      actionSuccessWithNotify(toast, t("booking.tx.toast.created"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal membuat transaksi.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.tx.error.create"),
       );
     } finally {
       setCreating(false);
@@ -179,13 +180,13 @@ function TransactionsPageContent() {
     setError(null);
     try {
       await confirmTransactionPaidByAdmin(id);
-      actionSuccessWithNotify(toast, "Pembayaran dikonfirmasi.");
+      actionSuccessWithNotify(toast, t("booking.tx.toast.paymentConfirmed"));
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengonfirmasi pembayaran.",
+          : t("booking.tx.error.confirm"),
       );
     } finally {
       setConfirmingPayId(null);
@@ -217,11 +218,11 @@ function TransactionsPageContent() {
         return next;
       });
       setRefundConfirmId(null);
-      toast.success("Refund berhasil diproses (dummy).");
+      toast.success(t("booking.tx.toast.refunded"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal refund.",
+        err instanceof ApiRequestError ? err.message : t("booking.tx.error.refund"),
       );
     } finally {
       setRefundingId(null);
@@ -233,36 +234,33 @@ function TransactionsPageContent() {
   }
 
   if (!user) {
-    return (
-      <SignInRequired message="Silakan masuk untuk melihat transaksi." />
-    );
+    return <SignInRequired message={t("booking.tx.signIn")} />;
   }
 
   if (user.role === "PHYSIOTHERAPIST") {
     return (
       <main className={`${widePageShell} space-y-6 pb-16`}>
         <PageHeader
-          eyebrow="Pembayaran"
-          title="Transaksi"
-          description="Daftar transaksi tersedia untuk Pasien dan Admin. Akun fisioterapis tidak menggunakan halaman ini."
+          eyebrow={t("booking.tx.eyebrow")}
+          title={t("booking.tx.title")}
+          description={t("booking.tx.pt.desc")}
         />
         <div className={`${cardSurface} space-y-4`}>
           <p className="text-sm leading-relaxed text-slate-700">
-            Gunakan pintasan di bawah navbar untuk konsultasi, booking, dan chat.
-            Pembayaran dilakukan oleh pasien melalui menu Transaksi di akun mereka.
+            {t("booking.tx.pt.note")}
           </p>
           <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:flex-wrap">
             <Link
               href="/bookings"
               className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
             >
-              Daftar booking
+              {t("booking.tx.link.bookings")}
             </Link>
             <Link
               href="/consultations"
               className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[11rem]`}
             >
-              Konsultasi
+              {t("booking.tx.link.consultations")}
             </Link>
           </div>
         </div>
@@ -276,12 +274,12 @@ function TransactionsPageContent() {
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
-          eyebrow="Pembayaran"
-          title="Transaksi"
+          eyebrow={t("booking.tx.eyebrow")}
+          title={t("booking.tx.title")}
           description={
             user.role === "ADMIN"
-              ? "Konfirmasi pembayaran dummy dan refund untuk transaksi yang memenuhi syarat."
-              : "Bayar kunjungan setelah fisioterapis mengonfirmasi booking. Nominal mengikuti tarif visit saat booking dibuat. Konfirmasi lunas oleh admin."
+              ? t("booking.tx.desc.admin")
+              : t("booking.tx.desc.patient")
           }
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
@@ -291,13 +289,13 @@ function TransactionsPageContent() {
                 href="/bookings"
                 className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
               >
-                Daftar booking
+                {t("booking.tx.link.bookings")}
               </Link>
               <Link
                 href="/consultations"
                 className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[11rem]`}
               >
-                Konsultasi
+                {t("booking.tx.link.consultations")}
               </Link>
             </>
           ) : null}
@@ -312,12 +310,12 @@ function TransactionsPageContent() {
       {user.role === "PATIENT" && (
         <section className={`${cardSurface} space-y-4`}>
           <h2 className="text-lg font-semibold text-slate-900">
-            Buat transaksi (dummy)
+            {t("booking.tx.create.title")}
           </h2>
           <form onSubmit={handleCreate} className="space-y-3 max-w-md">
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
-                Booking &amp; tarif visit
+                {t("booking.tx.create.bookingLabel")}
               </label>
               <select
                 required
@@ -325,7 +323,7 @@ function TransactionsPageContent() {
                 value={bookingId}
                 onChange={(e) => setBookingId(e.target.value)}
               >
-                <option value="">— Pilih booking —</option>
+                <option value="">{t("booking.tx.create.chooseBooking")}</option>
                 {pendingBookings.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.id.slice(0, 8)}… · {formatIdr(b.visitFeeSnapshot)}
@@ -334,9 +332,9 @@ function TransactionsPageContent() {
               </select>
               {pendingBookings.length === 0 ? (
                 <p className="text-xs text-amber-900 bg-amber-50 border border-amber-200/80 rounded-xl px-3 py-2 mt-2 leading-relaxed">
-                  Belum ada booking yang dikonfirmasi terapis. Cek status di{" "}
+                  {t("booking.tx.create.noPendingBefore")}{" "}
                   <Link href="/bookings" className="font-medium underline">
-                    Daftar booking
+                    {t("booking.tx.link.bookings")}
                   </Link>
                   .
                 </p>
@@ -344,7 +342,7 @@ function TransactionsPageContent() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
-                Metode bayar
+                {t("booking.tx.create.methodLabel")}
               </label>
               <select
                 className={inputBase}
@@ -356,18 +354,21 @@ function TransactionsPageContent() {
                 }
               >
                 <option value="QRIS">QRIS</option>
-                <option value="BANK_TRANSFER">Bank transfer</option>
-                <option value="E_WALLET">E-wallet</option>
-                <option value="CREDIT_CARD">Kartu kredit</option>
+                <option value="BANK_TRANSFER">
+                  {t("booking.tx.method.bankTransfer")}
+                </option>
+                <option value="E_WALLET">{t("booking.tx.method.eWallet")}</option>
+                <option value="CREDIT_CARD">
+                  {t("booking.tx.method.creditCard")}
+                </option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
-                Bukti pembayaran (wajib)
+                {t("booking.tx.create.proofLabel")}
               </label>
               <p className="text-xs text-slate-500 mb-2 leading-relaxed">
-                Unggah screenshot/struk, atau tautan https ke bukti di cloud
-                storage. Salah satu wajib diisi sebelum transaksi dibuat.
+                {t("booking.tx.create.proofHint")}
               </p>
               <input
                 type="file"
@@ -380,7 +381,7 @@ function TransactionsPageContent() {
               <input
                 type="url"
                 className={`${inputBase} mt-2`}
-                placeholder="https://contoh.com/bukti-bayar.png"
+                placeholder={t("booking.tx.create.proofPlaceholder")}
                 value={paymentProofUrl}
                 onChange={(e) => setPaymentProofUrl(e.target.value)}
               />
@@ -390,138 +391,152 @@ function TransactionsPageContent() {
               disabled={creating}
               className={`${btnPrimary} min-h-[44px]`}
             >
-              {creating ? "Menyimpan…" : "Buat transaksi"}
+              {creating
+                ? t("booking.tx.create.saving")
+                : t("booking.tx.create.submit")}
             </button>
           </form>
           <p className="text-sm text-slate-600 max-w-md leading-relaxed">
-            Pembayaran untuk <strong>konsultasi online</strong> dibuat dari halaman{" "}
+            {t("booking.tx.create.footer1")}{" "}
+            <strong>{t("booking.tx.create.footerOnline")}</strong>{" "}
+            {t("booking.tx.create.footer2")}{" "}
             <Link href="/consultations" className="text-teal-700 underline font-medium">
-              Konsultasi
+              {t("booking.tx.link.consultations")}
             </Link>{" "}
-            setelah terapis menerima. Formulir di atas hanya untuk transaksi{" "}
-            <strong>booking kunjungan</strong>. Bukti bayar wajib; konfirmasi lunas
-            oleh admin.
+            {t("booking.tx.create.footer3")}{" "}
+            <strong>{t("booking.tx.create.footerBooking")}</strong>.{" "}
+            {t("booking.tx.create.footer4")}
           </p>
         </section>
       )}
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900">
-          Daftar transaksi
+          {t("booking.tx.list.title")}
         </h2>
         {user.role === "ADMIN" && (
           <p className="text-sm text-slate-600 leading-relaxed">
-            Transaksi <strong>PENDING</strong> dengan bukti terlampir: konfirmasi
-            pembayaran dummy lewat tombol di bawah (
+            {t("booking.tx.admin.seg1")} <strong>PENDING</strong>{" "}
+            {t("booking.tx.admin.seg2")}
             <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono">
               PATCH /admin/transactions/:transactionId/pay
             </code>
-            ). Transaksi <strong>PAID</strong>: refund dummy lewat{" "}
+            {t("booking.tx.admin.seg3")} <strong>PAID</strong>
+            {t("booking.tx.admin.seg4")}{" "}
             <code className="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-mono">
               PATCH /admin/transactions/:transactionId/refund
             </code>{" "}
-            (alasan min. 5 karakter).
+            {t("booking.tx.admin.seg5")}
           </p>
         )}
         {loading ? (
           <ListSkeleton rows={3} />
         ) : loadError ? null : rows.length === 0 ? (
           <EmptyState
-            title="Belum ada transaksi"
+            title={t("booking.tx.empty.title")}
             hint={
               user.role === "PATIENT"
-                ? "Setelah terapis mengonfirmasi booking, buat transaksi pembayaran dari formulir di atas."
-                : "Transaksi dari pasien akan muncul di sini untuk dikonfirmasi."
+                ? t("booking.tx.empty.hintPatient")
+                : t("booking.tx.empty.hintAdmin")
             }
             actions={
               user.role === "PATIENT"
                 ? [
-                    { href: "/bookings", label: "Lihat booking saya" },
+                    {
+                      href: "/bookings",
+                      label: t("booking.tx.action.myBookings"),
+                    },
                     {
                       href: "/appointment",
-                      label: "Buat janji baru",
+                      label: t("booking.tx.action.newAppointment"),
                       variant: "secondary",
                     },
                   ]
-                : [{ href: "/admin/dashboard", label: "Kembali ke dashboard" }]
+                : [
+                    {
+                      href: "/admin/dashboard",
+                      label: t("booking.tx.action.backDashboard"),
+                    },
+                  ]
             }
           />
         ) : (
           <ul className="space-y-4">
-            {rows.map((t) => (
-              <li key={t.id} className={`${cardSurface} space-y-3`}>
+            {rows.map((tx) => (
+              <li key={tx.id} className={`${cardSurface} space-y-3`}>
                 <div className="flex flex-wrap justify-between gap-3 items-start">
                   <div className="min-w-0 flex-1 space-y-2">
                     <StatusChip
-                      label={transactionStatusMeta(t.status).label}
-                      tone={transactionStatusMeta(t.status).tone}
+                      label={transactionStatusMeta(tx.status, language).label}
+                      tone={transactionStatusMeta(tx.status, language).tone}
                     />
                     <p className="text-sm text-slate-600">
-                      {t.paymentMethod} · {formatIdr(t.amount)}
+                      {tx.paymentMethod} · {formatIdr(tx.amount)}
                     </p>
                     <p className="text-xs text-slate-600">
-                      {transactionReferenceLabel(t)}
+                      {transactionReferenceLabel(tx)}
                     </p>
                     <p className="text-xs text-slate-500 mt-1 font-mono break-all">
-                      {t.id}
+                      {tx.id}
                     </p>
                     <PaymentProofLink
-                      transactionId={t.id}
-                      paymentProofUrl={t.paymentProofUrl}
+                      transactionId={tx.id}
+                      paymentProofUrl={tx.paymentProofUrl}
                     />
                   </div>
-                  {user.role === "PATIENT" && t.status === "PENDING" && (
+                  {user.role === "PATIENT" && tx.status === "PENDING" && (
                     <span className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl shrink-0 max-w-xs">
-                      Menunggu konfirmasi pembayaran dari admin
+                      {t("booking.tx.item.waitingAdmin")}
                     </span>
                   )}
                 </div>
-                {user.role === "ADMIN" && t.status === "PENDING" && (
+                {user.role === "ADMIN" && tx.status === "PENDING" && (
                   <div className="border-t border-slate-100 pt-3 space-y-2">
-                    {!hasTransactionPaymentProof(t.paymentProofUrl) ? (
+                    {!hasTransactionPaymentProof(tx.paymentProofUrl) ? (
                       <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl">
-                        Konfirmasi bayar dinonaktifkan sampai pasien melampirkan
-                        bukti (URL atau unggahan).
+                        {t("booking.tx.item.confirmDisabled")}
                       </p>
                     ) : null}
                     <button
                       type="button"
                       disabled={
-                        confirmingPayId === t.id ||
-                        !hasTransactionPaymentProof(t.paymentProofUrl)
+                        confirmingPayId === tx.id ||
+                        !hasTransactionPaymentProof(tx.paymentProofUrl)
                       }
-                      onClick={() => void confirmPaymentAsAdmin(t.id)}
+                      onClick={() => void confirmPaymentAsAdmin(tx.id)}
                       className={`${btnPrimary} min-h-[44px] text-sm disabled:pointer-events-none disabled:opacity-50`}
                     >
-                      {confirmingPayId === t.id
-                        ? "Memproses…"
-                        : "Konfirmasi pembayaran (dummy)"}
+                      {confirmingPayId === tx.id
+                        ? t("booking.tx.item.processing")
+                        : t("booking.tx.item.confirmPay")}
                     </button>
                   </div>
                 )}
-                {user.role === "ADMIN" && t.status === "PAID" && (
+                {user.role === "ADMIN" && tx.status === "PAID" && (
                   <div className="border-t border-slate-100 pt-3 space-y-2">
                     <label className="block text-sm text-slate-700">
-                      Alasan refund (min. 5 karakter)
+                      {t("booking.tx.item.refundReasonLabel")}
                     </label>
                     <textarea
                       className={`${inputBase} min-h-[72px]`}
-                      placeholder="Contoh: Permintaan pembatalan dari pasien."
-                      value={refundReasonById[t.id] ?? ""}
+                      placeholder={t("booking.tx.item.refundPlaceholder")}
+                      value={refundReasonById[tx.id] ?? ""}
                       onChange={(e) =>
                         setRefundReasonById((prev) => ({
                           ...prev,
-                          [t.id]: e.target.value,
+                          [tx.id]: e.target.value,
                         }))
                       }
                     />
                     <button
                       type="button"
-                      disabled={refundingId === t.id}
-                      onClick={() => requestRefundConfirm(t.id)}
+                      disabled={refundingId === tx.id}
+                      onClick={() => requestRefundConfirm(tx.id)}
                       className={`${btnDanger} min-h-[44px] text-sm`}
                     >
-                      {refundingId === t.id ? "Memproses…" : "Refund (dummy)"}
+                      {refundingId === tx.id
+                        ? t("booking.tx.item.processing")
+                        : t("booking.tx.item.refundBtn")}
                     </button>
                   </div>
                 )}
@@ -533,10 +548,10 @@ function TransactionsPageContent() {
 
       <ConfirmDialog
         open={refundConfirmId !== null}
-        title="Proses refund?"
-        description="Transaksi akan ditandai refund (dummy). Pastikan alasan refund sudah benar — tindakan ini untuk keperluan demo admin."
-        confirmLabel="Ya, refund"
-        cancelLabel="Tidak jadi"
+        title={t("booking.tx.confirm.title")}
+        description={t("booking.tx.confirm.desc")}
+        confirmLabel={t("booking.tx.confirm.yes")}
+        cancelLabel={t("booking.tx.confirm.no")}
         variant="danger"
         loading={refundConfirmId !== null && refundingId === refundConfirmId}
         onConfirm={() => void confirmRefund()}

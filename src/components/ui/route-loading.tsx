@@ -1,9 +1,12 @@
+"use client";
+
 import {
   adminPageShell,
   ListSkeleton,
   pageShell,
   widePageShell,
 } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 
 type RouteListPageLoadingProps = {
   label?: string;
@@ -19,10 +22,12 @@ function resolveShell(shell: RouteListPageLoadingProps["shell"]): string {
 
 /** Skeleton untuk halaman list/data (Next.js `loading.tsx`). */
 export function RouteListPageLoading({
-  label = "Memuat…",
+  label,
   shell = "wide",
   rows = 4,
 }: RouteListPageLoadingProps) {
+  const { t } = useLanguage();
+  const resolvedLabel = label ?? t("ui.loading");
   return (
     <main
       className={resolveShell(shell)}
@@ -38,17 +43,19 @@ export function RouteListPageLoading({
         </header>
         <ListSkeleton rows={rows} />
       </div>
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{resolvedLabel}</span>
     </main>
   );
 }
 
 /** Skeleton thread chat (pesan bolak-balik). */
 export function RouteChatThreadLoading({
-  label = "Memuat percakapan…",
+  label,
 }: {
   label?: string;
 }) {
+  const { t } = useLanguage();
+  const resolvedLabel = label ?? t("ui.loadingConversation");
   return (
     <main
       className={`${pageShell} max-w-3xl pb-16`}
@@ -69,7 +76,7 @@ export function RouteChatThreadLoading({
           ))}
         </div>
       </div>
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{resolvedLabel}</span>
     </main>
   );
 }

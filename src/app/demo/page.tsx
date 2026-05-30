@@ -1,3 +1,5 @@
+"use client";
+
 import {
   btnPrimary,
   btnSecondary,
@@ -6,47 +8,54 @@ import {
   widePageShell,
 } from "@/components/ui/page-shell";
 import {
-  DEMO_ACCOUNTS,
   DEMO_DEFAULT_PASSWORD,
-  DEMO_HAPPY_PATHS,
-  DEMO_PREFLIGHT_CHECKLIST,
+  getDemoAccounts,
+  getDemoHappyPaths,
+  getDemoPreflightChecklist,
 } from "@/lib/demo-guide";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 
 export default function DemoGuidePage() {
+  const { t, language } = useLanguage();
+
+  const checklist = getDemoPreflightChecklist(language);
+  const accounts = getDemoAccounts(language);
+  const happyPaths = getDemoHappyPaths(language);
+
   return (
     <main className={`${widePageShell} space-y-10 pb-16`}>
       <PageHeader
-        eyebrow="Asesmen & presentasi"
-        title="Panduan demo Kinova"
-        description="Ringkasan akun seed, alur happy path, dan checklist sebelum demo. Pembayaran bersifat dummy; data mengikuti seed backend."
+        eyebrow={t("mkt.demoEyebrow")}
+        title={t("mkt.demoTitle")}
+        description={t("mkt.demoDesc")}
       />
 
       <section className={`${cardSurface} space-y-4`}>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-          Checklist sebelum demo
+          {t("mkt.demoChecklistTitle")}
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm text-slate-600 dark:text-slate-400">
-          {DEMO_PREFLIGHT_CHECKLIST.map((item) => (
+          {checklist.map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
         <div className="flex flex-wrap gap-3 pt-2">
           <Link href="/status" className={btnPrimary}>
-            Cek status layanan
+            {t("mkt.demoCheckStatus")}
           </Link>
           <Link href="/kebijakan" className={btnSecondary}>
-            Kebijakan produk
+            {t("mkt.demoPolicyBtn")}
           </Link>
         </div>
       </section>
 
       <section className={`${cardSurface} space-y-4`}>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-          Akun demo
+          {t("mkt.demoAccountsTitle")}
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Password default setelah{" "}
+          {t("mkt.demoPasswordBody1")}{" "}
           <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs dark:bg-slate-800">
             npm run prisma:seed
           </code>
@@ -59,13 +68,13 @@ export default function DemoGuidePage() {
           <table className="w-full min-w-[32rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-600">
-                <th className="py-2 pr-4 font-semibold">Email</th>
-                <th className="py-2 pr-4 font-semibold">Peran</th>
-                <th className="py-2 font-semibold">Catatan seed</th>
+                <th className="py-2 pr-4 font-semibold">{t("mkt.demoColEmail")}</th>
+                <th className="py-2 pr-4 font-semibold">{t("mkt.demoColRole")}</th>
+                <th className="py-2 font-semibold">{t("mkt.demoColNote")}</th>
               </tr>
             </thead>
             <tbody className="text-slate-700 dark:text-slate-300">
-              {DEMO_ACCOUNTS.map((acc) => (
+              {accounts.map((acc) => (
                 <tr
                   key={acc.email}
                   className="border-b border-slate-100 last:border-0 dark:border-slate-700/80"
@@ -83,16 +92,16 @@ export default function DemoGuidePage() {
           </table>
         </div>
         <Link href="/login" className={`${btnPrimary} inline-flex`}>
-          Masuk dengan akun demo
+          {t("mkt.demoLoginBtn")}
         </Link>
       </section>
 
       <section className="space-y-6">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">
-          Alur happy path
+          {t("mkt.demoHappyTitle")}
         </h2>
         <div className="grid gap-6 lg:grid-cols-3">
-          {DEMO_HAPPY_PATHS.map((flow) => (
+          {happyPaths.map((flow) => (
             <article key={flow.title} className={`${cardSurface} space-y-3`}>
               <h3 className="font-semibold text-slate-900 dark:text-slate-50">
                 {flow.title}
@@ -123,12 +132,11 @@ export default function DemoGuidePage() {
 
       <section className={`${cardSurface} text-sm text-slate-600 dark:text-slate-400`}>
         <p>
-          E2E lokal: jalankan backend + seed, lalu{" "}
+          {t("mkt.demoE2EBody1")}{" "}
           <code className="rounded bg-slate-100 px-1 font-mono text-xs dark:bg-slate-800">
             E2E_RUN=1 npm run test:e2e:local
           </code>{" "}
-          di repo frontend. Lihat README untuk skenario booking, browse terapis, dan
-          konsultasi.
+          {t("mkt.demoE2EBody2")}
         </p>
       </section>
     </main>

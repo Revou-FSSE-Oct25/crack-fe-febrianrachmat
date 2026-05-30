@@ -17,6 +17,7 @@ import { clearFieldError } from "@/lib/validation/form-helpers";
 import { validateRegister } from "@/lib/validation";
 import { buildLoginHref, safeNextPath } from "@/lib/auth-next";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -68,6 +69,7 @@ function RoleOption({
 
 function RegisterPageContent() {
   const { register, user, isReady } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const afterRegisterPath = safeNextPath(searchParams.get("next")) ?? "/profile";
@@ -124,7 +126,7 @@ function RegisterPageContent() {
       const msg =
         err instanceof ApiRequestError
           ? err.message
-          : "Pendaftaran gagal. Coba lagi.";
+          : t("auth.register.error");
       setError(msg);
     } finally {
       setLoading(false);
@@ -138,18 +140,18 @@ function RegisterPageContent() {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-            Akun baru
+            {t("auth.register.eyebrow")}
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            Daftar
+            {t("auth.register.title")}
           </h1>
           <p className="mt-3 text-sm text-slate-600">
-            Sudah punya akun?{" "}
+            {t("auth.register.haveAccount")}{" "}
             <Link
               href={loginHref}
               className="font-semibold text-teal-700 hover:text-teal-600 underline-offset-2 hover:underline"
             >
-              Masuk
+              {t("auth.register.loginLink")}
             </Link>
           </p>
         </div>
@@ -161,36 +163,36 @@ function RegisterPageContent() {
             </div>
 
             <fieldset className="space-y-3">
-              <legend className={labelClass}>Jenis akun</legend>
+              <legend className={labelClass}>{t("auth.register.accountType")}</legend>
               <div className="grid gap-3 sm:grid-cols-1">
                 <RoleOption
                   id="role-patient"
                   name="role"
                   checked={role === "PATIENT"}
                   onChange={() => setRole("PATIENT")}
-                  title="Pasien"
-                  description="Booking kunjungan dan konsultasi dengan fisioterapis."
+                  title={t("auth.register.patientTitle")}
+                  description={t("auth.register.patientDesc")}
                 />
                 <RoleOption
                   id="role-physio"
                   name="role"
                   checked={role === "PHYSIOTHERAPIST"}
                   onChange={() => setRole("PHYSIOTHERAPIST")}
-                  title="Fisioterapis"
-                  description="Kelola jadwal, konsultasi, dan profil praktik Anda."
+                  title={t("auth.register.physioTitle")}
+                  description={t("auth.register.physioDesc")}
                 />
               </div>
             </fieldset>
 
             <div>
               <label htmlFor="register-fullName" className={labelClass}>
-                Nama lengkap
+                {t("auth.register.fullNameLabel")}
               </label>
               <input
                 id="register-fullName"
                 type="text"
                 autoComplete="name"
-                placeholder="Contoh: Budi Santoso"
+                placeholder={t("auth.register.fullNamePlaceholder")}
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);
@@ -204,13 +206,13 @@ function RegisterPageContent() {
 
             <div>
               <label htmlFor="register-email" className={labelClass}>
-                Email
+                {t("auth.email.label")}
               </label>
               <input
                 id="register-email"
                 type="email"
                 autoComplete="email"
-                placeholder="nama@email.com"
+                placeholder={t("auth.email.placeholder")}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -224,8 +226,10 @@ function RegisterPageContent() {
 
             <div>
               <label htmlFor="register-phone" className={labelClass}>
-                Nomor telepon{" "}
-                <span className="font-normal text-slate-500">(opsional)</span>
+                {t("auth.register.phoneLabel")}{" "}
+                <span className="font-normal text-slate-500">
+                  {t("auth.register.phoneOptional")}
+                </span>
               </label>
               <input
                 id="register-phone"
@@ -245,12 +249,12 @@ function RegisterPageContent() {
 
             <div>
               <label htmlFor="register-password" className={labelClass}>
-                Kata sandi
+                {t("auth.password.label")}
               </label>
               <PasswordInput
                 id="register-password"
                 autoComplete="new-password"
-                placeholder="Buat kata sandi Anda"
+                placeholder={t("auth.register.passwordPlaceholder")}
                 value={password}
                 onChange={(v) => {
                   setPassword(v);
@@ -258,7 +262,7 @@ function RegisterPageContent() {
                 }}
                 hasError={Boolean(fieldErrors.password)}
                 errorMessage={fieldErrors.password}
-                hint="Minimal 8 karakter."
+                hint={t("auth.register.passwordHint")}
               />
             </div>
 
@@ -267,16 +271,16 @@ function RegisterPageContent() {
               disabled={loading}
               className={`${btnPrimary} w-full min-h-[48px] py-3`}
             >
-              {loading ? "Memproses…" : "Daftar"}
+              {loading ? t("auth.processing") : t("auth.register.submit")}
             </button>
           </form>
           <OAuthButtons role={role} nextPath={afterRegisterPath} />
         </div>
 
         <p className="mt-8 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-          Dengan mendaftar, Anda menyetujui ringkasan{" "}
+          {t("auth.register.termsPrefix")}{" "}
           <Link href="/kebijakan" className="text-teal-700 font-medium hover:underline">
-            kebijakan produk & demo
+            {t("auth.terms.policyLink")}
           </Link>
           .
         </p>

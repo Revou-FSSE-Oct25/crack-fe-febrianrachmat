@@ -12,6 +12,7 @@ import {
   formPageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyBookings } from "@/lib/api/bookings";
@@ -38,6 +39,7 @@ type ReviewTargetType = "booking" | "consultation";
 
 export default function WriteReviewPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [completedBookings, setCompletedBookings] = useState<SessionOption[]>(
     [],
@@ -75,12 +77,14 @@ export default function WriteReviewPage() {
       setCompletedBookings([]);
       setCompletedConsultations([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat sesi.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("review.loadSessionsError"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "PATIENT") return;
@@ -114,13 +118,13 @@ export default function WriteReviewPage() {
         rating,
         comment: comment.trim() || undefined,
       });
-      toast.success("Ulasan terkirim. Terima kasih atas masukan Anda.");
+      toast.success(t("review.submitSuccess"));
       setComment("");
       setTargetId("");
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal mengirim ulasan.",
+        err instanceof ApiRequestError ? err.message : t("review.submitError"),
       );
     } finally {
       setSubmitting(false);
@@ -132,7 +136,7 @@ export default function WriteReviewPage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Silakan masuk untuk menulis ulasan." />;
+    return <SignInRequired message={t("review.signInToWrite")} />;
   }
 
   if (user.role !== "PATIENT") {
@@ -140,14 +144,14 @@ export default function WriteReviewPage() {
       <main className={formPageShell}>
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
-            title="Ulasan"
-            description="Hanya pasien yang dapat menulis ulasan setelah sesi selesai."
+            title={t("review.eyebrow")}
+            description={t("review.patientOnlyWriteDesc")}
           />
           <Link
             href="/"
             className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Kembali ke beranda
+            {t("review.backToHome")}
           </Link>
         </div>
       </main>
@@ -157,9 +161,9 @@ export default function WriteReviewPage() {
   return (
     <main className={formPageShell}>
       <PageHeader
-        eyebrow="Feedback"
-        title="Beri ulasan"
-        description="Pilih sesi kunjungan atau konsultasi online yang sudah selesai. Satu sesi hanya boleh satu ulasan."
+        eyebrow={t("review.feedbackEyebrow")}
+        title={t("review.writeTitle")}
+        description={t("review.writeDesc")}
       />
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
@@ -169,17 +173,17 @@ export default function WriteReviewPage() {
             className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
             aria-hidden
           />
-          Memuat sesi…
+          {t("review.loadingSessions")}
         </p>
       ) : !hasAnySession ? (
         <EmptyState
-          title="Belum ada sesi selesai"
-          hint="Ulasan bisa ditulis setelah booking visit atau konsultasi online ditandai selesai."
+          title={t("review.emptySessionsTitle")}
+          hint={t("review.emptySessionsHint")}
           actions={[
-            { href: "/bookings", label: "Lihat booking" },
+            { href: "/bookings", label: t("review.viewBookings") },
             {
               href: "/consultations",
-              label: "Lihat konsultasi",
+              label: t("review.viewConsultations"),
               variant: "secondary",
             },
           ]}
@@ -188,7 +192,7 @@ export default function WriteReviewPage() {
         <form onSubmit={handleSubmit} className={`${cardSurface} space-y-5`}>
           <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-slate-800 mb-1">
-              Jenis sesi
+              {t("review.sessionType")}
             </legend>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -202,7 +206,7 @@ export default function WriteReviewPage() {
                 className="text-teal-600"
               />
               <span className="text-sm text-slate-700">
-                Kunjungan (booking) — {completedBookings.length} selesai
+                {`${t("review.visitBookingPrefix")} — ${completedBookings.length} ${t("review.completedCountSuffix")}`}
               </span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
@@ -217,22 +221,24 @@ export default function WriteReviewPage() {
                 className="text-teal-600"
               />
               <span className="text-sm text-slate-700">
-                Konsultasi online — {completedConsultations.length} selesai
+                {`${t("review.onlineConsultationPrefix")} — ${completedConsultations.length} ${t("review.completedCountSuffix")}`}
               </span>
             </label>
           </fieldset>
 
           {options.length === 0 ? (
             <p className="text-sm text-slate-600">
-              Belum ada{" "}
-              {targetType === "booking" ? "booking" : "konsultasi"} selesai untuk
-              jenis ini.
+              {targetType === "booking"
+                ? t("review.noCompletedBookingType")
+                : t("review.noCompletedConsultationType")}
             </p>
           ) : (
             <>
               <div>
                 <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                  {targetType === "booking" ? "Booking" : "Konsultasi"}
+                  {targetType === "booking"
+                    ? t("review.bookingLabel")
+                    : t("review.consultationLabel")}
                 </label>
                 <select
                   required
@@ -240,7 +246,7 @@ export default function WriteReviewPage() {
                   value={targetId}
                   onChange={(e) => setTargetId(e.target.value)}
                 >
-                  <option value="">— Pilih —</option>
+                  <option value="">{t("review.selectPlaceholder")}</option>
                   {options.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.id.slice(0, 8)}…
@@ -250,7 +256,7 @@ export default function WriteReviewPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                  Rating (1–5)
+                  {t("review.ratingLabel")}
                 </label>
                 <select
                   className={inputBase}
@@ -266,7 +272,7 @@ export default function WriteReviewPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                  Komentar (opsional)
+                  {t("review.commentOptional")}
                 </label>
                 <textarea
                   className={`${inputBase} min-h-[100px] resize-y`}
@@ -279,7 +285,7 @@ export default function WriteReviewPage() {
                 disabled={submitting || !targetId}
                 className={`${btnPrimary} w-full`}
               >
-                {submitting ? "Mengirim…" : "Kirim ulasan"}
+                {submitting ? t("review.sending") : t("review.submitReview")}
               </button>
             </>
           )}

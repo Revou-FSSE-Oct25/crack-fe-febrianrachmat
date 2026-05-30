@@ -1,11 +1,13 @@
 "use client";
 
 import { btnOutline, btnPrimary, cardSurface } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 import type { ApiHealthStatus } from "@/lib/api/health";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 
 export function StatusPanel({ initial }: { initial: ApiHealthStatus | null }) {
+  const { t } = useLanguage();
   const [health, setHealth] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,15 +25,15 @@ export function StatusPanel({ initial }: { initial: ApiHealthStatus | null }) {
       if (json.data) {
         setHealth(json.data);
       } else {
-        throw new Error(json.error?.message ?? "Health check gagal");
+        throw new Error(json.error?.message ?? t("mkt.statusHealthFailed"));
       }
     } catch (e) {
       setHealth(null);
-      setError(e instanceof Error ? e.message : "Tidak dapat menjangkau API.");
+      setError(e instanceof Error ? e.message : t("mkt.statusUnreachable"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const apiOk = health?.status === "ok" && health.database === "connected";
 
@@ -40,7 +42,7 @@ export function StatusPanel({ initial }: { initial: ApiHealthStatus | null }) {
       {error ? (
         <>
           <p className="text-sm font-semibold text-red-800 dark:text-red-200">
-            Tidak terhubung
+            {t("mkt.statusNotConnected")}
           </p>
           <p className="text-sm text-slate-600 leading-relaxed dark:text-slate-400">
             {error}
@@ -76,9 +78,7 @@ export function StatusPanel({ initial }: { initial: ApiHealthStatus | null }) {
       ) : null}
 
       <p className="text-xs text-slate-500 border-t border-slate-100 pt-4 dark:border-slate-700">
-        {apiOk
-          ? "Layanan siap digunakan."
-          : "Periksa NEXT_PUBLIC_API_URL dan status deploy backend."}
+        {apiOk ? t("mkt.statusReady") : t("mkt.statusCheckEnv")}
       </p>
 
       <div className="flex flex-wrap gap-3">
@@ -88,16 +88,16 @@ export function StatusPanel({ initial }: { initial: ApiHealthStatus | null }) {
           disabled={loading}
           className={btnPrimary}
         >
-          {loading ? "Memeriksa…" : "Periksa ulang"}
+          {loading ? t("mkt.statusChecking") : t("mkt.statusRecheck")}
         </button>
         <Link href="/demo" className={btnOutline}>
-          Panduan demo
+          {t("mkt.demoGuideLink")}
         </Link>
         <Link
           href="/"
           className="inline-flex items-center text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-300"
         >
-          Beranda
+          {t("mkt.homeLink")}
         </Link>
       </div>
     </section>

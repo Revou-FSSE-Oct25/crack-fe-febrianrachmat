@@ -6,6 +6,7 @@ import {
   cardSurface,
   pageShell,
 } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 import { useEffect } from "react";
 
@@ -16,6 +17,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLanguage();
+
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -26,14 +29,13 @@ export default function Error({
     >
       <div className={`${cardSurface} w-full max-w-md text-center space-y-5`}>
         <p className="text-xs font-semibold uppercase tracking-wider text-red-800">
-          Terjadi kesalahan
+          {t("ui.errorEyebrow")}
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 text-balance">
-          Maaf, ada yang tidak beres
+          {t("ui.errorTitle")}
         </h1>
         <p className="text-sm text-slate-600 leading-relaxed">
-          Halaman ini gagal dimuat. Anda bisa mencoba lagi atau kembali ke
-          beranda.
+          {t("ui.errorDescription")}
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-1">
           <button
@@ -41,13 +43,13 @@ export default function Error({
             onClick={() => reset()}
             className={`${btnPrimary} min-h-[44px] justify-center px-6`}
           >
-            Coba lagi
+            {t("ui.tryAgain")}
           </button>
           <Link
             href="/"
             className={`${btnOutline} min-h-[44px] justify-center px-6`}
           >
-            Ke beranda
+            {t("ui.toHome")}
           </Link>
         </div>
       </div>

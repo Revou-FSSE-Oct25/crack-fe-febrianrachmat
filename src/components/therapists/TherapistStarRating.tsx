@@ -1,3 +1,7 @@
+"use client";
+
+import { useLanguage } from "@/contexts/language-context";
+
 type TherapistStarRatingProps = {
   averageRating: number | null | undefined;
   reviewCount: number | null | undefined;
@@ -9,11 +13,12 @@ export function TherapistStarRating({
   reviewCount,
   className = "",
 }: TherapistStarRatingProps) {
+  const { t } = useLanguage();
   const count = reviewCount ?? 0;
   if (count === 0 || averageRating == null) {
     return (
       <p className={`text-xs text-slate-500 ${className}`.trim()}>
-        Belum ada ulasan
+        {t("ther.noReviews")}
       </p>
     );
   }
@@ -24,13 +29,13 @@ export function TherapistStarRating({
   return (
     <p
       className={`text-xs text-amber-800 ${className}`.trim()}
-      aria-label={`Rating rata-rata ${averageRating} dari ${count} ulasan`}
+      aria-label={`${t("ther.ratingAvgLabel")} ${averageRating} ${t("ther.of")} ${count} ${t("ther.reviewsWord")}`}
     >
       <span className="tracking-tight text-amber-500" aria-hidden>
         {stars}
       </span>{" "}
       <span className="font-semibold tabular-nums">{averageRating.toFixed(1)}</span>
-      <span className="text-slate-500"> ({count} ulasan)</span>
+      <span className="text-slate-500"> ({count} {t("ther.reviewsWord")})</span>
     </p>
   );
 }

@@ -1,5 +1,6 @@
 import { fetchApiHealth } from "@/lib/api/health";
-import { PageHeader, widePageShell } from "@/components/ui/page-shell";
+import { widePageShell } from "@/components/ui/page-shell";
+import { StatusHeader } from "./status-header";
 import { StatusPanel } from "./status-panel";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,7 @@ export default async function StatusPage() {
 
   return (
     <main className={`${widePageShell} space-y-8 pb-16`}>
-      <PageHeader
-        eyebrow="Operasional"
-        title="Status layanan"
-        description="Pemeriksaan koneksi ke backend Kinova (GET /health). Gunakan tombol periksa ulang saat menyiapkan demo."
-      />
+      <StatusHeader />
       <StatusPanel initial={health} />
     </main>
   );

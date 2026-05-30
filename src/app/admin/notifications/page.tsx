@@ -12,6 +12,7 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
@@ -28,6 +29,7 @@ import { useState } from "react";
 
 export default function AdminNotificationsPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
 
   const [broadcastTitle, setBroadcastTitle] = useState("");
@@ -55,12 +57,12 @@ export default function AdminNotificationsPage() {
     setError(null);
     try {
       await broadcastNotification({ title, body });
-      actionSuccessWithNotify(toast, "Broadcast notifikasi berhasil dikirim.");
+      actionSuccessWithNotify(toast, t("notif.broadcastSuccess"));
       setBroadcastTitle("");
       setBroadcastBody("");
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal broadcast.",
+        err instanceof ApiRequestError ? err.message : t("notif.broadcastError"),
       );
     } finally {
       setBroadcastLoading(false);
@@ -86,14 +88,14 @@ export default function AdminNotificationsPage() {
     setError(null);
     try {
       await sendNotificationToUser(uid, { title, body });
-      actionSuccessWithNotify(toast, "Notifikasi ke user berhasil dikirim.");
+      actionSuccessWithNotify(toast, t("notif.sendUserSuccess"));
       setUserTitle("");
       setUserBody("");
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengirim notifikasi.",
+          : t("notif.sendError"),
       );
     } finally {
       setSendLoading(false);
@@ -101,12 +103,12 @@ export default function AdminNotificationsPage() {
   }
 
   if (!isReady) {
-    return <PageLoading label="Memuat…" />;
+    return <PageLoading label={t("notif.loading")} />;
   }
 
   if (!user) {
     return (
-      <SignInRequired message="Silakan masuk sebagai admin untuk mengirim notifikasi." />
+      <SignInRequired message={t("notif.adminSignInRequired")} />
     );
   }
 
@@ -115,15 +117,15 @@ export default function AdminNotificationsPage() {
       <main className={adminPageShell}>
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
-            eyebrow="Admin"
-            title="Akses ditolak"
-            description="Hanya admin yang dapat membuka halaman ini."
+            eyebrow={t("notif.adminEyebrow")}
+            title={t("notif.accessDenied")}
+            description={t("notif.accessDeniedDesc")}
           />
           <Link
             href="/"
             className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Kembali ke beranda
+            {t("notif.backHome")}
           </Link>
         </div>
       </main>
@@ -135,21 +137,21 @@ export default function AdminNotificationsPage() {
       <AdminBreadcrumb />
 
       <PageHeader
-        eyebrow="Admin"
-        title="Notifikasi"
-        description="Kirim broadcast ke semua pengguna aktif, atau kirim pesan sistem ke satu pengguna lewat ID penggunanya."
+        eyebrow={t("notif.adminEyebrow")}
+        title={t("notif.title")}
+        description={t("notif.adminDescription")}
       />
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
       <section className={`${cardSurface} space-y-4`}>
         <h2 className="text-lg font-semibold text-slate-900">
-          Broadcast ke semua user aktif
+          {t("notif.broadcastHeading")}
         </h2>
         <form onSubmit={handleBroadcast} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Judul
+              {t("notif.fieldTitle")}
             </label>
             <input
               className={inputBase}
@@ -161,7 +163,7 @@ export default function AdminNotificationsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Isi
+              {t("notif.fieldBody")}
             </label>
             <textarea
               className={`${inputBase} min-h-[90px] resize-y`}
@@ -176,31 +178,31 @@ export default function AdminNotificationsPage() {
             disabled={broadcastLoading}
             className={`${btnPrimary} min-h-[44px]`}
           >
-            {broadcastLoading ? "Mengirim…" : "Kirim broadcast"}
+            {broadcastLoading ? t("notif.sending") : t("notif.sendBroadcast")}
           </button>
         </form>
       </section>
 
       <section className={`${cardSurface} space-y-4`}>
         <h2 className="text-lg font-semibold text-slate-900">
-          Kirim ke user tertentu
+          {t("notif.sendUserHeading")}
         </h2>
         <form onSubmit={handleSendToUser} className="space-y-3">
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              User ID
+              {t("notif.fieldUserId")}
             </label>
             <input
               className={`${inputBase} font-mono text-xs`}
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder="UUID user target"
+              placeholder={t("notif.userIdPlaceholder")}
               required
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Judul
+              {t("notif.fieldTitle")}
             </label>
             <input
               className={inputBase}
@@ -212,7 +214,7 @@ export default function AdminNotificationsPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Isi
+              {t("notif.fieldBody")}
             </label>
             <textarea
               className={`${inputBase} min-h-[90px] resize-y`}
@@ -223,7 +225,7 @@ export default function AdminNotificationsPage() {
             />
           </div>
           <button type="submit" disabled={sendLoading} className={`${btnPrimary} min-h-[44px]`}>
-            {sendLoading ? "Mengirim…" : "Kirim ke user"}
+            {sendLoading ? t("notif.sending") : t("notif.sendUser")}
           </button>
         </form>
       </section>

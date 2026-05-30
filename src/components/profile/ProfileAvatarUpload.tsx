@@ -2,6 +2,7 @@
 
 import { ProfileAvatar } from "@/components/ProfileAvatar";
 import { btnOutline, btnSecondary } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { useMyAvatarUrl } from "@/hooks/use-my-avatar-url";
 import { ApiRequestError } from "@/lib/api/client";
@@ -24,6 +25,7 @@ export function ProfileAvatarUpload({
   onUpdated,
 }: ProfileAvatarUploadProps) {
   const toast = useToast();
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const avatarSrc = useMyAvatarUrl(profile?.avatarUrl);
@@ -34,11 +36,11 @@ export function ProfileAvatarUpload({
     if (!file) return;
 
     if (!ACCEPT.split(",").includes(file.type)) {
-      toast.error("Format harus JPEG, PNG, atau WebP.");
+      toast.error(t("profile.avatar.formatError"));
       return;
     }
     if (file.size > MAX_BYTES) {
-      toast.error("Ukuran file maksimal 2 MB.");
+      toast.error(t("profile.avatar.sizeError"));
       return;
     }
 
@@ -46,12 +48,12 @@ export function ProfileAvatarUpload({
     try {
       const updated = await uploadMyAvatar(file);
       onUpdated(updated);
-      toast.success("Foto profil diperbarui.");
+      toast.success(t("profile.avatar.uploadSuccess"));
     } catch (err) {
       toast.error(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengunggah foto profil.",
+          : t("profile.avatar.uploadError"),
       );
     } finally {
       setUploading(false);
@@ -80,10 +82,12 @@ export function ProfileAvatarUpload({
           onClick={() => inputRef.current?.click()}
           className={`${btnSecondary} min-h-[40px] text-sm`}
         >
-          {uploading ? "Mengunggah…" : "Ganti foto profil"}
+          {uploading
+            ? t("profile.avatar.uploading")
+            : t("profile.avatar.change")}
         </button>
         <p className="text-xs text-slate-500 max-w-[14rem] text-center sm:text-left">
-          JPEG, PNG, atau WebP. Maks. 2 MB.
+          {t("profile.avatar.hint")}
         </p>
         {profile?.avatarUrl ? (
           <button
@@ -92,7 +96,7 @@ export function ProfileAvatarUpload({
             disabled={uploading}
             onClick={() => inputRef.current?.click()}
           >
-            Perbarui foto
+            {t("profile.avatar.update")}
           </button>
         ) : null}
       </div>

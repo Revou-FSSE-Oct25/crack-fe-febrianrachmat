@@ -1,9 +1,13 @@
+"use client";
+
 import { RouteListPageLoading } from "@/components/ui/route-loading";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Loading() {
+  const { t } = useLanguage();
   return (
     <RouteListPageLoading
-      label="Memuat panel admin…"
+      label={t("ui.loadingAdminPanel")}
       shell="admin"
       rows={4}
     />

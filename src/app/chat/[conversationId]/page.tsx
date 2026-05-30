@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMessages, sendMessage } from "@/lib/api/chat";
 import {
@@ -64,6 +65,7 @@ export default function ChatConversationPage() {
   const params = useParams();
   const conversationId = params.conversationId as string;
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
 
   const [messages, setMessages] = useState<MsgRow[]>([]);
   const [text, setText] = useState("");
@@ -85,13 +87,15 @@ export default function ChatConversationPage() {
         setMessages(asMsgRows(list));
       } catch (err) {
         setError(
-          err instanceof ApiRequestError ? err.message : "Gagal memuat pesan.",
+          err instanceof ApiRequestError
+            ? err.message
+            : t("chat.loadMessagesError"),
         );
       } finally {
         if (!opts?.silent) setLoading(false);
       }
     },
-    [conversationId],
+    [conversationId, t],
   );
 
   useEffect(() => {
@@ -119,7 +123,7 @@ export default function ChatConversationPage() {
         setError(
           err instanceof ApiRequestError
             ? err.message
-            : "Koneksi live chat terputus. Muat ulang halaman jika pesan tidak masuk.",
+            : t("chat.streamDisconnectedError"),
         );
       },
     });
@@ -154,7 +158,9 @@ export default function ChatConversationPage() {
       }
     } catch (err) {
       const msg =
-        err instanceof ApiRequestError ? err.message : "Gagal mengirim pesan.";
+        err instanceof ApiRequestError
+          ? err.message
+          : t("chat.sendMessageError");
       if (msg.toLowerCase().includes("chat is locked")) {
         setLocked(true);
       }
@@ -169,7 +175,7 @@ export default function ChatConversationPage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Masuk untuk membuka percakapan." />;
+    return <SignInRequired message={t("chat.signInToOpen")} />;
   }
 
   return (
@@ -181,11 +187,11 @@ export default function ChatConversationPage() {
         href="/chat"
         className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800 mb-2"
       >
-        ← Daftar chat
+        ← {t("chat.backToList")}
       </Link>
 
       <PageHeader
-        eyebrow="Percakapan"
+        eyebrow={t("chat.conversationEyebrow")}
         title="Chat"
         description={
           <span className="flex flex-col gap-1 text-xs text-slate-500">
@@ -199,7 +205,7 @@ export default function ChatConversationPage() {
                 Live (SSE)
               </span>
             ) : (
-              <span className="text-amber-700">Live terputus — muat ulang jika perlu</span>
+              <span className="text-amber-700">{t("chat.liveDisconnected")}</span>
             )}
           </span>
         }
@@ -213,12 +219,11 @@ export default function ChatConversationPage() {
             className="rounded-xl border border-amber-200/90 bg-amber-50/95 px-4 py-3 text-sm text-amber-950 shadow-sm border-l-4 border-l-amber-500"
             role="status"
           >
-            Chat masih terkunci karena sesi belum aktif. Buka{" "}
+            {t("chat.lockedPrefix")}
             <Link href="/consultations" className="font-semibold underline">
-              halaman konsultasi
-            </Link>{" "}
-            untuk menyelesaikan pembayaran. Setelah admin mengonfirmasi, chat
-            akan aktif.
+              {t("chat.lockedLink")}
+            </Link>
+            {t("chat.lockedSuffix")}
           </div>
         ) : null}
 
@@ -231,11 +236,11 @@ export default function ChatConversationPage() {
                 className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
                 aria-hidden
               />
-              Memuat pesan…
+              {t("chat.loadingMessages")}
             </p>
           ) : messages.length === 0 ? (
             <p className="text-sm text-slate-500 text-center py-8">
-              Belum ada pesan. Mulai percakapan di bawah.
+              {t("chat.emptyMessages")}
             </p>
           ) : (
             messages.map((m) => {
@@ -278,8 +283,8 @@ export default function ChatConversationPage() {
             className={`${inputBase} flex-1`}
             placeholder={
               locked
-                ? "Chat terkunci — selesaikan pembayaran dulu"
-                : "Tulis pesan…"
+                ? t("chat.inputLockedPlaceholder")
+                : t("chat.inputPlaceholder")
             }
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -290,7 +295,7 @@ export default function ChatConversationPage() {
             disabled={sending || locked || !text.trim()}
             className={`${btnPrimary} min-h-[44px] shrink-0 px-5`}
           >
-            Kirim
+            {t("chat.send")}
           </button>
         </form>
       </div>

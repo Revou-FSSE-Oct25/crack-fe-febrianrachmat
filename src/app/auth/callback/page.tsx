@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { AlertBanner, PageLoading, pageShell } from "@/components/ui/page-shell";
 import { safeNextPath } from "@/lib/auth-next";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import { Suspense, useEffect, useRef } from "react";
 
 function AuthCallbackContent() {
   const { completeOAuthLogin, user, isReady } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const handled = useRef(false);
@@ -60,9 +62,7 @@ function AuthCallbackContent() {
   }
 
   if (oauthError || !accessToken) {
-    const message =
-      oauthError ??
-      "Token masuk tidak ditemukan. Coba masuk lagi.";
+    const message = oauthError ?? t("auth.callback.error");
     return (
       <main className={`${pageShell} flex min-h-[calc(100vh-12rem)] items-center justify-center py-12`}>
         <div className="w-full max-w-md space-y-4 text-center">
@@ -71,7 +71,7 @@ function AuthCallbackContent() {
             href="/login"
             className="inline-block text-sm font-semibold text-teal-700 hover:underline"
           >
-            Kembali ke halaman masuk
+            {t("auth.callback.backToLogin")}
           </Link>
         </div>
       </main>

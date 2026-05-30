@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { listMyConversations } from "@/lib/api/chat";
 import {
@@ -35,6 +36,7 @@ function asConvRows(data: unknown): ConvRow[] {
 
 export default function ChatListPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const [rows, setRows] = useState<ConvRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,12 +49,14 @@ export default function ChatListPage() {
       setRows(asConvRows(list));
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat percakapan.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("chat.loadConversationsError"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || !user) return;
@@ -64,22 +68,22 @@ export default function ChatListPage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Silakan masuk untuk melihat percakapan." />;
+    return <SignInRequired message={t("chat.signInToView")} />;
   }
 
   return (
     <main className={`${widePageShell} space-y-8 pb-16`}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
-          eyebrow="Pesan"
+          eyebrow={t("chat.eyebrow")}
           title="Chat"
-          description="Buka percakapan dari halaman Konsultasi (tombol Buka chat). Di bawah ini daftar percakapan yang pernah dibuat untuk akun Anda."
+          description={t("chat.listDescription")}
         />
         <Link
           href="/consultations"
           className={`${btnOutline} min-h-[44px] shrink-0 justify-center self-start text-center sm:self-auto sm:min-w-[11rem]`}
         >
-          Halaman konsultasi
+          {t("chat.consultationPageLink")}
         </Link>
       </div>
 
@@ -89,13 +93,13 @@ export default function ChatListPage() {
         <ListSkeleton rows={4} />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Belum ada percakapan"
-          hint="Chat terbuka setelah konsultasi aktif dan pembayaran dikonfirmasi."
+          title={t("chat.emptyTitle")}
+          hint={t("chat.emptyHint")}
           actions={[
-            { href: "/consultations", label: "Ke halaman konsultasi" },
+            { href: "/consultations", label: t("chat.toConsultationPage") },
             {
               href: "/therapists",
-              label: "Cari fisioterapis",
+              label: t("chat.findPhysio"),
               variant: "secondary",
             },
           ]}
@@ -112,7 +116,7 @@ export default function ChatListPage() {
                   {c.id}
                 </span>
                 <p className="text-xs text-slate-500 mt-1">
-                  Terbaru:{" "}
+                  {t("chat.latest")}{" "}
                   {new Date(c.updatedAt).toLocaleString("id-ID")}
                 </p>
               </Link>

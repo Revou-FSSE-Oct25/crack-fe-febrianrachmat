@@ -14,6 +14,7 @@ import {
   widePageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
@@ -35,6 +36,7 @@ function toIsoFromDateAndTime(dateYmd: string, timeHm: string): string {
 
 export default function PhysiotherapistAvailabilityPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [slots, setSlots] = useState<AvailabilitySlotItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,12 +65,14 @@ export default function PhysiotherapistAvailabilityPage() {
     } catch (err) {
       setSlots([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat slot.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("physio.avail.errorLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "PHYSIOTHERAPIST") return;
@@ -78,13 +82,13 @@ export default function PhysiotherapistAvailabilityPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!slotDate) {
-      setError("Pilih tanggal.");
+      setError(t("physio.avail.pickDate"));
       return;
     }
     const startIso = toIsoFromDateAndTime(slotDate, startTime);
     const endIso = toIsoFromDateAndTime(slotDate, endTime);
     if (new Date(startIso) >= new Date(endIso)) {
-      setError("Waktu mulai harus sebelum selesai.");
+      setError(t("physio.avail.startBeforeEnd"));
       return;
     }
     setCreating(true);
@@ -95,11 +99,13 @@ export default function PhysiotherapistAvailabilityPage() {
         startTime: startIso,
         endTime: endIso,
       });
-      toast.success("Slot ketersediaan ditambahkan.");
+      toast.success(t("physio.avail.created"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal membuat slot.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("physio.avail.errorCreate"),
       );
     } finally {
       setCreating(false);
@@ -114,11 +120,13 @@ export default function PhysiotherapistAvailabilityPage() {
     try {
       await deleteMyAvailabilitySlot(id);
       setDeleteConfirmId(null);
-      toast.success("Slot dihapus.");
+      toast.success(t("physio.avail.deleted"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menghapus.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("physio.avail.errorDelete"),
       );
     } finally {
       setDeletingId(null);
@@ -130,7 +138,7 @@ export default function PhysiotherapistAvailabilityPage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Silakan masuk untuk mengelola slot ketersediaan." />;
+    return <SignInRequired message={t("physio.avail.signInRequired")} />;
   }
 
   if (user.role !== "PHYSIOTHERAPIST") {
@@ -139,15 +147,15 @@ export default function PhysiotherapistAvailabilityPage() {
         <div className="mx-auto max-w-3xl space-y-8">
           <div className={`${cardSurface} space-y-4`}>
             <PageHeader
-              eyebrow="Jadwal"
-              title="Akses terbatas"
-              description="Halaman ini hanya untuk akun fisioterapis."
+              eyebrow={t("physio.avail.restrictedEyebrow")}
+              title={t("physio.restrictedTitle")}
+              description={t("physio.restrictedDesc")}
             />
             <Link
               href="/"
               className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
             >
-              Kembali ke beranda
+              {t("physio.backHome")}
             </Link>
           </div>
         </div>
@@ -163,12 +171,12 @@ export default function PhysiotherapistAvailabilityPage() {
           href="/physiotherapist/profile"
           className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800 self-start"
         >
-          ← Profil fisioterapis
+          {t("physio.avail.backToProfile")}
         </Link>
         <PageHeader
-          eyebrow="Fisioterapis"
-          title="Slot ketersediaan"
-          description="Tambahkan rentang waktu yang bisa dipesan pasien. Pastikan waktu mulai lebih awal dari selesai."
+          eyebrow={t("physio.eyebrow")}
+          title={t("physio.avail.title")}
+          description={t("physio.avail.description")}
         />
       </div>
 
@@ -176,8 +184,7 @@ export default function PhysiotherapistAvailabilityPage() {
         className="rounded-xl border border-teal-100 bg-teal-50/80 px-4 py-3 text-xs text-teal-950 shadow-sm ring-1 ring-teal-900/5"
         role="note"
       >
-        Selama halaman ini terbuka, status &quot;online&quot; dikirim otomatis
-        setiap menit agar pasien dapat memfilter terapis yang sedang aktif.
+        {t("physio.avail.onlineNote")}
       </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
@@ -186,11 +193,11 @@ export default function PhysiotherapistAvailabilityPage() {
         id="tambah-slot"
         className={`${cardSurface} space-y-4 scroll-mt-24`}
       >
-        <h2 className="font-semibold text-slate-900">Tambah slot</h2>
+        <h2 className="font-semibold text-slate-900">{t("physio.avail.addSlot")}</h2>
         <form onSubmit={handleCreate} className="grid gap-3 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Tanggal
+              {t("physio.avail.date")}
             </label>
             <input
               type="date"
@@ -202,7 +209,7 @@ export default function PhysiotherapistAvailabilityPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Mulai
+              {t("physio.avail.start")}
             </label>
             <input
               type="time"
@@ -214,7 +221,7 @@ export default function PhysiotherapistAvailabilityPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Selesai
+              {t("physio.avail.end")}
             </label>
             <input
               type="time"
@@ -230,27 +237,29 @@ export default function PhysiotherapistAvailabilityPage() {
               disabled={creating}
               className={btnPrimary}
             >
-              {creating ? "Menyimpan…" : "Tambah slot"}
+              {creating ? t("physio.saving") : t("physio.avail.addSlot")}
             </button>
           </div>
         </form>
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-semibold text-slate-900">Daftar slot</h2>
+        <h2 className="font-semibold text-slate-900">{t("physio.avail.slotList")}</h2>
         {loading ? (
           <p className="text-sm font-medium text-slate-500 flex items-center gap-2">
             <span
               className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
               aria-hidden
             />
-            Memuat…
+            {t("physio.loading")}
           </p>
         ) : slots.length === 0 ? (
           <EmptyState
-            title="Belum ada slot"
-            hint="Pasien hanya bisa memilih waktu yang sudah Anda buka di sini."
-            actions={[{ href: "#tambah-slot", label: "Tambah slot sekarang" }]}
+            title={t("physio.avail.emptyTitle")}
+            hint={t("physio.avail.emptyHint")}
+            actions={[
+              { href: "#tambah-slot", label: t("physio.avail.addSlotNow") },
+            ]}
           />
         ) : (
           <ul className="space-y-3">
@@ -265,7 +274,9 @@ export default function PhysiotherapistAvailabilityPage() {
                     {new Date(s.endTime).toLocaleTimeString("id-ID")}
                   </p>
                   <p className="text-sm text-slate-600">
-                    {s.isAvailable ? "Tersedia" : "Tidak tersedia"}
+                    {s.isAvailable
+                      ? t("physio.avail.available")
+                      : t("physio.avail.unavailable")}
                   </p>
                   <p className="text-xs font-mono text-slate-400 break-all">
                     {s.id}
@@ -277,7 +288,7 @@ export default function PhysiotherapistAvailabilityPage() {
                   onClick={() => setDeleteConfirmId(s.id)}
                   className={`${btnOutline} min-h-[44px] border-red-200 text-red-800 hover:bg-red-50`}
                 >
-                  Hapus
+                  {t("physio.avail.delete")}
                 </button>
               </li>
             ))}
@@ -288,10 +299,10 @@ export default function PhysiotherapistAvailabilityPage() {
 
       <ConfirmDialog
         open={deleteConfirmId !== null}
-        title="Hapus slot ketersediaan?"
-        description="Slot ini tidak lagi ditampilkan ke pasien. Booking yang sudah memakai slot tidak otomatis terpengaruh di demo ini."
-        confirmLabel="Ya, hapus"
-        cancelLabel="Tidak jadi"
+        title={t("physio.avail.confirmTitle")}
+        description={t("physio.avail.confirmDesc")}
+        confirmLabel={t("physio.avail.confirmYes")}
+        cancelLabel={t("physio.avail.confirmNo")}
         variant="danger"
         loading={deleteConfirmId !== null && deletingId === deleteConfirmId}
         onConfirm={() => void confirmRemoveSlot()}

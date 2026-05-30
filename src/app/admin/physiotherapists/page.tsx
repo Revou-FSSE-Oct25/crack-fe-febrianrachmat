@@ -17,6 +17,7 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { validateRejectReason } from "@/lib/validation";
@@ -68,6 +69,7 @@ const rejectBtn =
 
 export default function AdminPhysiotherapistsPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [rows, setRows] = useState<PendingRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,12 +87,12 @@ export default function AdminPhysiotherapistsPage() {
     } catch (err) {
       setRows([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat daftar.",
+        err instanceof ApiRequestError ? err.message : t("admin.physio.errLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "ADMIN") return;
@@ -102,11 +104,11 @@ export default function AdminPhysiotherapistsPage() {
     setError(null);
     try {
       await verifyPhysiotherapist(profileId, { status: "APPROVED" });
-      toast.success("Profil fisioterapis disetujui.");
+      toast.success(t("admin.physio.toastApproved"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menyetujui.",
+        err instanceof ApiRequestError ? err.message : t("admin.physio.errApprove"),
       );
     } finally {
       setActionId(null);
@@ -141,11 +143,11 @@ export default function AdminPhysiotherapistsPage() {
         return next;
       });
       setRejectConfirmId(null);
-      toast.success("Profil fisioterapis ditolak.");
+      toast.success(t("admin.physio.toastRejected"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menolak.",
+        err instanceof ApiRequestError ? err.message : t("admin.physio.errReject"),
       );
     } finally {
       setActionId(null);
@@ -153,12 +155,12 @@ export default function AdminPhysiotherapistsPage() {
   }
 
   if (!isReady) {
-    return <PageLoading label="Memuat antrian verifikasi…" />;
+    return <PageLoading label={t("admin.physio.loading")} />;
   }
 
   if (!user) {
     return (
-      <SignInRequired message="Silakan masuk sebagai admin untuk memverifikasi fisioterapis." />
+      <SignInRequired message={t("admin.physio.signIn")} />
     );
   }
 
@@ -168,14 +170,14 @@ export default function AdminPhysiotherapistsPage() {
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             eyebrow="Admin"
-            title="Akses ditolak"
-            description="Hanya admin yang dapat membuka halaman ini."
+            title={t("admin.common.accessDenied")}
+            description={t("admin.common.onlyAdmin")}
           />
           <Link
             href="/"
             className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Kembali ke beranda
+            {t("admin.common.backHome")}
           </Link>
         </div>
       </main>
@@ -190,8 +192,8 @@ export default function AdminPhysiotherapistsPage() {
         <div className="min-w-0 flex-1">
           <PageHeader
             eyebrow="Admin"
-            title="Verifikasi fisioterapis"
-            description="Tinjau profil yang menunggu persetujuan, lalu setujui atau tolak dengan alasan yang jelas."
+            title={t("admin.physio.title")}
+            description={t("admin.physio.description")}
           />
         </div>
         <button
@@ -200,7 +202,7 @@ export default function AdminPhysiotherapistsPage() {
           disabled={loading}
           className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
         >
-          Muat ulang
+          {t("admin.common.reload")}
         </button>
       </div>
 
@@ -210,13 +212,13 @@ export default function AdminPhysiotherapistsPage() {
         <ListSkeleton rows={2} />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Tidak ada profil PENDING"
-          hint="Semua permohonan verifikasi sudah diproses, atau belum ada pendaftar fisioterapis baru."
+          title={t("admin.physio.noPending")}
+          hint={t("admin.physio.noPendingHint")}
           actions={[
-            { href: "/admin/dashboard", label: "Kembali ke dashboard" },
+            { href: "/admin/dashboard", label: t("admin.common.backToDashboard") },
             {
               href: "/register",
-              label: "Halaman daftar (demo)",
+              label: t("admin.physio.registerDemo"),
               variant: "secondary",
             },
           ]}
@@ -236,7 +238,7 @@ export default function AdminPhysiotherapistsPage() {
                   ) : null}
                   {row.category ? (
                     <p className="text-sm mt-1 text-slate-700">
-                      Kategori:{" "}
+                      {t("admin.physio.categoryPrefix")}{" "}
                       <span className="font-medium">{row.category.name}</span>
                     </p>
                   ) : null}
@@ -254,13 +256,13 @@ export default function AdminPhysiotherapistsPage() {
               <dl className={`${adminScrollWrap} grid gap-2 text-sm sm:grid-cols-2 min-w-[16rem]`}>
                 {row.licenseNumber ? (
                   <div>
-                    <dt className="text-slate-500">Nomor lisensi</dt>
+                    <dt className="text-slate-500">{t("admin.physio.licenseNumber")}</dt>
                     <dd className="text-slate-900">{row.licenseNumber}</dd>
                   </div>
                 ) : null}
                 {row.certificationUrl ? (
                   <div className="sm:col-span-2">
-                    <dt className="text-slate-500">Sertifikasi</dt>
+                    <dt className="text-slate-500">{t("admin.physio.certification")}</dt>
                     <dd>
                       <a
                         href={row.certificationUrl}
@@ -283,16 +285,16 @@ export default function AdminPhysiotherapistsPage() {
                     onClick={() => void approve(row.id)}
                     className={`${btnPrimary} min-h-[44px]`}
                   >
-                    Setujui
+                    {t("admin.physio.approveBtn")}
                   </button>
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-800">
-                    Tolak — alasan (min. 5 karakter)
+                    {t("admin.physio.rejectReasonLabel")}
                   </label>
                   <textarea
                     className={`${inputBase} min-h-[80px] resize-y`}
-                    placeholder="Contoh: Dokumen tidak lengkap."
+                    placeholder={t("admin.physio.rejectReasonPlaceholder")}
                     value={rejectReason[row.id] ?? ""}
                     onChange={(e) =>
                       setRejectReason((prev) => ({
@@ -307,7 +309,7 @@ export default function AdminPhysiotherapistsPage() {
                     onClick={() => requestReject(row.id)}
                     className={`${rejectBtn} min-h-[44px]`}
                   >
-                    Tolak
+                    {t("admin.physio.rejectBtn")}
                   </button>
                 </div>
               </div>
@@ -318,10 +320,10 @@ export default function AdminPhysiotherapistsPage() {
 
       <ConfirmDialog
         open={rejectConfirmId !== null}
-        title="Tolak verifikasi fisioterapis?"
-        description="Profil akan ditandai ditolak dan alasan yang Anda tulis akan disimpan. Fisioterapis dapat memperbaiki dokumen dan mendaftar ulang sesuai alur produk."
-        confirmLabel="Ya, tolak"
-        cancelLabel="Tidak jadi"
+        title={t("admin.physio.rejectConfirmTitle")}
+        description={t("admin.physio.rejectConfirmDesc")}
+        confirmLabel={t("admin.physio.rejectConfirmYes")}
+        cancelLabel={t("admin.common.cancelNo")}
         variant="danger"
         loading={rejectConfirmId !== null && actionId === rejectConfirmId}
         onConfirm={() => void confirmReject()}

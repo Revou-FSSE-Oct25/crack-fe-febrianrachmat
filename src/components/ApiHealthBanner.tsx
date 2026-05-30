@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { ApiHealthStatus } from "@/lib/api/health";
+import { useLanguage } from "@/contexts/language-context";
 
 type HealthPayload = ApiHealthStatus & { unreachable?: boolean };
 
@@ -24,6 +25,7 @@ async function fetchClientHealth(): Promise<HealthPayload> {
 }
 
 export default function ApiHealthBanner() {
+  const { t } = useLanguage();
   const [health, setHealth] = useState<HealthPayload | null>(null);
   const [dismissed, setDismissed] = useState(false);
 
@@ -60,8 +62,8 @@ export default function ApiHealthBanner() {
 
   const message =
     health.unreachable || health.status !== "ok"
-      ? "Backend tidak terjangkau dari browser ini."
-      : "Database backend terputus — beberapa fitur mungkin gagal.";
+      ? t("mkt.bannerUnreachable")
+      : t("mkt.bannerDbDown");
 
   return (
     <div
@@ -70,19 +72,19 @@ export default function ApiHealthBanner() {
     >
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-2 text-center sm:justify-between sm:text-left">
         <p>
-          <span className="font-semibold">Perhatian demo:</span> {message}{" "}
+          <span className="font-semibold">{t("mkt.bannerLabel")}</span> {message}{" "}
           <Link
             href="/status"
             className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950 dark:text-amber-200"
           >
-            Status layanan
+            {t("mkt.statusTitle")}
           </Link>
           {" · "}
           <Link
             href="/demo"
             className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-950 dark:text-amber-200"
           >
-            Panduan demo
+            {t("mkt.demoGuideLink")}
           </Link>
         </p>
         <button
@@ -90,7 +92,7 @@ export default function ApiHealthBanner() {
           onClick={() => setDismissed(true)}
           className="rounded-lg px-2 py-1 text-xs font-semibold text-amber-900 ring-1 ring-amber-300/80 hover:bg-amber-100/80 dark:text-amber-100 dark:ring-amber-700/60 dark:hover:bg-amber-900/40"
         >
-          Tutup
+          {t("mkt.bannerClose")}
         </button>
       </div>
     </div>

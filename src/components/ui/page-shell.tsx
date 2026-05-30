@@ -1,3 +1,6 @@
+"use client";
+
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -74,10 +77,11 @@ export function AdminBreadcrumb({
   href?: string;
   children?: ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <nav
       className="mb-6 border-b border-slate-200/90 pb-4 dark:border-slate-700/80"
-      aria-label="Navigasi admin"
+      aria-label={t("ui.adminNav")}
     >
       <Link
         href={href}
@@ -119,7 +123,8 @@ export type { ConfirmDialogProps } from "@/components/ui/confirm-dialog";
 /** Bungkus daftar admin panjang agar tidak overflow di layar sempit. */
 export const adminScrollWrap = "min-w-0 overflow-x-auto";
 
-export function PageLoading({ label = "Memuat…" }: { label?: string }) {
+export function PageLoading({ label }: { label?: string }) {
+  const { t } = useLanguage();
   return (
     <main className={`${pageShell} text-slate-600`}>
       <div
@@ -129,7 +134,7 @@ export function PageLoading({ label = "Memuat…" }: { label?: string }) {
           className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
           aria-hidden
         />
-        <span className="text-sm font-medium">{label}</span>
+        <span className="text-sm font-medium">{label ?? t("ui.loading")}</span>
       </div>
     </main>
   );

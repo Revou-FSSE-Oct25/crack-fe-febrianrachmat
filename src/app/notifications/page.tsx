@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   listMyNotifications,
@@ -46,6 +47,7 @@ function asRows(items: unknown[]): NotifRow[] {
 
 export default function NotificationsPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const [rows, setRows] = useState<NotifRow[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -65,12 +67,12 @@ export default function NotificationsPage() {
       setPage(meta.page);
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat notifikasi.",
+        err instanceof ApiRequestError ? err.message : t("notif.loadError"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || !user) return;
@@ -84,7 +86,7 @@ export default function NotificationsPage() {
       await load(page);
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menandai dibaca.",
+        err instanceof ApiRequestError ? err.message : t("notif.markReadError"),
       );
     }
   }
@@ -96,7 +98,7 @@ export default function NotificationsPage() {
       await load(page);
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menandai semua.",
+        err instanceof ApiRequestError ? err.message : t("notif.markAllError"),
       );
     }
   }
@@ -106,36 +108,36 @@ export default function NotificationsPage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Silakan masuk untuk melihat notifikasi." />;
+    return <SignInRequired message={t("notif.signInRequired")} />;
   }
 
   return (
     <main className={`${widePageShell} space-y-8 pb-16`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
-          eyebrow="Kotak masuk"
-          title="Notifikasi"
-          description="Pemberitahan dari sistem dan admin. Notifikasi yang belum dibaca ditandai dengan latar berbeda."
+          eyebrow={t("notif.eyebrow")}
+          title={t("notif.title")}
+          description={t("notif.description")}
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
           <Link
             href="/bookings"
             className={`${btnOutline} min-h-[44px] justify-center text-center sm:min-w-[9rem]`}
           >
-            Booking
+            {t("notif.booking")}
           </Link>
           <Link
             href="/consultations"
             className={`${btnOutline} min-h-[44px] justify-center text-center sm:min-w-[9rem]`}
           >
-            Konsultasi
+            {t("notif.consultation")}
           </Link>
           <button
             type="button"
             onClick={() => void markAll()}
             className={`${btnSecondary} min-h-[44px] justify-center px-5 text-center sm:min-w-[12rem]`}
           >
-            Tandai semua dibaca
+            {t("notif.markAll")}
           </button>
         </div>
       </div>
@@ -146,13 +148,13 @@ export default function NotificationsPage() {
         <ListSkeleton rows={3} />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Tidak ada notifikasi"
-          hint="Notifikasi akan muncul ketika ada pembaruan pada booking, konsultasi, atau transaksi Anda."
+          title={t("notif.emptyTitle")}
+          hint={t("notif.emptyHint")}
           actions={[
-            { href: "/bookings", label: "Lihat booking" },
+            { href: "/bookings", label: t("notif.viewBooking") },
             {
               href: "/consultations",
-              label: "Lihat konsultasi",
+              label: t("notif.viewConsultation"),
               variant: "secondary",
             },
           ]}
@@ -175,7 +177,7 @@ export default function NotificationsPage() {
                       onClick={() => void markOne(n.id)}
                       className={`${btnOutline} min-h-[36px] shrink-0 px-3 py-1.5 text-xs font-semibold text-teal-800`}
                     >
-                      Tandai dibaca
+                      {t("notif.markRead")}
                     </button>
                   ) : null}
                 </div>
@@ -196,10 +198,10 @@ export default function NotificationsPage() {
                 onClick={() => void load(page - 1)}
                 className={`${btnOutline} min-h-[44px] px-5`}
               >
-                Sebelumnya
+                {t("notif.previous")}
               </button>
               <span className="text-sm text-slate-600 tabular-nums">
-                Halaman {page} / {totalPages}
+                {t("notif.page")} {page} / {totalPages}
               </span>
               <button
                 type="button"
@@ -207,7 +209,7 @@ export default function NotificationsPage() {
                 onClick={() => void load(page + 1)}
                 className={`${btnOutline} min-h-[44px] px-5`}
               >
-                Berikutnya
+                {t("notif.next")}
               </button>
             </div>
           ) : null}

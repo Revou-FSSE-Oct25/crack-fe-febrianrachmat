@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/page-shell";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { getMyPhysiotherapistProfile } from "@/lib/api/physiotherapist-me";
@@ -39,14 +40,14 @@ import { useEffect, useState } from "react";
 const labelClass = "block text-sm font-medium mb-1 text-slate-700";
 const inputReadOnly = `${inputBase} cursor-not-allowed bg-slate-50 text-slate-600`;
 
-function roleLabel(role: string): string {
+function roleLabel(role: string, t: (key: string) => string): string {
   switch (role) {
     case "ADMIN":
-      return "Admin";
+      return t("profile.role.admin");
     case "PATIENT":
-      return "Pasien";
+      return t("profile.role.patient");
     case "PHYSIOTHERAPIST":
-      return "Fisioterapis";
+      return t("profile.role.physiotherapist");
     default:
       return role;
   }
@@ -71,6 +72,7 @@ function RoleHubCard({
   role: string;
   ptSummary: PtSummary | null;
 }) {
+  const { t } = useLanguage();
   if (role === "PHYSIOTHERAPIST") {
     const verification = ptSummary?.verificationStatus;
     const vMeta = verification
@@ -82,11 +84,10 @@ function RoleHubCard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-              Profil fisioterapis
+              {t("profile.ptHub.title")}
             </h2>
             <p className="mt-1 text-sm text-slate-600 leading-relaxed">
-              Bio, tarif, sertifikasi, dan status verifikasi dikelola di halaman
-              profil profesional.
+              {t("profile.ptHub.desc")}
             </p>
           </div>
           {vMeta ? (
@@ -99,14 +100,14 @@ function RoleHubCard({
           </p>
         ) : (
           <p className="text-sm text-slate-500 border-t border-slate-100 pt-3">
-            Belum ada bio. Lengkapi profil profesional Anda.
+            {t("profile.ptHub.noBio")}
           </p>
         )}
         <Link
           href="/physiotherapist/profile"
           className={`${btnPrimary} inline-flex min-h-[44px] items-center justify-center`}
         >
-          Kelola profil fisioterapis
+          {t("profile.ptHub.manage")}
         </Link>
       </div>
     );
@@ -114,21 +115,30 @@ function RoleHubCard({
 
   if (role === "ADMIN") {
     const adminLinks = [
-      { href: "/admin/dashboard", label: "Dashboard" },
-      { href: "/admin/physiotherapists", label: "Verifikasi fisioterapis" },
-      { href: "/admin/categories", label: "Kategori" },
-      { href: "/admin/reviews", label: "Moderasi ulasan" },
-      { href: "/admin/notifications", label: "Notifikasi" },
+      { href: "/admin/dashboard", label: t("profile.adminHub.dashboard") },
+      {
+        href: "/admin/physiotherapists",
+        label: t("profile.adminHub.verifyPt"),
+      },
+      { href: "/admin/categories", label: t("profile.adminHub.categories") },
+      {
+        href: "/admin/reviews",
+        label: t("profile.adminHub.reviewModeration"),
+      },
+      {
+        href: "/admin/notifications",
+        label: t("profile.adminHub.notifications"),
+      },
     ];
 
     return (
       <div className={`${cardSurface} mx-auto max-w-lg space-y-4`}>
         <div>
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-            Panel admin
+            {t("profile.adminHub.title")}
           </h2>
           <p className="mt-1 text-sm text-slate-600 leading-relaxed">
-            Akses cepat ke alat administrasi Kinova.
+            {t("profile.adminHub.desc")}
           </p>
         </div>
         <ul className="grid gap-2 sm:grid-cols-2">
@@ -152,6 +162,7 @@ function RoleHubCard({
 
 export default function ProfilePage() {
   const { user, isReady, logout, syncUserFromProfile } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [fullName, setFullName] = useState("");
@@ -186,7 +197,7 @@ export default function ProfilePage() {
           setError(
             err instanceof ApiRequestError
               ? err.message
-              : "Gagal memuat profil.",
+              : t("profile.error.loadProfile"),
           );
         }
       })
@@ -196,7 +207,7 @@ export default function ProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [isReady, user]);
+  }, [isReady, user, t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "PHYSIOTHERAPIST") return;
@@ -226,7 +237,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Anda belum masuk." />;
+    return <SignInRequired message={t("profile.signInRequired")} />;
   }
 
   async function handleChangePassword(e: React.FormEvent) {
@@ -251,13 +262,13 @@ export default function ProfilePage() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setPasswordMsg(res.message || "Password berhasil diubah.");
-      toast.success("Password berhasil diubah.");
+      setPasswordMsg(res.message || t("profile.password.changeSuccess"));
+      toast.success(t("profile.password.changeSuccess"));
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengubah password.",
+          : t("profile.error.changePassword"),
       );
     } finally {
       setChangingPassword(false);
@@ -281,11 +292,11 @@ export default function ProfilePage() {
       });
       setProfile(updated);
       syncUserFromProfile(updated);
-      setSavedMsg("Perubahan disimpan.");
-      toast.success("Profil diperbarui.");
+      setSavedMsg(t("profile.saved"));
+      toast.success(t("profile.toast.profileUpdated"));
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menyimpan.",
+        err instanceof ApiRequestError ? err.message : t("profile.error.save"),
       );
     } finally {
       setSaving(false);
@@ -314,11 +325,11 @@ export default function ProfilePage() {
             />
           )}
           <PageHeader
-            eyebrow="Akun"
+            eyebrow={t("profile.eyebrow")}
             title={displayName}
             description={
               <span className="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-900 ring-1 ring-teal-100">
-                {roleLabel(user.role)}
+                {roleLabel(user.role, t)}
               </span>
             }
           />
@@ -328,20 +339,20 @@ export default function ProfilePage() {
             href="/bookings"
             className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[9rem]`}
           >
-            Booking
+            {t("profile.nav.booking")}
           </Link>
           <Link
             href="/transactions"
             className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[9rem]`}
           >
-            Transaksi
+            {t("profile.nav.transactions")}
           </Link>
           {user.role === "PATIENT" ? (
             <Link
               href="/reviews"
               className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[9rem]`}
             >
-              Ulasan saya
+              {t("profile.nav.myReviews")}
             </Link>
           ) : null}
         </div>
@@ -380,17 +391,21 @@ export default function ProfilePage() {
           {profile ? (
             <div className={`${cardSurface} mx-auto max-w-lg`}>
               <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                Informasi akun
+                {t("profile.accountInfo.title")}
               </h2>
               <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt className="text-slate-500">Bergabung sejak</dt>
+                  <dt className="text-slate-500">
+                    {t("profile.accountInfo.joined")}
+                  </dt>
                   <dd className="mt-0.5 font-medium text-slate-900">
                     {formatProfileDate(profile.createdAt)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-slate-500">Terakhir diperbarui</dt>
+                  <dt className="text-slate-500">
+                    {t("profile.accountInfo.updated")}
+                  </dt>
                   <dd className="mt-0.5 font-medium text-slate-900">
                     {formatProfileDate(profile.updatedAt)}
                   </dd>
@@ -405,16 +420,15 @@ export default function ProfilePage() {
           >
             <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5">
               <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                Data diri
+                {t("profile.personal.title")}
               </h2>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Nama tampil dan kontak. Email hanya dapat diubah melalui
-                administrator.
+                {t("profile.personal.desc")}
               </p>
               <div className="mt-4 space-y-4">
                 <div>
                   <label htmlFor="profile-email" className={labelClass}>
-                    Email
+                    {t("profile.field.email")}
                   </label>
                   <input
                     id="profile-email"
@@ -427,7 +441,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <label htmlFor="profile-fullName" className={labelClass}>
-                    Nama lengkap
+                    {t("profile.field.fullName")}
                   </label>
                   <input
                     id="profile-fullName"
@@ -436,20 +450,20 @@ export default function ProfilePage() {
                     className={inputBase}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Contoh: Budi Santoso"
+                    placeholder={t("profile.placeholder.fullName")}
                     disabled={loading}
                   />
                 </div>
                 <div>
                   <label htmlFor="profile-phone" className={labelClass}>
-                    Nomor telepon
+                    {t("profile.field.phone")}
                   </label>
                   <input
                     id="profile-phone"
                     className={inputBase}
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="08123456789"
+                    placeholder={t("profile.placeholder.phone")}
                     disabled={loading}
                   />
                 </div>
@@ -461,14 +475,14 @@ export default function ProfilePage() {
                 disabled={saving || loading}
                 className={`${btnPrimary} min-h-[44px] justify-center sm:min-w-[10rem]`}
               >
-                {saving ? "Menyimpan…" : "Simpan perubahan"}
+                {saving ? t("profile.btn.saving") : t("profile.btn.save")}
               </button>
               <button
                 type="button"
                 onClick={() => logout()}
                 className={`${btnSecondary} min-h-[44px] justify-center sm:min-w-[8rem]`}
               >
-                Keluar
+                {t("profile.btn.logout")}
               </button>
             </div>
           </form>
@@ -479,46 +493,45 @@ export default function ProfilePage() {
           >
             <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5">
               <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-                Ubah password
+                {t("profile.password.title")}
               </h2>
               <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-                Password baru minimal 8 karakter. Anda perlu memasukkan password
-                saat ini.
+                {t("profile.password.desc")}
               </p>
               <div className="mt-4 space-y-4">
                 <div>
                   <label htmlFor="current-password" className={labelClass}>
-                    Password saat ini
+                    {t("profile.password.current")}
                   </label>
                   <PasswordInput
                     id="current-password"
                     value={currentPassword}
                     onChange={setCurrentPassword}
-                    placeholder="Masukkan password saat ini"
+                    placeholder={t("profile.password.currentPlaceholder")}
                     autoComplete="current-password"
                   />
                 </div>
                 <div>
                   <label htmlFor="new-password" className={labelClass}>
-                    Password baru
+                    {t("profile.password.new")}
                   </label>
                   <PasswordInput
                     id="new-password"
                     value={newPassword}
                     onChange={setNewPassword}
-                    placeholder="Buat kata sandi baru"
+                    placeholder={t("profile.password.newPlaceholder")}
                     autoComplete="new-password"
                   />
                 </div>
                 <div>
                   <label htmlFor="confirm-password" className={labelClass}>
-                    Konfirmasi password baru
+                    {t("profile.password.confirm")}
                   </label>
                   <PasswordInput
                     id="confirm-password"
                     value={confirmPassword}
                     onChange={setConfirmPassword}
-                    placeholder="Ulangi kata sandi baru"
+                    placeholder={t("profile.password.confirmPlaceholder")}
                     autoComplete="new-password"
                   />
                 </div>
@@ -530,7 +543,9 @@ export default function ProfilePage() {
                 disabled={changingPassword}
                 className={`${btnOutline} min-h-[44px] justify-center sm:min-w-[10rem]`}
               >
-                {changingPassword ? "Menyimpan…" : "Ubah password"}
+                {changingPassword
+                  ? t("profile.btn.saving")
+                  : t("profile.password.title")}
               </button>
             </div>
           </form>

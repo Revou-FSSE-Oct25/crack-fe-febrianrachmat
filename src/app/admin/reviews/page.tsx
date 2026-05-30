@@ -17,6 +17,7 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -33,6 +34,7 @@ const hideBtn =
 
 export default function AdminReviewsPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,12 +52,12 @@ export default function AdminReviewsPage() {
     } catch (err) {
       setRows([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat ulasan.",
+        err instanceof ApiRequestError ? err.message : t("admin.reviews.errLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "ADMIN") return;
@@ -69,7 +71,7 @@ export default function AdminReviewsPage() {
   ) {
     const note = noteRaw.trim();
     if (note.length > 0 && note.length < 3) {
-      setError("Catatan moderasi minimal 3 karakter jika diisi.");
+      setError(t("admin.reviews.moderationNoteMin"));
       return;
     }
     setActionId(reviewId);
@@ -85,14 +87,14 @@ export default function AdminReviewsPage() {
         return next;
       });
       toast.success(
-        isHidden ? "Ulasan disembunyikan." : "Ulasan ditampilkan kembali.",
+        isHidden ? t("admin.reviews.toastHidden") : t("admin.reviews.toastShown"),
       );
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memperbarui moderasi.",
+          : t("admin.reviews.errModerate"),
       );
     } finally {
       setActionId(null);
@@ -100,12 +102,12 @@ export default function AdminReviewsPage() {
   }
 
   if (!isReady) {
-    return <PageLoading label="Memuat ulasan…" />;
+    return <PageLoading label={t("admin.reviews.loading")} />;
   }
 
   if (!user) {
     return (
-      <SignInRequired message="Silakan masuk sebagai admin untuk moderasi ulasan." />
+      <SignInRequired message={t("admin.reviews.signIn")} />
     );
   }
 
@@ -115,14 +117,14 @@ export default function AdminReviewsPage() {
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             eyebrow="Admin"
-            title="Akses ditolak"
-            description="Hanya admin yang dapat membuka halaman ini."
+            title={t("admin.common.accessDenied")}
+            description={t("admin.common.onlyAdmin")}
           />
           <Link
             href="/"
             className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Kembali ke beranda
+            {t("admin.common.backHome")}
           </Link>
         </div>
       </main>
@@ -137,8 +139,8 @@ export default function AdminReviewsPage() {
         <div className="min-w-0 flex-1">
           <PageHeader
             eyebrow="Admin"
-            title="Moderasi ulasan"
-            description="Sembunyikan ulasan yang melanggar kebijakan atau tampilkan kembali setelah koreksi. Catatan moderasi opsional namun disarankan saat menyembunyikan."
+            title={t("admin.reviews.title")}
+            description={t("admin.reviews.description")}
           />
         </div>
         <button
@@ -147,7 +149,7 @@ export default function AdminReviewsPage() {
           disabled={loading}
           className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
         >
-          Muat ulang
+          {t("admin.common.reload")}
         </button>
       </div>
 
@@ -157,13 +159,13 @@ export default function AdminReviewsPage() {
         <ListSkeleton rows={2} />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Belum ada ulasan"
-          hint="Ulasan muncul setelah pasien menyelesaikan kunjungan atau konsultasi online dan mengirim penilaian."
+          title={t("admin.reviews.noReviews")}
+          hint={t("admin.reviews.noReviewsHint")}
           actions={[
-            { href: "/admin/dashboard", label: "Kembali ke dashboard" },
+            { href: "/admin/dashboard", label: t("admin.common.backToDashboard") },
             {
               href: "/bookings",
-              label: "Lihat booking (demo)",
+              label: t("admin.reviews.viewBookingsDemo"),
               variant: "secondary",
             },
           ]}
@@ -175,7 +177,7 @@ export default function AdminReviewsPage() {
               <div className="flex flex-wrap justify-between gap-2 items-start">
                 <div>
                   <p className="text-amber-700 font-semibold">
-                    Rating: {rev.rating}/5
+                    {t("admin.reviews.ratingPrefix")}: {rev.rating}/5
                   </p>
                   <p className="text-xs text-slate-500 mt-1 font-mono break-all">
                     {rev.id}
@@ -184,7 +186,9 @@ export default function AdminReviewsPage() {
                     {reviewSourceLabel(rev.sourceType)}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {rev.sourceType === "CONSULTATION" ? "Konsultasi" : "Booking"}
+                    {rev.sourceType === "CONSULTATION"
+                      ? t("admin.common.consultation")
+                      : t("admin.common.booking")}
                     :{" "}
                     <span className="font-mono break-all">
                       {rev.sourceType === "CONSULTATION"
@@ -197,7 +201,7 @@ export default function AdminReviewsPage() {
                   </p>
                 </div>
                 <StatusChip
-                  label={rev.isHidden ? "Disembunyikan" : "Tampil publik"}
+                  label={rev.isHidden ? t("admin.reviews.hiddenChip") : t("admin.reviews.publicChip")}
                   tone={rev.isHidden ? "neutral" : "success"}
                 />
               </div>
@@ -211,7 +215,7 @@ export default function AdminReviewsPage() {
               {rev.moderationNote ? (
                 <p className="text-sm text-slate-700 bg-slate-50 rounded-xl p-3 ring-1 ring-slate-100">
                   <span className="font-medium text-slate-800">
-                    Catatan moderasi:{" "}
+                    {t("admin.reviews.moderationNotePrefix")}{" "}
                   </span>
                   {rev.moderationNote}
                 </p>
@@ -219,11 +223,11 @@ export default function AdminReviewsPage() {
 
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <label className="block text-sm font-medium text-slate-800">
-                  Catatan moderasi (opsional, min. 3 karakter jika diisi)
+                  {t("admin.reviews.moderationNoteLabel")}
                 </label>
                 <textarea
                   className={`${inputBase} min-h-[72px] resize-y`}
-                  placeholder="Contoh: Mengandung bahasa tidak pantas."
+                  placeholder={t("admin.reviews.moderationNotePlaceholder")}
                   value={noteById[rev.id] ?? ""}
                   onChange={(e) =>
                     setNoteById((prev) => ({
@@ -240,9 +244,7 @@ export default function AdminReviewsPage() {
                       onClick={() => {
                         const note = (noteById[rev.id] ?? "").trim();
                         if (note.length > 0 && note.length < 3) {
-                          setError(
-                            "Catatan moderasi minimal 3 karakter jika diisi.",
-                          );
+                          setError(t("admin.reviews.moderationNoteMin"));
                           return;
                         }
                         setError(null);
@@ -250,7 +252,7 @@ export default function AdminReviewsPage() {
                       }}
                       className={`${hideBtn} min-h-[44px]`}
                     >
-                      Sembunyikan
+                      {t("admin.reviews.hideBtn")}
                     </button>
                   ) : (
                     <button
@@ -259,7 +261,7 @@ export default function AdminReviewsPage() {
                       onClick={() => void applyModeration(rev.id, false, "")}
                       className={`${btnPrimary} min-h-[44px]`}
                     >
-                      Tampilkan lagi
+                      {t("admin.reviews.showAgainBtn")}
                     </button>
                   )}
                 </div>
@@ -271,10 +273,10 @@ export default function AdminReviewsPage() {
 
       <ConfirmDialog
         open={hideConfirmId !== null}
-        title="Sembunyikan ulasan?"
-        description="Ulasan tidak akan tampil ke publik. Anda masih bisa menampilkannya lagi dari halaman ini."
-        confirmLabel="Ya, sembunyikan"
-        cancelLabel="Tidak jadi"
+        title={t("admin.reviews.hideConfirmTitle")}
+        description={t("admin.reviews.hideConfirmDesc")}
+        confirmLabel={t("admin.reviews.hideConfirmYes")}
+        cancelLabel={t("admin.common.cancelNo")}
         variant="danger"
         loading={hideConfirmId !== null && actionId === hideConfirmId}
         onConfirm={() => {

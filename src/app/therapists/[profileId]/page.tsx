@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { createConsultation } from "@/lib/api/consultations";
 import { getPhysiotherapistById } from "@/lib/api/physiotherapists";
@@ -43,6 +44,7 @@ export default function TherapistDetailPage() {
   const router = useRouter();
   const profileId = params.profileId as string;
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
 
   const [therapist, setTherapist] = useState<PhysiotherapistBrowseItem | null>(
     null,
@@ -73,12 +75,12 @@ export default function TherapistDetailPage() {
       setTherapist(null);
       setReviews([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat halaman.",
+        err instanceof ApiRequestError ? err.message : t("ther.loadPageFailed"),
       );
     } finally {
       setLoading(false);
     }
-  }, [profileId]);
+  }, [profileId, t]);
 
   useEffect(() => {
     if (!isReady || !user || !profileId) return;
@@ -90,22 +92,20 @@ export default function TherapistDetailPage() {
   }
 
   if (!user) {
-    return (
-      <SignInRequired message="Masuk untuk melihat profil fisioterapis." />
-    );
+    return <SignInRequired message={t("ther.signInProfile")} />;
   }
 
   return (
     <main className={`${widePageShell} space-y-8 pb-16`}>
       <nav
         className="border-b border-slate-200/90 pb-4"
-        aria-label="Navigasi profil"
+        aria-label={t("ther.profileNavAria")}
       >
         <Link
           href="/therapists"
           className="inline-flex min-h-[40px] items-center rounded-xl px-2 py-1.5 text-sm font-semibold text-teal-800 ring-1 ring-transparent transition-[background,ring,colors] hover:bg-teal-50 hover:ring-teal-100/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
         >
-          ← Kembali ke daftar
+          {t("ther.backToList")}
         </Link>
       </nav>
 
@@ -117,22 +117,22 @@ export default function TherapistDetailPage() {
             className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
             aria-hidden
           />
-          Memuat profil…
+          {t("ther.loadingProfile")}
         </p>
       ) : !therapist ? (
         <div className={`${cardSurface} text-center py-10`}>
-          <p className="text-slate-700 font-medium">Profil tidak ditemukan.</p>
+          <p className="text-slate-700 font-medium">{t("ther.profileNotFound")}</p>
           <Link
             href="/therapists"
             className={`${btnPrimary} mt-6 inline-flex min-h-[44px] items-center justify-center px-6`}
           >
-            Ke daftar fisioterapis
+            {t("ther.toTherapistList")}
           </Link>
         </div>
       ) : (
         <>
           <PageHeader
-            eyebrow="Profil terapis"
+            eyebrow={t("ther.profileEyebrow")}
             title={therapist.user.fullName}
             description={
               <span className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
@@ -156,24 +156,24 @@ export default function TherapistDetailPage() {
                 {therapist.bio}
               </p>
             ) : (
-              <p className="text-slate-500 text-sm italic">Belum ada bio.</p>
+              <p className="text-slate-500 text-sm italic">{t("ther.noBio")}</p>
             )}
             {therapist.clinicAddress ? (
               <p className="text-sm text-slate-700">
-                <span className="font-semibold text-slate-800">Klinik: </span>
+                <span className="font-semibold text-slate-800">{t("ther.clinicLabel")}</span>
                 {therapist.clinicAddress}
               </p>
             ) : null}
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 pt-1 border-t border-slate-100">
               <span>
-                Konsultasi online:{" "}
+                {t("ther.consultOnlineLabel")}{" "}
                 <strong className="text-slate-900">
                   {formatRupiah(therapist.consultationFee ?? null)}
                 </strong>
               </span>
               <span className="text-slate-300">·</span>
               <span>
-                Visit:{" "}
+                {t("ther.visitColonLabel")}{" "}
                 <strong className="text-slate-900">
                   {formatRupiah(therapist.visitFee ?? null)}
                 </strong>
@@ -181,7 +181,7 @@ export default function TherapistDetailPage() {
               {therapist.onlineUntil &&
               new Date(String(therapist.onlineUntil)) > new Date() ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-200">
-                  Online
+                  {t("ther.online")}
                 </span>
               ) : null}
             </div>
@@ -193,14 +193,14 @@ export default function TherapistDetailPage() {
                   onClick={() => setShowConsultForm((v) => !v)}
                   className={`${btnPrimary} min-h-[44px] justify-center px-5 text-center sm:min-w-[14rem]`}
                 >
-                  Konsultasi online (
+                  {t("ther.consultOnlineBtn")} (
                   {formatRupiah(therapist.consultationFee ?? null)})
                 </button>
                 <Link
                   href="/appointment"
                   className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[14rem]`}
                 >
-                  Booking visit (
+                  {t("ther.bookVisitBtn")} (
                   {formatRupiah(therapist.visitFee ?? null)})
                 </Link>
               </div>
@@ -212,16 +212,14 @@ export default function TherapistDetailPage() {
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (complaint.trim().length < 10) {
-                  setError("Keluhan minimal 10 karakter.");
+                  setError(t("ther.complaintMin"));
                   return;
                 }
                 const therapistOnline =
                   therapist.onlineUntil != null &&
                   new Date(String(therapist.onlineUntil)) > new Date();
                 if (consultSla === "FAST_ONLINE" && !therapistOnline) {
-                  setError(
-                    "Respons cepat hanya saat terapis sedang online. Pilih Standar atau tunggu badge Online.",
-                  );
+                  setError(t("ther.fastOnlineError"));
                   return;
                 }
                 setError(null);
@@ -240,7 +238,7 @@ export default function TherapistDetailPage() {
                   setError(
                     err instanceof ApiRequestError
                       ? err.message
-                      : "Gagal mengirim permintaan konsultasi.",
+                      : t("ther.consultSubmitFailed"),
                   );
                 } finally {
                   setSubmittingConsult(false);
@@ -249,15 +247,15 @@ export default function TherapistDetailPage() {
               className={`${cardSurface} space-y-4 border-teal-100/80 bg-teal-50/30`}
             >
               <p className="text-sm text-slate-700 leading-relaxed">
-                Alur: kirim keluhan → terapis menerima → kamu bayar{" "}
+                {t("ther.flowBefore")}{" "}
                 <strong>
                   {formatRupiah(therapist.consultationFee ?? null)}
                 </strong>{" "}
-                → chat aktif setelah pembayaran dikonfirmasi.
+                {t("ther.flowAfter")}
               </p>
               <fieldset className="space-y-2.5 text-sm text-slate-700">
                 <legend className="font-semibold text-slate-800 mb-1">
-                  Batas balasan terapis setelah bayar
+                  {t("ther.slaLegend")}
                 </legend>
                 <label className="flex items-start gap-2.5 cursor-pointer rounded-lg p-2 hover:bg-white/60">
                   <input
@@ -267,7 +265,7 @@ export default function TherapistDetailPage() {
                     onChange={() => setConsultSla("STANDARD")}
                     className="mt-1 text-teal-600 focus:ring-teal-500"
                   />
-                  <span>Standar (~24 jam)</span>
+                  <span>{t("ther.slaStandard")}</span>
                 </label>
                 <label className="flex items-start gap-2.5 cursor-pointer rounded-lg p-2 hover:bg-white/60">
                   <input
@@ -278,8 +276,8 @@ export default function TherapistDetailPage() {
                     className="mt-1 text-teal-600 focus:ring-teal-500"
                   />
                   <span>
-                    Respons cepat (~10 menit) — hanya jika badge{" "}
-                    <strong>Online</strong> tampil.
+                    {t("ther.slaFastBefore")}{" "}
+                    <strong>{t("ther.online")}</strong> {t("ther.slaFastAfter")}
                   </span>
                 </label>
               </fieldset>
@@ -288,7 +286,7 @@ export default function TherapistDetailPage() {
                   htmlFor="consult-complaint"
                   className="block text-sm font-medium text-slate-800 mb-1.5"
                 >
-                  Keluhan (min. 10 karakter)
+                  {t("ther.complaintLabel")}
                 </label>
                 <textarea
                   id="consult-complaint"
@@ -297,7 +295,7 @@ export default function TherapistDetailPage() {
                   value={complaint}
                   onChange={(e) => setComplaint(e.target.value)}
                   className={`${inputBase} min-h-[100px]`}
-                  placeholder="Ceritakan keluhan kamu agar terapis bisa siap menerima sesi."
+                  placeholder={t("ther.complaintPlaceholder")}
                 />
               </div>
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -306,7 +304,7 @@ export default function TherapistDetailPage() {
                   disabled={submittingConsult}
                   className={`${btnPrimary} min-h-[44px] justify-center sm:min-w-[12rem]`}
                 >
-                  {submittingConsult ? "Mengirim…" : "Kirim permintaan"}
+                  {submittingConsult ? t("ther.sending") : t("ther.sendRequest")}
                 </button>
                 <button
                   type="button"
@@ -318,7 +316,7 @@ export default function TherapistDetailPage() {
                   }}
                   className={`${btnOutline} min-h-[44px] justify-center sm:min-w-[8rem]`}
                 >
-                  Batal
+                  {t("ther.cancel")}
                 </button>
               </div>
             </form>
@@ -331,11 +329,10 @@ export default function TherapistDetailPage() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Ulasan publik
+                {t("ther.publicReviews")}
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Ulasan dari pasien setelah kunjungan atau konsultasi online
-                selesai.
+                {t("ther.publicReviewsHint")}
               </p>
             </div>
             <TherapistStarRating
@@ -345,7 +342,7 @@ export default function TherapistDetailPage() {
           </div>
           {reviews.length === 0 ? (
             <div className={`${cardSurface} text-center py-8 text-slate-600 text-sm`}>
-              Belum ada ulasan.
+              {t("ther.noReviewsYet")}
             </div>
           ) : (
             <ul className="space-y-3">

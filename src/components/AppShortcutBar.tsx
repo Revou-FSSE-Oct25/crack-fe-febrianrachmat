@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -87,6 +88,7 @@ function useWideLayout(breakpointPx: number) {
 
 export default function AppShortcutBar() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const pathname = usePathname();
   const isHome = pathname === "/";
   const mdUp = useWideLayout(768);
@@ -112,14 +114,14 @@ export default function AppShortcutBar() {
       <div className="border-b border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-teal-50/50 backdrop-blur-sm dark:border-slate-700/80 dark:from-slate-900 dark:via-slate-900 dark:to-teal-950/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-sm leading-snug text-slate-600">
-            Siap konsultasi atau booking sesi fisioterapi?
+            {t("ui.shortcutGuestPrompt")}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/appointment" className={`${pillPrimary} min-h-[40px]`}>
-              Buat janji temu
+              {t("ui.makeAppointment")}
             </Link>
             <Link href="/therapists" className={`${pill} min-h-[40px]`}>
-              Cari fisioterapis
+              {t("ui.findPhysiotherapist")}
             </Link>
           </div>
         </div>
@@ -143,10 +145,10 @@ export default function AppShortcutBar() {
       items: [
         { href: "/admin/dashboard", label: "Dashboard", admin: true },
         { href: "/admin/analytics", label: "Analytics", admin: true },
-        { href: "/admin/operations", label: "Operasional", admin: true },
-        { href: "/admin/physiotherapists", label: "Verifikasi PT", admin: true },
-        { href: "/admin/categories", label: "Kategori", admin: true },
-        { href: "/admin/reviews", label: "Ulasan", admin: true },
+        { href: "/admin/operations", label: t("ui.operations"), admin: true },
+        { href: "/admin/physiotherapists", label: t("ui.verifyPt"), admin: true },
+        { href: "/admin/categories", label: t("ui.categories"), admin: true },
+        { href: "/admin/reviews", label: t("ui.reviews"), admin: true },
         { href: "/admin/audit-logs", label: "Audit log", admin: true },
         { href: "/admin/notifications", label: "Broadcast", admin: true },
       ],
@@ -154,52 +156,54 @@ export default function AppShortcutBar() {
   }
 
   const activityItems: ShortcutLink[] = [
-    { href: "/consultations", label: "Konsultasi" },
-    { href: "/calendar", label: "Kalender" },
-    { href: "/bookings", label: "Daftar booking" },
-    ...(showTransactions ? [{ href: "/transactions", label: "Transaksi" }] : []),
-    { href: "/notifications", label: "Notifikasi" },
+    { href: "/consultations", label: t("ui.consultations") },
+    { href: "/calendar", label: t("ui.calendar") },
+    { href: "/bookings", label: t("ui.bookingList") },
+    ...(showTransactions
+      ? [{ href: "/transactions", label: t("ui.transactions") }]
+      : []),
+    { href: "/notifications", label: t("ui.notifications") },
     { href: "/chat", label: "Chat" },
   ];
   sections.push({
     id: "activity",
-    title: "Aktivitas",
+    title: t("ui.activity"),
     defaultOpen: !isAdmin,
     items: activityItems,
   });
 
   const forYouItems: ShortcutLink[] = [];
   if (showTherapistsList) {
-    forYouItems.push({ href: "/therapists", label: "Fisioterapis" });
+    forYouItems.push({ href: "/therapists", label: t("ui.physiotherapists") });
   }
   if (user.role === "PATIENT") {
     forYouItems.push(
-      { href: "/reviews", label: "Ulasan saya" },
-      { href: "/reviews/write", label: "Tulis ulasan" },
+      { href: "/reviews", label: t("ui.myReviews") },
+      { href: "/reviews/write", label: t("ui.writeReview") },
     );
   }
   if (isPt) {
     forYouItems.push(
-      { href: "/physiotherapist/profile", label: "Profil PT" },
-      { href: "/physiotherapist/availability", label: "Jadwal slot" },
+      { href: "/physiotherapist/profile", label: t("ui.ptProfile") },
+      { href: "/physiotherapist/availability", label: t("ui.slotSchedule") },
     );
   }
-  forYouItems.push({ href: "/profile", label: "Profil saya" });
-  sections.push({ id: "foryou", title: "Untuk Anda", items: forYouItems });
+  forYouItems.push({ href: "/profile", label: t("ui.myProfile") });
+  sections.push({ id: "foryou", title: t("ui.forYou"), items: forYouItems });
 
   const quickItems: ShortcutLink[] = [];
   if (showBookingCTA) {
-    quickItems.push({ href: "/appointment", label: "Form janji temu" });
+    quickItems.push({ href: "/appointment", label: t("ui.appointmentForm") });
   }
-  quickItems.push({ href: "/services", label: "Layanan" });
-  sections.push({ id: "quick", title: "Cepat", items: quickItems });
+  quickItems.push({ href: "/services", label: t("ui.services") });
+  sections.push({ id: "quick", title: t("ui.quick"), items: quickItems });
 
   return (
     <div className="border-b border-slate-200/80 bg-white/85 shadow-[0_6px_24px_rgb(15_23_42_/_0.04)] backdrop-blur-md dark:border-slate-700/80 dark:bg-slate-900/85 dark:shadow-[0_6px_24px_rgb(0_0_0_/_0.25)]">
       <div className="mx-auto max-w-7xl space-y-5 px-4 py-4 sm:px-6 sm:py-5 lg:px-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="truncate text-sm text-slate-600" title={user.fullName}>
-            Halo,{" "}
+            {t("ui.greetingHello")}{" "}
             <span className="font-semibold text-slate-800">{user.fullName}</span>
           </p>
           {showBookingCTA ? (
@@ -207,27 +211,27 @@ export default function AppShortcutBar() {
               href="/appointment"
               className={`${pillPrimary} w-full min-h-[44px] text-center sm:w-auto`}
             >
-              Booking / janji baru
+              {t("ui.newBooking")}
             </Link>
           ) : isAdmin ? (
             <Link
               href="/admin/dashboard"
               className={`${pillPrimary} w-full min-h-[44px] text-center sm:w-auto`}
             >
-              Dashboard admin
+              {t("ui.adminDashboard")}
             </Link>
           ) : isPt ? (
             <Link
               href="/physiotherapist/availability"
               className={`${pillPrimary} w-full min-h-[44px] text-center sm:w-auto`}
             >
-              Kelola jadwal
+              {t("ui.manageSchedule")}
             </Link>
           ) : null}
         </div>
 
         {narrowShortcuts ? (
-          <div className="space-y-2" role="navigation" aria-label="Pintasan">
+          <div className="space-y-2" role="navigation" aria-label={t("ui.shortcuts")}>
             {sections.map((s) => (
               <details
                 key={s.id}
@@ -248,7 +252,7 @@ export default function AppShortcutBar() {
           <div
             className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
             role="navigation"
-            aria-label="Pintasan"
+            aria-label={t("ui.shortcuts")}
           >
             {sections.map((s) => (
               <Section key={s.id} title={s.title}>

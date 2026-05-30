@@ -5,6 +5,7 @@ import {
   btnPrimary,
   btnSecondary,
 } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 import { useEffect, type ReactNode } from "react";
 
 export type ConfirmDialogProps = {
@@ -23,13 +24,14 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = "Konfirmasi",
-  cancelLabel = "Batal",
+  confirmLabel,
+  cancelLabel,
   variant = "default",
   loading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useLanguage();
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -59,7 +61,7 @@ export function ConfirmDialog({
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
-        aria-label="Tutup dialog"
+        aria-label={t("ui.closeDialog")}
         disabled={loading}
         onClick={onCancel}
       />
@@ -91,7 +93,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className={`${btnSecondary} min-h-[44px] justify-center px-5`}
           >
-            {cancelLabel}
+            {cancelLabel ?? t("ui.cancel")}
           </button>
           <button
             type="button"
@@ -99,7 +101,7 @@ export function ConfirmDialog({
             onClick={onConfirm}
             className={confirmBtnClass}
           >
-            {loading ? "Memproses…" : confirmLabel}
+            {loading ? t("ui.processing") : confirmLabel ?? t("ui.confirm")}
           </button>
         </div>
       </div>

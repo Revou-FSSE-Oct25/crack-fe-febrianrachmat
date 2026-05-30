@@ -6,6 +6,7 @@ import {
   cardSurface,
 } from "@/components/ui/page-shell";
 import { FieldError, inputWithFieldError } from "@/components/ui/field-error";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -35,6 +36,7 @@ export function PatientMedicalCard({
   onSaved,
 }: PatientMedicalCardProps) {
   const toast = useToast();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,12 +67,12 @@ export function PatientMedicalCard({
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memuat data medis.",
+          : t("profile.medical.loadError"),
       );
     } finally {
       setLoading(false);
     }
-  }, [applyProfile]);
+  }, [applyProfile, t]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -112,14 +114,14 @@ export function PatientMedicalCard({
     try {
       const updated = await updateMyPatientProfile(body);
       applyProfile(updated);
-      setSavedMsg("Data medis disimpan.");
-      toast.success("Data medis diperbarui.");
+      setSavedMsg(t("profile.medical.saved"));
+      toast.success(t("profile.medical.savedToast"));
       onSaved?.(updated);
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal menyimpan data medis.",
+          : t("profile.medical.saveError"),
       );
     } finally {
       setSaving(false);
@@ -135,11 +137,10 @@ export function PatientMedicalCard({
     >
       <div className="rounded-xl border border-slate-100 bg-slate-50/40 p-4 sm:p-5">
         <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-          Data medis & kontak darurat
+          {t("profile.medical.title")}
         </h2>
         <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-          Informasi ini membantu fisioterapis memahami kebutuhan Anda. Semua
-          kolom opsional.
+          {t("profile.medical.desc")}
         </p>
 
         {error ? (
@@ -163,7 +164,7 @@ export function PatientMedicalCard({
           <div className="mt-4 space-y-4">
             <div>
               <label htmlFor="patient-dob" className={labelClass}>
-                Tanggal lahir
+                {t("profile.medical.dob")}
               </label>
               <input
                 id="patient-dob"
@@ -180,7 +181,7 @@ export function PatientMedicalCard({
             </div>
             <div>
               <label htmlFor="patient-gender" className={labelClass}>
-                Jenis kelamin
+                {t("profile.medical.gender")}
               </label>
               <select
                 id="patient-gender"
@@ -192,16 +193,18 @@ export function PatientMedicalCard({
                 }}
                 disabled={saving}
               >
-                <option value="">— Pilih —</option>
-                <option value="M">Laki-laki</option>
-                <option value="F">Perempuan</option>
-                <option value="OTHER">Lainnya</option>
+                <option value="">{t("profile.medical.genderSelect")}</option>
+                <option value="M">{t("profile.medical.genderMale")}</option>
+                <option value="F">{t("profile.medical.genderFemale")}</option>
+                <option value="OTHER">
+                  {t("profile.medical.genderOther")}
+                </option>
               </select>
               <FieldError message={fieldErrors.gender} />
             </div>
             <div>
               <label htmlFor="patient-address" className={labelClass}>
-                Alamat
+                {t("profile.medical.address")}
               </label>
               <textarea
                 id="patient-address"
@@ -212,14 +215,14 @@ export function PatientMedicalCard({
                   setAddress(e.target.value);
                   clearFieldError(setFieldErrors, "address");
                 }}
-                placeholder="Jl. Contoh No. 10, Jakarta"
+                placeholder={t("profile.medical.addressPlaceholder")}
                 disabled={saving}
               />
               <FieldError message={fieldErrors.address} />
             </div>
             <div>
               <label htmlFor="patient-ec-name" className={labelClass}>
-                Nama kontak darurat
+                {t("profile.medical.ecName")}
               </label>
               <input
                 id="patient-ec-name"
@@ -231,14 +234,14 @@ export function PatientMedicalCard({
                   setEmergencyContactName(e.target.value);
                   clearFieldError(setFieldErrors, "emergencyContactName");
                 }}
-                placeholder="Contoh: Siti Santoso"
+                placeholder={t("profile.medical.ecNamePlaceholder")}
                 disabled={saving}
               />
               <FieldError message={fieldErrors.emergencyContactName} />
             </div>
             <div>
               <label htmlFor="patient-ec-phone" className={labelClass}>
-                Telepon kontak darurat
+                {t("profile.medical.ecPhone")}
               </label>
               <input
                 id="patient-ec-phone"
@@ -251,7 +254,7 @@ export function PatientMedicalCard({
                   setEmergencyContactPhone(e.target.value);
                   clearFieldError(setFieldErrors, "emergencyContactPhone");
                 }}
-                placeholder="08123456789"
+                placeholder={t("profile.medical.ecPhonePlaceholder")}
                 disabled={saving}
               />
               <FieldError message={fieldErrors.emergencyContactPhone} />
@@ -265,7 +268,7 @@ export function PatientMedicalCard({
           disabled={saving || loading}
           className={`${btnPrimary} min-h-[44px] justify-center sm:min-w-[10rem]`}
         >
-          {saving ? "Menyimpan…" : "Simpan data medis"}
+          {saving ? t("profile.medical.saving") : t("profile.medical.saveBtn")}
         </button>
       </div>
     </form>

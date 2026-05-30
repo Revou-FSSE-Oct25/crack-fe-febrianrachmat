@@ -27,6 +27,7 @@ import {
 import { formatIdr } from "@/lib/format/currency";
 import { consultationStatusMetaForDisplay } from "@/lib/status-meta";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
@@ -56,6 +57,7 @@ type ConsultationPayProof = { file: File | null; url: string };
 
 export default function ConsultationsPage() {
   const { user, isReady } = useAuth();
+  const { t, language } = useLanguage();
   const toast = useToast();
   const router = useRouter();
   const [rows, setRows] = useState<Consultation[]>([]);
@@ -118,17 +120,16 @@ export default function ConsultationsPage() {
       return;
     }
     if (!physiotherapistId) {
-      setError("Pilih fisioterapis.");
+      setError(t("booking.cons.error.pickTherapist"));
       return;
     }
     if (slaTier === "FAST_ONLINE") {
-      const t = therapists.find((x) => x.id === physiotherapistId);
+      const selected = therapists.find((x) => x.id === physiotherapistId);
       const online =
-        t?.onlineUntil != null && new Date(String(t.onlineUntil)) > new Date();
+        selected?.onlineUntil != null &&
+        new Date(String(selected.onlineUntil)) > new Date();
       if (!online) {
-        setError(
-          "Respons cepat (10 menit) hanya jika terapis sedang online. Pilih Standar atau pilih terapis dari daftar yang punya badge Online.",
-        );
+        setError(t("booking.cons.error.fastOnline"));
         return;
       }
     }
@@ -142,14 +143,13 @@ export default function ConsultationsPage() {
       });
       setComplaint("");
       setSlaTier("STANDARD");
-      actionSuccessWithNotify(
-        toast,
-        "Permintaan konsultasi terkirim. Fisioterapis mendapat notifikasi.",
-      );
+      actionSuccessWithNotify(toast, t("booking.cons.toast.requested"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal membuat konsultasi.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.cons.error.create"),
       );
     } finally {
       setSubmitting(false);
@@ -164,7 +164,9 @@ export default function ConsultationsPage() {
       router.push(`/chat/${conv.id}`);
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal membuka chat.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.cons.error.openChat"),
       );
     }
   }
@@ -177,14 +179,16 @@ export default function ConsultationsPage() {
     try {
       await updateConsultationStatus(id, { status });
       const labels: Record<string, string> = {
-        ACCEPTED: "Permintaan diterima. Pasien dapat membayar.",
-        COMPLETED: "Konsultasi ditandai selesai.",
+        ACCEPTED: t("booking.cons.toast.accepted"),
+        COMPLETED: t("booking.cons.toast.completed"),
       };
       if (labels[status]) actionSuccessWithNotify(toast, labels[status]);
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memperbarui status.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.cons.error.update"),
       );
     }
   }
@@ -196,13 +200,13 @@ export default function ConsultationsPage() {
     try {
       await updateConsultationStatus(cancelConfirmId, { status: "CANCELLED" });
       setCancelConfirmId(null);
-      toast.success("Konsultasi dibatalkan.");
+      toast.success(t("booking.cons.toast.cancelled"));
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal membatalkan konsultasi.",
+          : t("booking.cons.error.cancel"),
       );
     } finally {
       setCancelLoading(false);
@@ -214,7 +218,7 @@ export default function ConsultationsPage() {
   async function payConsultation(row: Consultation) {
     if (row.status !== "ACCEPTED") return;
     if (!row.feeSnapshot) {
-      setError("Biaya konsultasi tidak diketahui untuk sesi ini.");
+      setError(t("booking.cons.error.unknownFee"));
       return;
     }
     const proof =
@@ -242,14 +246,13 @@ export default function ConsultationsPage() {
         delete next[row.id];
         return next;
       });
-      actionSuccessWithNotify(
-        toast,
-        "Pembayaran terkirim. Admin akan mengonfirmasi; pantau di halaman Transaksi.",
-      );
+      actionSuccessWithNotify(toast, t("booking.cons.toast.paid"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal membuat pembayaran.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.cons.error.pay"),
       );
     } finally {
       setPayingId(null);
@@ -271,23 +274,21 @@ export default function ConsultationsPage() {
   }
 
   if (!user) {
-    return (
-      <SignInRequired message="Silakan masuk untuk melihat konsultasi." />
-    );
+    return <SignInRequired message={t("booking.cons.signIn")} />;
   }
 
   return (
     <main className={`${widePageShell} space-y-10 pb-16`}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
-          eyebrow="Telehealth"
-          title="Konsultasi"
+          eyebrow={t("booking.cons.eyebrow")}
+          title={t("booking.cons.title")}
           description={
             user.role === "PHYSIOTHERAPIST"
-              ? "Terima permintaan pasien, tunggu pembayaran & konfirmasi admin, lalu sesi chat aktif."
+              ? t("booking.cons.desc.pt")
               : user.role === "ADMIN"
-                ? "Pantau permintaan konsultasi online di seluruh platform."
-                : "Ajukan keluhan awal, bayar setelah terapis menerima, lalu mulai sesi chat setelah admin mengonfirmasi pembayaran."
+                ? t("booking.cons.desc.admin")
+                : t("booking.cons.desc.patient")
           }
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
@@ -295,13 +296,13 @@ export default function ConsultationsPage() {
             href="/therapists"
             className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
           >
-            Cari fisioterapis
+            {t("booking.cons.link.findTherapist")}
           </Link>
           <Link
             href="/chat"
             className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[10rem]`}
           >
-            Daftar chat
+            {t("booking.cons.link.chatList")}
           </Link>
         </div>
       </div>
@@ -317,18 +318,21 @@ export default function ConsultationsPage() {
           className={`${cardSurface} space-y-4 scroll-mt-24`}
         >
           <h2 className="text-lg font-semibold text-slate-900">
-            Ajukan konsultasi baru
+            {t("booking.cons.form.title")}
           </h2>
           <p className="text-sm text-slate-600">
-            Alur: <strong>terapis menerima</strong> → kamu{" "}
-            <strong>lampirkan bukti bayar</strong> lalu{" "}
-            <strong>bayar</strong> → chat otomatis aktif setelah pembayaran
-            dikonfirmasi admin.
+            {t("booking.cons.form.flowPrefix")}{" "}
+            <strong>{t("booking.cons.form.flowAccept")}</strong> →{" "}
+            {t("booking.cons.form.flowYou")}{" "}
+            <strong>{t("booking.cons.form.flowAttach")}</strong>{" "}
+            {t("booking.cons.form.flowThen")}{" "}
+            <strong>{t("booking.cons.form.flowPay")}</strong> →{" "}
+            {t("booking.cons.form.flowSuffix")}
           </p>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
-                Fisioterapis
+                {t("booking.cons.form.therapistLabel")}
               </label>
               <select
                 required
@@ -336,15 +340,16 @@ export default function ConsultationsPage() {
                 value={physiotherapistId}
                 onChange={(e) => setPhysiotherapistId(e.target.value)}
               >
-                <option value="">— Pilih —</option>
-                {therapists.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.user.fullName}
-                    {t.consultationFee != null && t.consultationFee !== ""
-                      ? ` · online ${formatIdr(String(t.consultationFee))}`
+                <option value="">{t("booking.cons.form.choose")}</option>
+                {therapists.map((therapist) => (
+                  <option key={therapist.id} value={therapist.id}>
+                    {therapist.user.fullName}
+                    {therapist.consultationFee != null &&
+                    therapist.consultationFee !== ""
+                      ? ` · online ${formatIdr(String(therapist.consultationFee))}`
                       : ""}
-                    {t.visitFee != null && t.visitFee !== ""
-                      ? ` · visit ${formatIdr(String(t.visitFee))}`
+                    {therapist.visitFee != null && therapist.visitFee !== ""
+                      ? ` · visit ${formatIdr(String(therapist.visitFee))}`
                       : ""}
                   </option>
                 ))}
@@ -352,7 +357,7 @@ export default function ConsultationsPage() {
             </div>
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium text-slate-700">
-                Batas waktu balasan terapis setelah bayar
+                {t("booking.cons.form.slaLegend")}
               </legend>
               <label className="flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
                 <input
@@ -363,8 +368,8 @@ export default function ConsultationsPage() {
                   className="mt-1"
                 />
                 <span>
-                  <strong>Standar (24 jam)</strong> — cocok jika kamu memilih
-                  terapis tertentu; balasan bisa lebih lama.
+                  <strong>{t("booking.cons.form.standardTitle")}</strong>{" "}
+                  {t("booking.cons.form.standardDesc")}
                 </span>
               </label>
               <label className="flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
@@ -376,15 +381,16 @@ export default function ConsultationsPage() {
                   className="mt-1"
                 />
                 <span>
-                  <strong>Respons cepat (~10 menit)</strong> — hanya jika terapis
-                  sedang <em>online</em> (badge Online). Jika tidak ada balasan,
-                  pembayaran dikembalikan otomatis oleh sistem.
+                  <strong>{t("booking.cons.form.fastTitle")}</strong>{" "}
+                  {t("booking.cons.form.fastDescBefore")}{" "}
+                  <em>{t("booking.cons.form.fastOnlineWord")}</em>{" "}
+                  {t("booking.cons.form.fastDescAfter")}
                 </span>
               </label>
             </fieldset>
             <div>
               <label className="block text-sm font-medium mb-1 text-slate-700">
-                Keluhan (min. 10 karakter)
+                {t("booking.cons.form.complaintLabel")}
               </label>
               <textarea
                 required
@@ -399,7 +405,9 @@ export default function ConsultationsPage() {
               disabled={submitting || loading}
               className={`${btnPrimary} min-h-[44px]`}
             >
-              {submitting ? "Mengirim…" : "Kirim"}
+              {submitting
+                ? t("booking.cons.form.sending")
+                : t("booking.cons.form.send")}
             </button>
           </form>
         </section>
@@ -407,32 +415,35 @@ export default function ConsultationsPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold text-slate-900">
-          Daftar konsultasi
+          {t("booking.cons.list.title")}
         </h2>
         {loading ? (
           <ListSkeleton rows={3} />
         ) : loadError ? null : rows.length === 0 ? (
           <EmptyState
-            title="Belum ada konsultasi"
+            title={t("booking.cons.empty.title")}
             hint={
               user.role === "PATIENT"
-                ? "Mulai dengan mengajukan keluhan awal ke fisioterapis pilihan Anda."
-                : "Permintaan dari pasien akan muncul di sini setelah mereka mengajukan konsultasi."
+                ? t("booking.cons.empty.hintPatient")
+                : t("booking.cons.empty.hintOther")
             }
             actions={
               user.role === "PATIENT"
                 ? [
-                    { href: "#ajukan-konsultasi", label: "Ajukan konsultasi" },
+                    {
+                      href: "#ajukan-konsultasi",
+                      label: t("booking.cons.action.request"),
+                    },
                     {
                       href: "/therapists",
-                      label: "Cari fisioterapis",
+                      label: t("booking.cons.action.findTherapist"),
                       variant: "secondary",
                     },
                   ]
                 : [
                     {
                       href: "/physiotherapist/profile",
-                      label: "Kelola profil",
+                      label: t("booking.cons.action.manageProfile"),
                       variant: "secondary",
                     },
                   ]
@@ -449,17 +460,22 @@ export default function ConsultationsPage() {
                 transactions,
               );
               const statusMeta = isPatient
-                ? consultationStatusMetaForDisplay(c.status, {
-                    patientLabel: consultationStatusLabelForPatient(
-                      c.status,
-                      openTx,
-                    ),
-                  })
-                : consultationStatusMetaForDisplay(c.status);
+                ? consultationStatusMetaForDisplay(
+                    c.status,
+                    {
+                      patientLabel: consultationStatusLabelForPatient(
+                        c.status,
+                        openTx,
+                        language,
+                      ),
+                    },
+                    language,
+                  )
+                : consultationStatusMetaForDisplay(c.status, undefined, language);
               const actionHint = isPatient
-                ? consultationPatientActionHint(c.status, openTx)
+                ? consultationPatientActionHint(c.status, openTx, language)
                 : isPt
-                  ? consultationTherapistActionHint(c.status, openTx)
+                  ? consultationTherapistActionHint(c.status, openTx, language)
                   : null;
 
               const canChat =
@@ -496,14 +512,15 @@ export default function ConsultationsPage() {
                       </span>
                       <span className="text-xs text-slate-500">·</span>
                       <span className="text-xs text-slate-700">
-                        Biaya: <strong>{formatIdr(c.feeSnapshot)}</strong>
+                        {t("booking.cons.item.fee")}{" "}
+                        <strong>{formatIdr(c.feeSnapshot)}</strong>
                       </span>
                       <span className="text-xs text-slate-500">·</span>
                       <span className="text-xs text-slate-600">
-                        SLA:{" "}
+                        {t("booking.cons.item.sla")}{" "}
                         {c.slaTier === "FAST_ONLINE"
-                          ? "cepat (~10 min)"
-                          : "standar (~24 jam)"}
+                          ? t("booking.cons.item.slaFast")
+                          : t("booking.cons.item.slaStandard")}
                       </span>
                     </div>
                     <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
@@ -522,13 +539,13 @@ export default function ConsultationsPage() {
                         href="/transactions"
                         className={`${btnSecondary} min-h-[44px] justify-center px-4 text-center`}
                       >
-                        Lihat status pembayaran
+                        {t("booking.cons.btn.viewPayment")}
                       </Link>
                     )}
                     {canPay && (
                       <div className="w-full md:w-auto md:max-w-xs space-y-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
                         <p className="text-xs font-medium text-slate-700">
-                          Bukti pembayaran (wajib)
+                          {t("booking.cons.pay.proofLabel")}
                         </p>
                         <input
                           type="file"
@@ -545,7 +562,7 @@ export default function ConsultationsPage() {
                           type="url"
                           disabled={payingId === c.id}
                           className={`${inputBase} text-sm`}
-                          placeholder="https://contoh.com/bukti.png"
+                          placeholder={t("booking.cons.pay.proofPlaceholder")}
                           value={
                             proofByConsultationId[c.id]?.url ?? ""
                           }
@@ -562,8 +579,8 @@ export default function ConsultationsPage() {
                           className={`${btnPrimary} min-h-[44px] w-full justify-center sm:w-auto`}
                         >
                           {payingId === c.id
-                            ? "Memproses…"
-                            : `Bayar ${formatIdr(c.feeSnapshot)}`}
+                            ? t("booking.cons.pay.processing")
+                            : `${t("booking.cons.pay.payPrefix")} ${formatIdr(c.feeSnapshot)}`}
                         </button>
                       </div>
                     )}
@@ -573,7 +590,7 @@ export default function ConsultationsPage() {
                         onClick={() => void openChat(c.id)}
                         className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-900 transition-colors hover:bg-teal-100/80"
                       >
-                        Buka chat
+                        {t("booking.cons.btn.openChat")}
                       </button>
                     )}
                     {canAccept && (
@@ -582,7 +599,7 @@ export default function ConsultationsPage() {
                         onClick={() => void patchStatus(c.id, "ACCEPTED")}
                         className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 transition-colors hover:bg-emerald-100/80"
                       >
-                        Terima permintaan
+                        {t("booking.cons.btn.accept")}
                       </button>
                     )}
                     {canComplete && (
@@ -591,7 +608,7 @@ export default function ConsultationsPage() {
                         onClick={() => void patchStatus(c.id, "COMPLETED")}
                         className={`${btnOutline} min-h-[44px] justify-center bg-slate-50 px-4`}
                       >
-                        Tandai selesai
+                        {t("booking.cons.btn.complete")}
                       </button>
                     )}
                     {canCancel && (
@@ -600,7 +617,7 @@ export default function ConsultationsPage() {
                         onClick={() => setCancelConfirmId(c.id)}
                         className={`${btnOutline} min-h-[44px] justify-center px-4`}
                       >
-                        Batalkan
+                        {t("booking.cons.btn.cancel")}
                       </button>
                     )}
                   </div>
@@ -613,10 +630,10 @@ export default function ConsultationsPage() {
 
       <ConfirmDialog
         open={cancelConfirmId !== null}
-        title="Batalkan konsultasi?"
-        description="Permintaan atau sesi konsultasi ini akan dibatalkan. Anda bisa mengajukan konsultasi baru nanti jika diperlukan."
-        confirmLabel="Ya, batalkan"
-        cancelLabel="Tidak jadi"
+        title={t("booking.cons.confirm.title")}
+        description={t("booking.cons.confirm.desc")}
+        confirmLabel={t("booking.cons.confirm.yes")}
+        cancelLabel={t("booking.cons.confirm.no")}
         variant="danger"
         loading={cancelLoading}
         onConfirm={() => void confirmCancelConsultation()}

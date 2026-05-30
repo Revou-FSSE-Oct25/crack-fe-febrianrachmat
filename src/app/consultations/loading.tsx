@@ -1,5 +1,9 @@
+"use client";
+
 import { RouteListPageLoading } from "@/components/ui/route-loading";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function Loading() {
-  return <RouteListPageLoading label="Memuat konsultasi…" rows={5} />;
+  const { t } = useLanguage();
+  return <RouteListPageLoading label={t("ui.loadingConsultations")} rows={5} />;
 }

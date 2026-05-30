@@ -1,9 +1,13 @@
+"use client";
+
 import Hero from "@/components/Hero";
 import ServiceCard from "@/components/ServiceCard";
 import { btnPrimary, btnSecondary } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 
 export default function Home() {
+  const { t } = useLanguage();
   return (
     <main className="pb-16">
       <Hero />
@@ -16,31 +20,30 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
           <header className="mx-auto mb-12 max-w-2xl space-y-3 text-center sm:mb-16">
             <p className="mx-auto inline-flex items-center rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-teal-800 ring-1 ring-teal-100">
-              Yang kami tawarkan
+              {t("home.offerBadge")}
             </p>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900 text-balance sm:text-3xl">
-              Layanan kami
+              {t("home.servicesTitle")}
             </h2>
             <p className="text-pretty text-sm leading-relaxed text-slate-600 sm:text-base">
-              Pendekatan berbasis bukti untuk pemulihan cedera, manajemen nyeri,
-              dan peningkatan performa.
+              {t("home.servicesSubtitle")}
             </p>
           </header>
 
           <div className="grid gap-6 md:grid-cols-3 md:gap-8">
             <ServiceCard
-              title="Fisioterapi"
-              description="Terapi gerak dan rehabilitasi untuk mengembalikan fungsi dan mobilitas."
+              title={t("home.service1.title")}
+              description={t("home.service1.desc")}
             />
 
             <ServiceCard
-              title="Sports massage"
-              description="Pijat olahraga untuk mengurangi ketegangan otot dan pemulihan pasca aktivitas."
+              title={t("home.service2.title")}
+              description={t("home.service2.desc")}
             />
 
             <ServiceCard
-              title="Performance training"
-              description="Program latihan bertahap agar Anda kembali beraktivitas dengan aman."
+              title={t("home.service3.title")}
+              description={t("home.service3.desc")}
             />
           </div>
 
@@ -49,11 +52,10 @@ export default function Home() {
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="space-y-2 text-center lg:max-w-md lg:text-left">
                   <h3 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-                    Langkah berikutnya
+                    {t("home.nextStep")}
                   </h3>
                   <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
-                    Jelajahi profil fisioterapis atau langsung buat janji temu
-                    sesuai jadwal Anda.
+                    {t("home.nextStepDesc")}
                   </p>
                 </div>
                 <div className="flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:shrink-0 lg:justify-end">
@@ -61,13 +63,13 @@ export default function Home() {
                     href="/therapists"
                     className={`${btnSecondary} min-h-[44px] px-6 text-center sm:min-w-[10rem]`}
                   >
-                    Cari fisioterapis
+                    {t("home.findPhysio")}
                   </Link>
                   <Link
                     href="/appointment"
                     className={`${btnPrimary} min-h-[44px] px-6 text-center sm:min-w-[10rem]`}
                   >
-                    Booking sekarang
+                    {t("home.bookNow")}
                   </Link>
                 </div>
               </div>

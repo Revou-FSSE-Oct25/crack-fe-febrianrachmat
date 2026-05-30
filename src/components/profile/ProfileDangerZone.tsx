@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/page-shell";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { deactivateMyAccount } from "@/lib/api/users";
@@ -21,6 +22,7 @@ type ProfileDangerZoneProps = {
 
 export function ProfileDangerZone({ enabled }: ProfileDangerZoneProps) {
   const { logout } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const router = useRouter();
   const [password, setPassword] = useState("");
@@ -33,12 +35,17 @@ export function ProfileDangerZone({ enabled }: ProfileDangerZoneProps) {
   async function handleDeactivate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (confirmText.trim().toUpperCase() !== "NONAKTIFKAN") {
-      setError('Ketik "NONAKTIFKAN" untuk melanjutkan.');
+    const confirmWord = t("profile.danger.confirmWord");
+    if (confirmText.trim().toUpperCase() !== confirmWord.toUpperCase()) {
+      setError(
+        `${t("profile.danger.confirmErrorPrefix")}${confirmWord}${t(
+          "profile.danger.confirmErrorSuffix",
+        )}`,
+      );
       return;
     }
     if (password.length < 8) {
-      setError("Masukkan password saat ini (min. 8 karakter).");
+      setError(t("profile.danger.passwordMin"));
       return;
     }
 
@@ -52,7 +59,7 @@ export function ProfileDangerZone({ enabled }: ProfileDangerZoneProps) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal menonaktifkan akun.",
+          : t("profile.danger.deactivateError"),
       );
     } finally {
       setLoading(false);
@@ -66,11 +73,10 @@ export function ProfileDangerZone({ enabled }: ProfileDangerZoneProps) {
     >
       <div>
         <h2 className="text-sm font-semibold tracking-tight text-red-900">
-          Zona berbahaya
+          {t("profile.danger.title")}
         </h2>
         <p className="mt-1 text-xs text-slate-600 leading-relaxed">
-          Menonaktifkan akun akan menghentikan akses login. Hubungi admin untuk
-          mengaktifkan kembali.
+          {t("profile.danger.desc")}
         </p>
       </div>
 
@@ -78,26 +84,28 @@ export function ProfileDangerZone({ enabled }: ProfileDangerZoneProps) {
 
       <div>
         <label htmlFor="deactivate-password" className={labelClass}>
-          Password saat ini
+          {t("profile.password.current")}
         </label>
         <PasswordInput
           id="deactivate-password"
           value={password}
           onChange={setPassword}
-          placeholder="Konfirmasi dengan password Anda"
+          placeholder={t("profile.danger.passwordPlaceholder")}
           autoComplete="current-password"
         />
       </div>
       <div>
         <label htmlFor="deactivate-confirm" className={labelClass}>
-          Ketik NONAKTIFKAN
+          {`${t("profile.danger.typeLabelPrefix")}${t(
+            "profile.danger.confirmWord",
+          )}`}
         </label>
         <input
           id="deactivate-confirm"
           className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
           value={confirmText}
           onChange={(e) => setConfirmText(e.target.value)}
-          placeholder="NONAKTIFKAN"
+          placeholder={t("profile.danger.confirmWord")}
           autoComplete="off"
           disabled={loading}
         />
@@ -107,7 +115,9 @@ export function ProfileDangerZone({ enabled }: ProfileDangerZoneProps) {
         disabled={loading}
         className={`${btnOutline} min-h-[44px] w-full justify-center border-red-200 text-red-800 hover:bg-red-50 sm:w-auto`}
       >
-        {loading ? "Memproses…" : "Nonaktifkan akun saya"}
+        {loading
+          ? t("profile.danger.processing")
+          : t("profile.danger.deactivateBtn")}
       </button>
     </form>
   );

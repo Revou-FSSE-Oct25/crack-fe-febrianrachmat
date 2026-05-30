@@ -1,12 +1,15 @@
+"use client";
+
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 
-const trustItems = [
-  { label: "Berbasis bukti", detail: "Protokol terstruktur" },
-  { label: "Alur booking jelas", detail: "Slot & tarif transparan" },
-  { label: "Tim fisioterapis", detail: "Profil & kategori layanan" },
-] as const;
-
 export default function Hero() {
+  const { t } = useLanguage();
+  const trustItems = [
+    { label: t("hero.trust1.label"), detail: t("hero.trust1.detail") },
+    { label: t("hero.trust2.label"), detail: t("hero.trust2.detail") },
+    { label: t("hero.trust3.label"), detail: t("hero.trust3.detail") },
+  ];
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-teal-600 via-teal-700 to-teal-950 text-white">
       <div
@@ -35,31 +38,30 @@ export default function Hero() {
             Kinova
           </p>
           <h1 className="mt-5 text-4xl font-bold tracking-tight text-balance leading-[1.08] sm:text-5xl lg:text-[3.35rem]">
-            Pulihkan gerak. Kembali beraktivitas.
+            {t("hero.title")}
           </h1>
           <p className="mt-6 text-pretty text-base leading-relaxed text-teal-50/95 sm:text-lg lg:max-w-xl">
-            Mitra fisioterapi dan pemulihan gerak Anda — dari konsultasi hingga
-            program latihan yang disesuaikan dengan kebutuhan Anda.
+            {t("hero.subtitle")}
           </p>
           <div className="mt-10 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start sm:gap-4">
             <Link
               href="/appointment"
               className="inline-flex w-full sm:w-auto min-h-[48px] min-w-[200px] items-center justify-center rounded-xl bg-white px-8 py-3.5 text-base font-semibold text-teal-800 shadow-lg shadow-teal-950/30 hover:bg-teal-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white transition-[transform,colors] duration-150 hover:-translate-y-0.5 active:translate-y-0"
             >
-              Buat janji temu
+              {t("hero.cta.appointment")}
             </Link>
             <Link
               href="/services"
               className="inline-flex w-full sm:w-auto min-h-[48px] min-w-[200px] items-center justify-center rounded-xl border-2 border-white/35 bg-white/10 px-8 py-3.5 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/15 hover:border-white/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80 transition-[transform,colors,border-color] duration-150"
             >
-              Lihat layanan
+              {t("hero.cta.services")}
             </Link>
           </div>
         </div>
 
         <ul
           className="mx-auto mt-14 grid max-w-2xl gap-3 sm:grid-cols-3 sm:gap-4 lg:mx-0 lg:max-w-none"
-          aria-label="Nilai utama"
+          aria-label={t("hero.values")}
         >
           {trustItems.map((item) => (
             <li

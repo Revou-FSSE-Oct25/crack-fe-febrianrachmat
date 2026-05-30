@@ -11,6 +11,7 @@ import {
   widePageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { useTherapistOnlineHeartbeat } from "@/hooks/use-therapist-online-heartbeat";
 import { ApiRequestError } from "@/lib/api/client";
@@ -26,6 +27,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function PhysiotherapistProfilePage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,12 +83,14 @@ export default function PhysiotherapistProfilePage() {
       );
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat profil.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("physio.profile.errorLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "PHYSIOTHERAPIST") return;
@@ -118,13 +122,13 @@ export default function PhysiotherapistProfilePage() {
     setSaving(true);
     try {
       await updateMyPhysiotherapistProfile(body);
-      toast.success(
-        "Profil disimpan. Status verifikasi dapat kembali menunggu tinjauan admin.",
-      );
+      toast.success(t("physio.profile.saved"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menyimpan.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("physio.profile.errorSave"),
       );
     } finally {
       setSaving(false);
@@ -136,7 +140,7 @@ export default function PhysiotherapistProfilePage() {
   }
 
   if (!user) {
-    return <SignInRequired message="Silakan masuk untuk mengelola profil fisioterapis." />;
+    return <SignInRequired message={t("physio.profile.signInRequired")} />;
   }
 
   if (user.role !== "PHYSIOTHERAPIST") {
@@ -145,15 +149,15 @@ export default function PhysiotherapistProfilePage() {
         <div className="mx-auto max-w-2xl space-y-6">
           <div className={`${cardSurface} space-y-4`}>
             <PageHeader
-              eyebrow="Profil"
-              title="Akses terbatas"
-              description="Halaman ini hanya untuk akun fisioterapis."
+              eyebrow={t("physio.profile.restrictedEyebrow")}
+              title={t("physio.restrictedTitle")}
+              description={t("physio.restrictedDesc")}
             />
             <Link
               href="/"
               className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
             >
-              Kembali ke beranda
+              {t("physio.backHome")}
             </Link>
           </div>
         </div>
@@ -169,12 +173,12 @@ export default function PhysiotherapistProfilePage() {
           href="/physiotherapist/availability"
           className="inline-flex text-sm font-medium text-teal-700 hover:text-teal-800 self-start"
         >
-          Kelola slot jadwal →
+          {t("physio.profile.manageSlots")}
         </Link>
         <PageHeader
-          eyebrow="Fisioterapis"
-          title="Profil"
-          description="Perbarui bio, tarif, dan data profesional. Isi hanya field yang ingin diubah; validasi panjang minimum tetap berlaku."
+          eyebrow={t("physio.eyebrow")}
+          title={t("physio.profile.title")}
+          description={t("physio.profile.description")}
         />
       </div>
 
@@ -182,8 +186,7 @@ export default function PhysiotherapistProfilePage() {
         className="rounded-xl border border-teal-100 bg-teal-50/80 px-4 py-3 text-xs text-teal-950 shadow-sm ring-1 ring-teal-900/5"
         role="note"
       >
-        Tab ini juga menjaga status &quot;online&quot; untuk pasien (ping
-        otomatis setiap menit).
+        {t("physio.profile.onlineNote")}
       </div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
@@ -194,20 +197,20 @@ export default function PhysiotherapistProfilePage() {
             className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent"
             aria-hidden
           />
-          Memuat…
+          {t("physio.loading")}
         </p>
       ) : (
         <form onSubmit={handleSubmit} className={`${cardSurface} space-y-4`}>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Kategori
+              {t("physio.profile.category")}
             </label>
             <select
               className={inputBase}
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
             >
-              <option value="">— Pilih —</option>
+              <option value="">{t("physio.profile.choosePlaceholder")}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -217,7 +220,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Bio (min. 10 karakter jika diisi)
+              {t("physio.profile.bio")}
             </label>
             <textarea
               className={`${inputBase} min-h-[100px] resize-y`}
@@ -227,7 +230,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Pendidikan (min. 5 karakter jika diisi)
+              {t("physio.profile.education")}
             </label>
             <textarea
               className={`${inputBase} min-h-[80px] resize-y`}
@@ -237,7 +240,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Tahun pengalaman (0–60)
+              {t("physio.profile.experience")}
             </label>
             <input
               type="number"
@@ -250,7 +253,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              URL sertifikasi
+              {t("physio.profile.certUrl")}
             </label>
             <input
               className={inputBase}
@@ -260,7 +263,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Nomor lisensi (min. 5 karakter jika diisi)
+              {t("physio.profile.license")}
             </label>
             <input
               className={inputBase}
@@ -270,7 +273,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Biaya konsultasi online
+              {t("physio.profile.consultationFee")}
             </label>
             <input
               type="number"
@@ -283,7 +286,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Biaya visit (klinik / kunjungan rumah)
+              {t("physio.profile.visitFee")}
             </label>
             <input
               type="number"
@@ -296,7 +299,7 @@ export default function PhysiotherapistProfilePage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Alamat klinik (min. 10 karakter jika diisi)
+              {t("physio.profile.clinicAddress")}
             </label>
             <textarea
               className={`${inputBase} min-h-[88px] resize-y`}
@@ -305,7 +308,7 @@ export default function PhysiotherapistProfilePage() {
             />
           </div>
           <button type="submit" disabled={saving} className={btnPrimary}>
-            {saving ? "Menyimpan…" : "Simpan profil"}
+            {saving ? t("physio.saving") : t("physio.profile.save")}
           </button>
         </form>
       )}

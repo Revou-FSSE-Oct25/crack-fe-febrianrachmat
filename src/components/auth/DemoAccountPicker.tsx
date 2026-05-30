@@ -4,19 +4,21 @@ import {
   DEMO_ACCOUNTS,
   DEMO_DEFAULT_PASSWORD,
 } from "@/lib/demo-guide";
+import { useLanguage } from "@/contexts/language-context";
 
 export function DemoAccountPicker({
   onPick,
 }: {
   onPick: (email: string, password: string) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="mt-6 rounded-xl border border-dashed border-teal-200/90 bg-teal-50/50 px-4 py-4 dark:border-teal-800/60 dark:bg-teal-950/30">
       <p className="text-xs font-semibold uppercase tracking-wider text-teal-800 dark:text-teal-200">
-        Akun demo (seed)
+        {t("auth.demo.title")}
       </p>
       <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-        Kata sandi: <code className="font-mono text-teal-800 dark:text-teal-200">{DEMO_DEFAULT_PASSWORD}</code>
+        {t("auth.demo.passwordLabel")} <code className="font-mono text-teal-800 dark:text-teal-200">{DEMO_DEFAULT_PASSWORD}</code>
       </p>
       <ul className="mt-3 flex flex-col gap-2">
         {DEMO_ACCOUNTS.map((acc) => (

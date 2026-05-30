@@ -14,11 +14,12 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import {
   auditActionLabel,
   auditEntityLabel,
-  AUDIT_ACTION_OPTIONS,
-  AUDIT_ENTITY_OPTIONS,
+  auditActionOptions,
+  auditEntityOptions,
   formatAuditMetadataSummary,
   type AuditAction,
   type AuditEntityType,
@@ -33,6 +34,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function AdminAuditLogsPage() {
   const { user, isReady } = useAuth();
+  const { t, language } = useLanguage();
   const [rows, setRows] = useState<AuditLogItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -69,12 +71,12 @@ export default function AdminAuditLogsPage() {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memuat audit log.",
+          : t("admin.audit.errLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, [page, appliedFilters]);
+  }, [page, appliedFilters, t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "ADMIN") return;
@@ -91,12 +93,12 @@ export default function AdminAuditLogsPage() {
   }
 
   if (!isReady) {
-    return <PageLoading label="Memuat audit log…" />;
+    return <PageLoading label={t("admin.audit.loading")} />;
   }
 
   if (!user) {
     return (
-      <SignInRequired message="Masuk sebagai admin untuk melihat audit log." />
+      <SignInRequired message={t("admin.audit.signIn")} />
     );
   }
 
@@ -106,14 +108,14 @@ export default function AdminAuditLogsPage() {
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             eyebrow="Admin"
-            title="Akses ditolak"
-            description="Hanya admin yang dapat membuka halaman ini."
+            title={t("admin.common.accessDenied")}
+            description={t("admin.common.onlyAdmin")}
           />
           <Link
             href="/"
             className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Kembali ke beranda
+            {t("admin.common.backHome")}
           </Link>
         </div>
       </main>
@@ -127,8 +129,8 @@ export default function AdminAuditLogsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <PageHeader
           eyebrow="Admin"
-          title="Audit log"
-          description="Jejak aksi admin dan sistem yang disimpan di database — konfirmasi bayar, refund, moderasi, verifikasi, dan notifikasi."
+          title={t("admin.audit.title")}
+          description={t("admin.audit.description")}
         />
         <button
           type="button"
@@ -136,7 +138,7 @@ export default function AdminAuditLogsPage() {
           disabled={loading}
           className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
         >
-          {loading ? "Memuat…" : "Muat ulang"}
+          {loading ? t("admin.common.loading") : t("admin.common.reload")}
         </button>
       </div>
 
@@ -148,7 +150,7 @@ export default function AdminAuditLogsPage() {
             htmlFor="audit-filter-action"
             className="block text-sm font-medium text-slate-800 mb-1.5"
           >
-            Aksi
+            {t("admin.audit.filterActionLabel")}
           </label>
           <select
             id="audit-filter-action"
@@ -158,7 +160,7 @@ export default function AdminAuditLogsPage() {
               setAction(e.target.value as AuditAction | "")
             }
           >
-            {AUDIT_ACTION_OPTIONS.map((o) => (
+            {auditActionOptions(language).map((o) => (
               <option key={o.label} value={o.value}>
                 {o.label}
               </option>
@@ -170,7 +172,7 @@ export default function AdminAuditLogsPage() {
             htmlFor="audit-filter-entity"
             className="block text-sm font-medium text-slate-800 mb-1.5"
           >
-            Entitas
+            {t("admin.audit.filterEntityLabel")}
           </label>
           <select
             id="audit-filter-entity"
@@ -180,7 +182,7 @@ export default function AdminAuditLogsPage() {
               setEntityType(e.target.value as AuditEntityType | "")
             }
           >
-            {AUDIT_ENTITY_OPTIONS.map((o) => (
+            {auditEntityOptions(language).map((o) => (
               <option key={o.label} value={o.value}>
                 {o.label}
               </option>
@@ -192,12 +194,12 @@ export default function AdminAuditLogsPage() {
             htmlFor="audit-filter-entity-id"
             className="block text-sm font-medium text-slate-800 mb-1.5"
           >
-            ID entitas (opsional)
+            {t("admin.audit.filterEntityIdLabel")}
           </label>
           <input
             id="audit-filter-entity-id"
             className={inputBase}
-            placeholder="UUID transaksi, ulasan, dll."
+            placeholder={t("admin.audit.filterEntityIdPlaceholder")}
             value={entityId}
             onChange={(e) => setEntityId(e.target.value)}
           />
@@ -209,27 +211,27 @@ export default function AdminAuditLogsPage() {
             disabled={loading}
             className={`${btnOutline} min-h-[44px] px-5 border-teal-200 bg-teal-50 text-teal-900`}
           >
-            Terapkan filter
+            {t("admin.audit.applyFilter")}
           </button>
         </div>
       </div>
 
       <p className="text-sm text-slate-600">
-        Menampilkan {rows.length} dari {total} entri
-        {totalPages > 1 ? ` · halaman ${page}/${totalPages}` : ""}
+        {t("admin.audit.showing")} {rows.length} {t("admin.audit.of")} {total} {t("admin.audit.entries")}
+        {totalPages > 1 ? ` · ${t("admin.audit.page")} ${page}/${totalPages}` : ""}
       </p>
 
       {loading ? (
         <ListSkeleton rows={4} />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Belum ada audit log"
-          hint="Entri muncul setelah admin mengonfirmasi pembayaran, refund, moderasi ulasan, atau aksi operasional lain yang terhubung."
+          title={t("admin.audit.noLogs")}
+          hint={t("admin.audit.noLogsHint")}
           actions={[
-            { href: "/admin/operations", label: "Panel operasional" },
+            { href: "/admin/operations", label: t("admin.audit.operationalPanel") },
             {
               href: "/admin/dashboard",
-              label: "Dashboard",
+              label: t("admin.common.dashboard"),
               variant: "secondary",
             },
           ]}
@@ -237,16 +239,16 @@ export default function AdminAuditLogsPage() {
       ) : (
         <ul className="space-y-3">
           {rows.map((log) => {
-            const summary = formatAuditMetadataSummary(log.metadata);
+            const summary = formatAuditMetadataSummary(log.metadata, language);
             return (
               <li key={log.id} className={`${cardSurface} space-y-2`}>
                 <div className="flex flex-wrap justify-between gap-2 items-start">
                   <div>
                     <p className="font-semibold text-slate-900">
-                      {auditActionLabel(log.action)}
+                      {auditActionLabel(log.action, language)}
                     </p>
                     <p className="text-xs text-teal-800 font-medium mt-0.5">
-                      {auditEntityLabel(log.entityType)}
+                      {auditEntityLabel(log.entityType, language)}
                     </p>
                   </div>
                   <time
@@ -258,7 +260,7 @@ export default function AdminAuditLogsPage() {
                 </div>
 
                 <p className="text-xs font-mono text-slate-600 break-all">
-                  Entitas: {log.entityId}
+                  {t("admin.audit.entityLabel")} {log.entityId}
                 </p>
 
                 <p className="text-sm text-slate-700">
@@ -271,7 +273,7 @@ export default function AdminAuditLogsPage() {
                       </span>
                     </>
                   ) : (
-                    <span className="text-slate-500 italic">Sistem / cron</span>
+                    <span className="text-slate-500 italic">{t("admin.audit.systemCron")}</span>
                   )}
                 </p>
 
@@ -284,7 +286,7 @@ export default function AdminAuditLogsPage() {
                 {log.metadata && Object.keys(log.metadata).length > 0 ? (
                   <details className="text-xs">
                     <summary className="cursor-pointer text-slate-500 hover:text-slate-700">
-                      Metadata lengkap
+                      {t("admin.audit.fullMetadata")}
                     </summary>
                     <pre className="mt-2 overflow-x-auto rounded-lg bg-slate-50 p-3 text-slate-800 border border-slate-100">
                       {JSON.stringify(log.metadata, null, 2)}
@@ -305,10 +307,10 @@ export default function AdminAuditLogsPage() {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             className={`${btnOutline} min-h-[44px] px-4`}
           >
-            ← Sebelumnya
+            {t("admin.audit.prevPage")}
           </button>
           <span className="text-sm text-slate-600 tabular-nums">
-            Halaman {page} / {totalPages}
+            {t("admin.audit.pageWord")} {page} / {totalPages}
           </span>
           <button
             type="button"
@@ -316,7 +318,7 @@ export default function AdminAuditLogsPage() {
             onClick={() => setPage((p) => p + 1)}
             className={`${btnOutline} min-h-[44px] px-4`}
           >
-            Berikutnya →
+            {t("admin.audit.nextPage")}
           </button>
         </div>
       ) : null}

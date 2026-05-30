@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/page-shell";
 import { DemoAccountPicker } from "@/components/auth/DemoAccountPicker";
 import { OAuthButtons } from "@/components/auth/OAuthButtons";
+import { useLanguage } from "@/contexts/language-context";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 function LoginPageContent() {
   const { login, user, isReady } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -67,7 +69,7 @@ function LoginPageContent() {
       const msg =
         err instanceof ApiRequestError
           ? err.message
-          : "Login gagal. Periksa email dan kata sandi.";
+          : t("auth.login.error");
       setError(msg);
     } finally {
       setLoading(false);
@@ -81,18 +83,18 @@ function LoginPageContent() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <p className="text-xs font-semibold uppercase tracking-wider text-teal-700">
-            Selamat datang kembali
+            {t("auth.login.eyebrow")}
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            Masuk
+            {t("auth.login.title")}
           </h1>
           <p className="mt-3 text-sm text-slate-600">
-            Belum punya akun?{" "}
+            {t("auth.login.noAccount")}{" "}
             <Link
               href={registerHref}
               className="font-semibold text-teal-700 hover:text-teal-600 underline-offset-2 hover:underline"
             >
-              Daftar
+              {t("auth.login.registerLink")}
             </Link>
           </p>
         </div>
@@ -104,13 +106,13 @@ function LoginPageContent() {
             </div>
             <div>
               <label htmlFor="login-email" className={labelClass}>
-                Email
+                {t("auth.email.label")}
               </label>
               <input
                 id="login-email"
                 type="email"
                 autoComplete="email"
-                placeholder="nama@email.com"
+                placeholder={t("auth.email.placeholder")}
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -123,12 +125,12 @@ function LoginPageContent() {
             </div>
             <div>
               <label htmlFor="login-password" className={labelClass}>
-                Kata sandi
+                {t("auth.password.label")}
               </label>
               <PasswordInput
                 id="login-password"
                 autoComplete="current-password"
-                placeholder="Masukkan kata sandi Anda"
+                placeholder={t("auth.login.passwordPlaceholder")}
                 value={password}
                 onChange={(v) => {
                   setPassword(v);
@@ -143,7 +145,7 @@ function LoginPageContent() {
               disabled={loading}
               className={`${btnPrimary} w-full min-h-[48px] py-3`}
             >
-              {loading ? "Memproses…" : "Masuk"}
+              {loading ? t("auth.processing") : t("auth.login.submit")}
             </button>
           </form>
           <OAuthButtons nextPath={afterLoginPath} />
@@ -162,14 +164,14 @@ function LoginPageContent() {
             href="/demo"
             className="font-semibold text-teal-700 hover:underline dark:text-teal-300"
           >
-            Panduan demo lengkap
+            {t("auth.login.demoGuide")}
           </Link>
         </p>
 
         <p className="mt-4 text-center text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-          Dengan masuk, Anda menyetujui ringkasan{" "}
+          {t("auth.login.termsPrefix")}{" "}
           <Link href="/kebijakan" className="text-teal-700 font-medium hover:underline">
-            kebijakan produk & demo
+            {t("auth.terms.policyLink")}
           </Link>
           .
         </p>

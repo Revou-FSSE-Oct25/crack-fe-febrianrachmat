@@ -1,3 +1,6 @@
+"use client";
+
+import { useLanguage } from "@/contexts/language-context";
 import {
   btnOutline,
   btnPrimary,
@@ -7,6 +10,7 @@ import {
 import Link from "next/link";
 
 export default function NotFound() {
+  const { t } = useLanguage();
   return (
     <main
       className={`${pageShell} flex min-h-[50vh] flex-col items-center justify-center pb-16`}
@@ -16,23 +20,23 @@ export default function NotFound() {
           404
         </p>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 text-balance">
-          Halaman tidak ditemukan
+          {t("ui.notFoundTitle")}
         </h1>
         <p className="text-sm text-slate-600 leading-relaxed">
-          Alamat yang Anda buka tidak ada atau sudah dipindahkan.
+          {t("ui.notFoundDesc")}
         </p>
         <div className="flex flex-wrap justify-center gap-3 pt-1">
           <Link
             href="/"
             className={`${btnPrimary} min-h-[44px] justify-center px-6`}
           >
-            Ke beranda
+            {t("ui.toHome")}
           </Link>
           <Link
             href="/therapists"
             className={`${btnOutline} min-h-[44px] justify-center px-6`}
           >
-            Cari terapis
+            {t("ui.findTherapist")}
           </Link>
         </div>
       </div>

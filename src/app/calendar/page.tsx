@@ -13,6 +13,7 @@ import {
   widePageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
   downloadCalendarIcsExport,
@@ -53,6 +54,7 @@ function groupByDay(items: CalendarBookingItem[]): Map<number, CalendarBookingIt
 
 export default function CalendarPage() {
   const { user, isReady } = useAuth();
+  const { t, language } = useLanguage();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -72,12 +74,12 @@ export default function CalendarPage() {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memuat kalender.",
+          : t("booking.cal.error.load"),
       );
     } finally {
       setLoading(false);
     }
-  }, [year, month]);
+  }, [year, month, t]);
 
   useEffect(() => {
     if (!isReady || !user) return;
@@ -106,7 +108,7 @@ export default function CalendarPage() {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengekspor kalender.",
+          : t("booking.cal.error.export"),
       );
     } finally {
       setExporting(false);
@@ -118,36 +120,34 @@ export default function CalendarPage() {
   }
 
   if (!user) {
-    return (
-      <SignInRequired message="Silakan masuk untuk melihat kalender janji temu." />
-    );
+    return <SignInRequired message={t("booking.cal.signIn")} />;
   }
 
   const roleHint =
     user.role === "PATIENT"
-      ? "Janji temu Anda dengan fisioterapis. Pengingat H-1 dikirim lewat notifikasi in-app (sekitar 24 jam sebelum waktu janji)."
+      ? t("booking.cal.hint.patient")
       : user.role === "PHYSIOTHERAPIST"
-        ? "Jadwal kunjungan pasien Anda. Pengingat H-1 dikirim ke Anda dan pasien lewat notifikasi."
-        : "Semua janji temu dalam rentang bulan (admin).";
+        ? t("booking.cal.hint.pt")
+        : t("booking.cal.hint.admin");
 
   return (
     <main className={`${widePageShell} space-y-6 pb-16`}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
-          eyebrow="Janji temu"
-          title="Kalender"
+          eyebrow={t("booking.cal.eyebrow")}
+          title={t("booking.cal.title")}
           description={roleHint}
         />
         <div className="flex flex-wrap gap-2">
           <Link href="/bookings" className={`${btnOutline} min-h-[44px] px-4`}>
-            Daftar booking
+            {t("booking.cal.link.bookings")}
           </Link>
           {user.role === "PATIENT" ? (
             <Link
               href="/appointment"
               className={`${btnOutline} min-h-[44px] border-teal-200 bg-teal-50 px-4 text-teal-900`}
             >
-              Janji baru
+              {t("booking.cal.link.newAppointment")}
             </Link>
           ) : null}
         </div>
@@ -160,7 +160,7 @@ export default function CalendarPage() {
           type="button"
           className={`${btnOutline} min-h-[40px] px-3`}
           onClick={() => goMonth(-1)}
-          aria-label="Bulan sebelumnya"
+          aria-label={t("booking.cal.prevMonth")}
         >
           ←
         </button>
@@ -171,7 +171,7 @@ export default function CalendarPage() {
           type="button"
           className={`${btnOutline} min-h-[40px] px-3`}
           onClick={() => goMonth(1)}
-          aria-label="Bulan berikutnya"
+          aria-label={t("booking.cal.nextMonth")}
         >
           →
         </button>
@@ -183,7 +183,7 @@ export default function CalendarPage() {
             setMonth(now.getMonth() + 1);
           }}
         >
-          Hari ini
+          {t("booking.cal.today")}
         </button>
         <button
           type="button"
@@ -191,12 +191,11 @@ export default function CalendarPage() {
           className={`${btnOutline} min-h-[40px] px-3 text-sm`}
           onClick={() => void handleExportIcs()}
         >
-          {exporting ? "Mengekspor…" : "Unduh .ics"}
+          {exporting ? t("booking.cal.exporting") : t("booking.cal.downloadIcs")}
         </button>
       </div>
       <p className="text-xs text-slate-500">
-        File .ics berisi janji temu bulan ini (kecuali dibatalkan). Impor ke Google
-        Calendar, Apple Calendar, atau Outlook.
+        {t("booking.cal.icsNote")}
       </p>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
@@ -205,8 +204,8 @@ export default function CalendarPage() {
         <ListSkeleton rows={4} />
       ) : items.length === 0 ? (
         <EmptyState
-          title="Tidak ada janji di bulan ini"
-          hint="Buat booking baru atau pilih bulan lain."
+          title={t("booking.cal.empty.title")}
+          hint={t("booking.cal.empty.hint")}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -226,13 +225,13 @@ export default function CalendarPage() {
                   {day}
                   {isToday ? (
                     <span className="ml-2 text-xs font-medium text-teal-700">
-                      Hari ini
+                      {t("booking.cal.today")}
                     </span>
                   ) : null}
                 </h3>
                 <ul className="space-y-3">
                   {dayItems.map((b) => {
-                    const meta = bookingStatusMeta(b.status);
+                    const meta = bookingStatusMeta(b.status, language);
                     return (
                       <li
                         key={b.id}
@@ -241,7 +240,7 @@ export default function CalendarPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           <StatusChip label={meta.label} tone={meta.tone} />
                           <span className="text-xs text-slate-500">
-                            {formatAppointmentType(b.appointmentType)}
+                            {formatAppointmentType(b.appointmentType, language)}
                           </span>
                         </div>
                         <p className="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">

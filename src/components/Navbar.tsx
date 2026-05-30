@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import {
   IconArrowRightEndOnRectangle,
   IconArrowRightOnRectangle,
@@ -9,6 +10,7 @@ import {
   IconUserCircle,
   IconXMark,
 } from "@/components/nav-icons";
+import LanguageToggle from "@/components/LanguageToggle";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import Link from "next/link";
@@ -81,6 +83,7 @@ function UnreadBadge({ count }: { count: number }) {
 
 export default function Navbar() {
   const { user, isReady, logout } = useAuth();
+  const { t } = useLanguage();
   const { unreadCount } = useUnreadNotifications();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -123,9 +126,9 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden lg:flex flex-1 items-center justify-center gap-10 min-w-0">
-          <NavLink href="/">Beranda</NavLink>
-          <NavLink href="/services">Layanan</NavLink>
-          <NavLink href="/about">Tentang</NavLink>
+          <NavLink href="/">{t("nav.home")}</NavLink>
+          <NavLink href="/services">{t("nav.services")}</NavLink>
+          <NavLink href="/about">{t("nav.about")}</NavLink>
         </div>
 
         <div className="flex items-center justify-end gap-2 shrink-0">
@@ -141,46 +144,48 @@ export default function Navbar() {
                 className={`${iconBtn} relative`}
                 aria-label={
                   unreadCount > 0
-                    ? `Notifikasi, ${unreadCount} belum dibaca`
-                    : "Notifikasi"
+                    ? `${t("nav.notifications")} (${unreadCount})`
+                    : t("nav.notifications")
                 }
-                title="Notifikasi"
+                title={t("nav.notifications")}
               >
                 <IconBell />
                 <UnreadBadge count={unreadCount} />
-                <span className="sr-only">Notifikasi</span>
+                <span className="sr-only">{t("nav.notifications")}</span>
               </Link>
               <Link
                 href="/profile"
                 className={iconBtn}
-                aria-label="Profil"
-                title="Profil"
+                aria-label={t("nav.profile")}
+                title={t("nav.profile")}
               >
                 <IconUserCircle />
-                <span className="sr-only">Profil</span>
+                <span className="sr-only">{t("nav.profile")}</span>
               </Link>
               <button
                 type="button"
                 className={iconBtnDanger}
                 onClick={() => logout()}
-                aria-label="Keluar"
-                title="Keluar"
+                aria-label={t("nav.logout")}
+                title={t("nav.logout")}
               >
                 <IconArrowRightOnRectangle />
-                <span className="sr-only">Keluar</span>
+                <span className="sr-only">{t("nav.logout")}</span>
               </button>
             </>
           ) : (
             <Link
               href="/login"
               className={iconBtn}
-              aria-label="Masuk"
-              title="Masuk"
+              aria-label={t("nav.login")}
+              title={t("nav.login")}
             >
               <IconArrowRightEndOnRectangle />
-              <span className="sr-only">Masuk</span>
+              <span className="sr-only">{t("nav.login")}</span>
             </Link>
           )}
+
+          <LanguageToggle />
 
           <ThemeToggle />
 
@@ -189,7 +194,7 @@ export default function Navbar() {
             className={menuBtn}
             aria-expanded={menuOpen}
             aria-controls={menuId}
-            aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
+            aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             onClick={() => setMenuOpen((o) => !o)}
           >
             {menuOpen ? <IconXMark /> : <IconBars3 />}
@@ -202,7 +207,7 @@ export default function Navbar() {
           <button
             type="button"
             className="fixed inset-0 z-40 bg-slate-900/25 backdrop-blur-[2px] lg:hidden"
-            aria-label="Tutup menu"
+            aria-label={t("nav.closeMenu")}
             onClick={() => setMenuOpen(false)}
           />
           <div
@@ -210,21 +215,21 @@ export default function Navbar() {
             className="lg:hidden absolute left-0 right-0 top-full z-50 max-h-[min(70vh,calc(100dvh-5rem))] overflow-y-auto border-b border-slate-200/90 bg-white/95 px-4 py-4 shadow-lg shadow-slate-900/10 backdrop-blur-xl sm:px-6 dark:border-slate-700/80 dark:bg-slate-900/95 dark:shadow-black/30"
             role="dialog"
             aria-modal="true"
-            aria-label="Navigasi"
+            aria-label={t("nav.navigation")}
           >
             <div className="mx-auto max-w-lg space-y-1">
               <NavLink href="/" mobile onNavigate={() => setMenuOpen(false)}>
-                Beranda
+                {t("nav.home")}
               </NavLink>
               <NavLink
                 href="/services"
                 mobile
                 onNavigate={() => setMenuOpen(false)}
               >
-                Layanan
+                {t("nav.services")}
               </NavLink>
               <NavLink href="/about" mobile onNavigate={() => setMenuOpen(false)}>
-                Tentang
+                {t("nav.about")}
               </NavLink>
               {user ? (
                 <NavLink
@@ -232,7 +237,7 @@ export default function Navbar() {
                   mobile
                   onNavigate={() => setMenuOpen(false)}
                 >
-                  Notifikasi
+                  {t("nav.notifications")}
                   {unreadCount > 0 ? ` (${unreadCount})` : ""}
                 </NavLink>
               ) : null}
@@ -241,14 +246,14 @@ export default function Navbar() {
                 mobile
                 onNavigate={() => setMenuOpen(false)}
               >
-                Cari fisioterapis
+                {t("nav.findPhysio")}
               </NavLink>
               <NavLink
                 href="/appointment"
                 mobile
                 onNavigate={() => setMenuOpen(false)}
               >
-                Buat janji temu
+                {t("nav.makeAppointment")}
               </NavLink>
             </div>
           </div>

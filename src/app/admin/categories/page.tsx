@@ -17,6 +17,7 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { validateCategoryName } from "@/lib/validation";
@@ -32,6 +33,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function AdminCategoriesPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [items, setItems] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,12 +62,12 @@ export default function AdminCategoriesPage() {
     } catch (err) {
       setItems([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat kategori.",
+        err instanceof ApiRequestError ? err.message : t("admin.categories.errLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "ADMIN") return;
@@ -89,11 +91,11 @@ export default function AdminCategoriesPage() {
       });
       setCreateName("");
       setCreateDesc("");
-      toast.success("Kategori berhasil ditambahkan.");
+      toast.success(t("admin.categories.toastAdded"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menambah kategori.",
+        err instanceof ApiRequestError ? err.message : t("admin.categories.errAdd"),
       );
     } finally {
       setCreating(false);
@@ -127,11 +129,11 @@ export default function AdminCategoriesPage() {
         description: editDesc.trim() || undefined,
       });
       cancelEdit();
-      toast.success("Kategori diperbarui.");
+      toast.success(t("admin.categories.toastUpdated"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menyimpan.",
+        err instanceof ApiRequestError ? err.message : t("admin.categories.errSave"),
       );
     } finally {
       setSavingId(null);
@@ -146,11 +148,11 @@ export default function AdminCategoriesPage() {
       await deleteCategory(deleteConfirm.id);
       if (editingId === deleteConfirm.id) cancelEdit();
       setDeleteConfirm(null);
-      toast.success("Kategori dihapus.");
+      toast.success(t("admin.categories.toastDeleted"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menghapus.",
+        err instanceof ApiRequestError ? err.message : t("admin.categories.errDelete"),
       );
     } finally {
       setDeleting(false);
@@ -158,12 +160,12 @@ export default function AdminCategoriesPage() {
   }
 
   if (!isReady) {
-    return <PageLoading label="Memuat…" />;
+    return <PageLoading label={t("admin.common.loading")} />;
   }
 
   if (!user) {
     return (
-      <SignInRequired message="Silakan masuk sebagai admin untuk mengelola kategori." />
+      <SignInRequired message={t("admin.categories.signIn")} />
     );
   }
 
@@ -173,14 +175,14 @@ export default function AdminCategoriesPage() {
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             eyebrow="Admin"
-            title="Akses ditolak"
-            description="Hanya admin yang dapat membuka halaman ini."
+            title={t("admin.common.accessDenied")}
+            description={t("admin.common.onlyAdmin")}
           />
           <Link
             href="/"
             className="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800"
           >
-            Kembali ke beranda
+            {t("admin.common.backHome")}
           </Link>
         </div>
       </main>
@@ -193,8 +195,8 @@ export default function AdminCategoriesPage() {
 
       <PageHeader
         eyebrow="Admin"
-        title="Kategori"
-        description="Tambah, ubah, atau hapus kategori layanan. Daftar publik memakai endpoint kategori umum; perubahan struktural memakai API admin."
+        title={t("admin.categories.title")}
+        description={t("admin.categories.description")}
       />
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
@@ -203,11 +205,11 @@ export default function AdminCategoriesPage() {
         id="tambah-kategori"
         className={`${cardSurface} space-y-4 scroll-mt-24`}
       >
-        <h2 className="text-lg font-semibold text-slate-900">Tambah kategori</h2>
+        <h2 className="text-lg font-semibold text-slate-900">{t("admin.categories.addCategory")}</h2>
         <form onSubmit={handleCreate} className="space-y-3 max-w-lg">
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Nama
+              {t("admin.common.name")}
             </label>
             <input
               required
@@ -220,7 +222,7 @@ export default function AdminCategoriesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-800 mb-1.5">
-              Deskripsi (opsional)
+              {t("admin.categories.descOptionalLabel")}
             </label>
             <textarea
               maxLength={500}
@@ -234,21 +236,21 @@ export default function AdminCategoriesPage() {
             disabled={creating}
             className={`${btnPrimary} min-h-[44px]`}
           >
-            {creating ? "Menyimpan…" : "Simpan"}
+            {creating ? t("admin.common.saving") : t("admin.common.save")}
           </button>
         </form>
       </section>
 
       <section className="space-y-4">
         <div className="flex flex-wrap justify-between items-center gap-3">
-          <h2 className="text-lg font-semibold text-slate-900">Daftar kategori</h2>
+          <h2 className="text-lg font-semibold text-slate-900">{t("admin.categories.categoryList")}</h2>
           <button
             type="button"
             onClick={() => void load()}
             disabled={loading}
             className={`${btnOutline} min-h-[44px] shrink-0 px-5`}
           >
-            Muat ulang
+            {t("admin.common.reload")}
           </button>
         </div>
 
@@ -256,10 +258,10 @@ export default function AdminCategoriesPage() {
           <ListSkeleton rows={3} />
         ) : items.length === 0 ? (
           <EmptyState
-            title="Belum ada kategori"
-            hint="Kategori dipakai saat pasien memfilter dan memilih layanan fisioterapis."
+            title={t("admin.categories.noCategories")}
+            hint={t("admin.categories.noCategoriesHint")}
             actions={[
-              { href: "#tambah-kategori", label: "Tambah kategori pertama" },
+              { href: "#tambah-kategori", label: t("admin.categories.addFirstCategory") },
             ]}
           />
         ) : (
@@ -270,7 +272,7 @@ export default function AdminCategoriesPage() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                        Nama
+                        {t("admin.common.name")}
                       </label>
                       <input
                         minLength={3}
@@ -282,7 +284,7 @@ export default function AdminCategoriesPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                        Deskripsi
+                        {t("admin.categories.descLabel")}
                       </label>
                       <textarea
                         maxLength={500}
@@ -298,14 +300,14 @@ export default function AdminCategoriesPage() {
                         onClick={() => void handleSaveEdit(c.id)}
                         className={btnPrimary}
                       >
-                        Simpan
+                        {t("admin.common.save")}
                       </button>
                       <button
                         type="button"
                         onClick={cancelEdit}
                         className={btnOutline}
                       >
-                        Batal
+                        {t("admin.common.cancel")}
                       </button>
                     </div>
                   </>
@@ -330,7 +332,7 @@ export default function AdminCategoriesPage() {
                         onClick={() => startEdit(c)}
                         className={btnOutline}
                       >
-                        Ubah
+                        {t("admin.categories.editBtn")}
                       </button>
                       <button
                         type="button"
@@ -339,7 +341,7 @@ export default function AdminCategoriesPage() {
                         }
                         className={`${btnDanger} min-h-[44px]`}
                       >
-                        Hapus
+                        {t("admin.categories.deleteBtn")}
                       </button>
                     </div>
                   </>
@@ -354,12 +356,12 @@ export default function AdminCategoriesPage() {
         open={deleteConfirm !== null}
         title={
           deleteConfirm
-            ? `Hapus kategori "${deleteConfirm.label}"?`
-            : "Hapus kategori?"
+            ? `${t("admin.categories.deletePrefix")} "${deleteConfirm.label}"?`
+            : t("admin.categories.deleteTitle")
         }
-        description="Kategori akan dihapus dari sistem. Jika masih dipakai relasi lain, server dapat menolak permintaan ini."
-        confirmLabel="Ya, hapus"
-        cancelLabel="Tidak jadi"
+        description={t("admin.categories.deleteDesc")}
+        confirmLabel={t("admin.categories.deleteConfirmYes")}
+        cancelLabel={t("admin.common.cancelNo")}
         variant="danger"
         loading={deleting}
         onConfirm={() => void confirmDeleteCategory()}

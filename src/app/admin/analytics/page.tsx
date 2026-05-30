@@ -15,6 +15,7 @@ import {
   SignInRequired,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import {
   getAdminDashboardAnalytics,
   type AdminDashboardAnalytics,
@@ -27,14 +28,22 @@ import { useCallback, useEffect, useState } from "react";
 const PERIOD_OPTIONS = [7, 14, 30, 60, 90] as const;
 const asPercent = (v: number): string => `${(v * 100).toFixed(1)}%`;
 
-function wowDeltaLabel(values: number[]): string {
-  if (values.length < 2) return "Data minggu sebelumnya belum cukup";
+function wowDeltaLabel(
+  values: number[],
+  t: (key: string) => string,
+): string {
+  if (values.length < 2) return t("admin.analytics.insufficientPrevWeek");
   const current = values[values.length - 1] ?? 0;
   const prev = values[values.length - 2] ?? 0;
   const delta = current - prev;
   const pct = prev > 0 ? (delta / prev) * 100 : current > 0 ? 100 : 0;
-  const direction = delta > 0 ? "naik" : delta < 0 ? "turun" : "stabil";
-  return `${direction} ${Math.abs(pct).toFixed(1)}% (minggu ini ${current}, minggu lalu ${prev})`;
+  const direction =
+    delta > 0
+      ? t("admin.analytics.directionUp")
+      : delta < 0
+        ? t("admin.analytics.directionDown")
+        : t("admin.analytics.directionStable");
+  return `${direction} ${Math.abs(pct).toFixed(1)}% (${t("admin.analytics.wowThisWeek")} ${current}, ${t("admin.analytics.wowLastWeek")} ${prev})`;
 }
 
 function wowDirection(values: number[]): "up" | "down" | "flat" {
@@ -80,6 +89,7 @@ function wowDirectionIcon(direction: "up" | "down" | "flat"): string {
 
 export default function AdminAnalyticsPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const [days, setDays] = useState<number>(30);
   const [data, setData] = useState<AdminDashboardAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -96,12 +106,12 @@ export default function AdminAnalyticsPage() {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memuat analytics.",
+          : t("admin.analytics.errLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, [days]);
+  }, [days, t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "ADMIN") return;
@@ -109,20 +119,20 @@ export default function AdminAnalyticsPage() {
   }, [isReady, user?.role, load]);
 
   if (!isReady) {
-    return <PageLoading label="Memuat analytics…" />;
+    return <PageLoading label={t("admin.analytics.loading")} />;
   }
 
   if (!user) {
-    return <SignInRequired message="Masuk sebagai admin untuk analytics." />;
+    return <SignInRequired message={t("admin.analytics.signIn")} />;
   }
 
   if (user.role !== "ADMIN") {
     return (
       <main className={adminPageShell}>
         <div className={`${cardSurface} max-w-lg space-y-4`}>
-          <PageHeader title="Akses ditolak" description="Hanya admin." />
+          <PageHeader title={t("admin.common.accessDenied")} description={t("admin.analytics.onlyAdminShort")} />
           <Link href="/" className="text-sm font-semibold text-teal-700">
-            Beranda
+            {t("admin.analytics.home")}
           </Link>
         </div>
       </main>
@@ -140,12 +150,12 @@ export default function AdminAnalyticsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <PageHeader
           eyebrow="Admin"
-          title="Analytics"
-          description="Tren aktivitas, pendapatan, distribusi ulasan, dan performa terapis dalam periode yang dipilih."
+          title={t("admin.analytics.title")}
+          description={t("admin.analytics.description")}
         />
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="analytics-days" className="sr-only">
-            Periode (hari)
+            {t("admin.analytics.periodDays")}
           </label>
           <select
             id="analytics-days"
@@ -155,7 +165,7 @@ export default function AdminAnalyticsPage() {
           >
             {PERIOD_OPTIONS.map((d) => (
               <option key={d} value={d}>
-                {d} hari terakhir
+                {d} {t("admin.analytics.daysOption")}
               </option>
             ))}
           </select>
@@ -165,7 +175,7 @@ export default function AdminAnalyticsPage() {
             disabled={loading}
             className={`${btnOutline} min-h-[44px] px-5`}
           >
-            {loading ? "Memuat…" : "Muat ulang"}
+            {loading ? t("admin.common.loading") : t("admin.common.reload")}
           </button>
         </div>
       </div>
@@ -176,22 +186,22 @@ export default function AdminAnalyticsPage() {
         <ListSkeleton rows={4} />
       ) : !data ? (
         <EmptyState
-          title="Tidak ada data analytics"
-          actions={[{ href: "/admin/dashboard", label: "Dashboard" }]}
+          title={t("admin.analytics.noData")}
+          actions={[{ href: "/admin/dashboard", label: t("admin.common.dashboard") }]}
         />
       ) : (
         <div className="space-y-8">
           <p className="text-sm text-slate-600">
-            Periode: {data.periodDays} hari (sejak{" "}
+            {t("admin.analytics.periodLabel")} {data.periodDays} {t("admin.analytics.daysWord")} ({t("admin.analytics.sinceWord")}{" "}
             {new Date(data.periodStart).toLocaleDateString("id-ID")}) ·{" "}
-            {data.auditLogsInPeriod} entri audit log · diperbarui{" "}
+            {data.auditLogsInPeriod} {t("admin.analytics.auditEntriesSuffix")} · {t("admin.analytics.updatedWord")}{" "}
             {new Date(data.generatedAt).toLocaleString("id-ID")}
           </p>
 
           <section className="grid gap-6 lg:grid-cols-2">
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Pendapatan harian (PAID)
+                {t("admin.analytics.dailyRevenuePaid")}
               </h2>
               <TrendBars
                 labels={data.trends.labels}
@@ -201,13 +211,13 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Pengguna baru / hari
+                {t("admin.analytics.newUsersPerDay")}
               </h2>
               <TrendBars labels={data.trends.labels} values={data.trends.newUsers} />
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Booking baru / hari
+                {t("admin.analytics.newBookingsPerDay")}
               </h2>
               <TrendBars
                 labels={data.trends.labels}
@@ -216,7 +226,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Konsultasi baru / hari
+                {t("admin.analytics.newConsultationsPerDay")}
               </h2>
               <TrendBars
                 labels={data.trends.labels}
@@ -225,7 +235,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Booking sukses / hari
+                {t("admin.analytics.bookingCompletedPerDay")}
               </h2>
               <TrendBars
                 labels={data.trends.labels}
@@ -234,7 +244,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Cancelled / hari
+                {t("admin.analytics.bookingCancelledPerDay")}
               </h2>
               <TrendBars
                 labels={data.trends.labels}
@@ -243,7 +253,7 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                No-show estimasi / hari
+                {t("admin.analytics.noShowPerDay")}
               </h2>
               <TrendBars
                 labels={data.trends.labels}
@@ -254,11 +264,10 @@ export default function AdminAnalyticsPage() {
 
           <section className={`${cardSurface} space-y-4`}>
             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-              Ringkasan mingguan operasional
+              {t("admin.analytics.weeklyOperationalSummary")}
             </h2>
             <p className="text-sm text-slate-600">
-              Bucket {data.operationalWeekly.bucketDays} hari untuk membaca tren
-              operasional mingguan.
+              Bucket {data.operationalWeekly.bucketDays} {t("admin.analytics.bucketDaysDesc")}
             </p>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <div
@@ -270,7 +279,7 @@ export default function AdminAnalyticsPage() {
                 )}`}
               >
                 <p className="text-xs uppercase tracking-wide text-slate-500 flex items-center justify-between gap-2">
-                  Booking sukses
+                  {t("admin.analytics.bookingSuccess")}
                   <span className="text-sm font-semibold text-slate-700">
                     {wowDirectionIcon(
                       wowDirection(data.operationalWeekly.bookingCompleted),
@@ -278,7 +287,7 @@ export default function AdminAnalyticsPage() {
                   </span>
                 </p>
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {wowDeltaLabel(data.operationalWeekly.bookingCompleted)}
+                  {wowDeltaLabel(data.operationalWeekly.bookingCompleted, t)}
                 </p>
               </div>
               <div
@@ -290,7 +299,7 @@ export default function AdminAnalyticsPage() {
                 )}`}
               >
                 <p className="text-xs uppercase tracking-wide text-slate-500 flex items-center justify-between gap-2">
-                  Cancelled
+                  {t("admin.analytics.cancelled")}
                   <span className="text-sm font-semibold text-slate-700">
                     {wowDirectionIcon(
                       wowDirection(data.operationalWeekly.bookingCancelled),
@@ -298,7 +307,7 @@ export default function AdminAnalyticsPage() {
                   </span>
                 </p>
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {wowDeltaLabel(data.operationalWeekly.bookingCancelled)}
+                  {wowDeltaLabel(data.operationalWeekly.bookingCancelled, t)}
                 </p>
               </div>
               <div
@@ -310,7 +319,7 @@ export default function AdminAnalyticsPage() {
                 )}`}
               >
                 <p className="text-xs uppercase tracking-wide text-slate-500 flex items-center justify-between gap-2">
-                  No-show estimasi
+                  {t("admin.analytics.noShowEstimated")}
                   <span className="text-sm font-semibold text-slate-700">
                     {wowDirectionIcon(
                       wowDirection(data.operationalWeekly.bookingNoShowEstimated),
@@ -318,7 +327,7 @@ export default function AdminAnalyticsPage() {
                   </span>
                 </p>
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {wowDeltaLabel(data.operationalWeekly.bookingNoShowEstimated)}
+                  {wowDeltaLabel(data.operationalWeekly.bookingNoShowEstimated, t)}
                 </p>
               </div>
               <div
@@ -327,7 +336,7 @@ export default function AdminAnalyticsPage() {
                 )}`}
               >
                 <p className="text-xs uppercase tracking-wide text-slate-500 flex items-center justify-between gap-2">
-                  Total operasional
+                  {t("admin.analytics.totalOperational")}
                   <span className="text-sm font-semibold text-slate-700">
                     {wowDirectionIcon(
                       wowDirection(data.operationalWeekly.totalOperational),
@@ -335,7 +344,7 @@ export default function AdminAnalyticsPage() {
                   </span>
                 </p>
                 <p className="mt-1 text-sm font-medium text-slate-800">
-                  {wowDeltaLabel(data.operationalWeekly.totalOperational)}
+                  {wowDeltaLabel(data.operationalWeekly.totalOperational, t)}
                 </p>
               </div>
             </div>
@@ -344,53 +353,53 @@ export default function AdminAnalyticsPage() {
           <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                KPI operasional
+                {t("admin.analytics.operationalKpi")}
               </h2>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-600">Booking sukses</dt>
+                  <dt className="text-slate-600">{t("admin.analytics.bookingSuccess")}</dt>
                   <dd className="font-medium tabular-nums">
                     {asPercent(data.operationalKpis.bookingSuccessRate)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-600">Cancel rate</dt>
+                  <dt className="text-slate-600">{t("admin.analytics.cancelRate")}</dt>
                   <dd className="font-medium tabular-nums">
                     {asPercent(data.operationalKpis.cancelRate)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-600">No-show rate (estimasi)</dt>
+                  <dt className="text-slate-600">{t("admin.analytics.noShowRate")}</dt>
                   <dd className="font-medium tabular-nums">
                     {asPercent(data.operationalKpis.noShowRate)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-600">Repeat patient</dt>
+                  <dt className="text-slate-600">{t("admin.analytics.repeatPatient")}</dt>
                   <dd className="font-medium tabular-nums">
                     {asPercent(data.operationalKpis.repeatPatientRate)}
                   </dd>
                 </div>
               </dl>
               <p className="text-xs text-slate-600 pt-2 border-t border-slate-100">
-                Basis hitung: sukses {data.operationalKpis.totals.completed} ·
-                cancel {data.operationalKpis.totals.cancelled} · no-show estimasi{" "}
+                {t("admin.analytics.basisPrefix")} {t("admin.analytics.basisSuccess")} {data.operationalKpis.totals.completed} ·
+                {" "}{t("admin.analytics.basisCancel")} {data.operationalKpis.totals.cancelled} · {t("admin.analytics.basisNoShow")}{" "}
                 {data.operationalKpis.totals.noShowEstimated}
               </p>
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Mix pembayaran (PAID)
+                {t("admin.analytics.paymentMix")}
               </h2>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-slate-600">Transaksi booking</dt>
+                  <dt className="text-slate-600">{t("admin.analytics.bookingTransactions")}</dt>
                   <dd className="font-medium tabular-nums">
                     {data.paymentMix.paidBookingCount}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-600">Transaksi konsultasi</dt>
+                  <dt className="text-slate-600">{t("admin.analytics.consultationTransactions")}</dt>
                   <dd className="font-medium tabular-nums">
                     {data.paymentMix.paidConsultationCount}
                   </dd>
@@ -398,13 +407,13 @@ export default function AdminAnalyticsPage() {
               </dl>
               <div className="pt-2 border-t border-slate-100 space-y-1 text-sm">
                 <p>
-                  Revenue booking:{" "}
+                  {t("admin.analytics.revenueBooking")}{" "}
                   <strong>
                     {formatIdr(parseMoney(data.paymentMix.paidBookingRevenue))}
                   </strong>
                 </p>
                 <p>
-                  Revenue konsultasi:{" "}
+                  {t("admin.analytics.revenueConsultation")}{" "}
                   <strong>
                     {formatIdr(
                       parseMoney(data.paymentMix.paidConsultationRevenue),
@@ -416,48 +425,48 @@ export default function AdminAnalyticsPage() {
 
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Ulasan (publik)
+                {t("admin.analytics.reviewsPublic")}
               </h2>
               <p className="text-2xl font-bold text-slate-900">
                 {data.reviews.averageRating != null
                   ? `${data.reviews.averageRating.toFixed(1)} ★`
                   : "—"}
                 <span className="text-sm font-normal text-slate-500 ml-2">
-                  rata-rata
+                  {t("admin.common.average")}
                 </span>
               </p>
               <div className="space-y-2">
                 {data.reviews.ratingDistribution.map((row) => (
                   <StatBar
                     key={row.rating}
-                    label={`${row.rating} bintang`}
+                    label={`${row.rating} ${t("admin.analytics.starWord")}`}
                     value={row.count}
                     max={maxRating}
                   />
                 ))}
               </div>
               <p className="text-xs text-slate-600 pt-2 border-t border-slate-100">
-                Kunjungan: {data.reviews.bySource.booking} · Konsultasi:{" "}
+                {t("admin.analytics.reviewVisit")}: {data.reviews.bySource.booking} · {t("admin.analytics.reviewConsultation")}:{" "}
                 {data.reviews.bySource.consultation}
               </p>
             </div>
 
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Top terapis (rating)
+                {t("admin.analytics.topTherapistsRating")}
               </h2>
               {data.topTherapistsByRating.length === 0 ? (
-                <p className="text-sm text-slate-500">Belum ada ulasan publik.</p>
+                <p className="text-sm text-slate-500">{t("admin.analytics.noPublicReviews")}</p>
               ) : (
                 <ol className="space-y-3">
-                  {data.topTherapistsByRating.map((t, i) => (
-                    <li key={t.physiotherapistId} className="text-sm">
+                  {data.topTherapistsByRating.map((therapist, i) => (
+                    <li key={therapist.physiotherapistId} className="text-sm">
                       <span className="font-semibold text-slate-900">
-                        {i + 1}. {t.fullName}
+                        {i + 1}. {therapist.fullName}
                       </span>
                       <span className="text-slate-600 block">
-                        {t.averageRating?.toFixed(1) ?? "—"} ★ · {t.reviewCount}{" "}
-                        ulasan
+                        {therapist.averageRating?.toFixed(1) ?? "—"} ★ · {therapist.reviewCount}{" "}
+                        {t("admin.analytics.reviewsWord")}
                       </span>
                     </li>
                   ))}
@@ -466,21 +475,21 @@ export default function AdminAnalyticsPage() {
             </div>
             <div className={`${cardSurface} space-y-4`}>
               <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
-                Top physio (booking sukses)
+                {t("admin.analytics.topPhysioCompleted")}
               </h2>
               {data.topPhysiotherapistsByCompletedBookings.length === 0 ? (
                 <p className="text-sm text-slate-500">
-                  Belum ada booking completed pada periode ini.
+                  {t("admin.analytics.noCompletedBookings")}
                 </p>
               ) : (
                 <ol className="space-y-3">
-                  {data.topPhysiotherapistsByCompletedBookings.map((t, i) => (
-                    <li key={t.physiotherapistId} className="text-sm">
+                  {data.topPhysiotherapistsByCompletedBookings.map((physio, i) => (
+                    <li key={physio.physiotherapistId} className="text-sm">
                       <span className="font-semibold text-slate-900">
-                        {i + 1}. {t.fullName}
+                        {i + 1}. {physio.fullName}
                       </span>
                       <span className="text-slate-600 block">
-                        {t.completedBookingCount} booking completed
+                        {physio.completedBookingCount} {t("admin.analytics.bookingCompletedWord")}
                       </span>
                     </li>
                   ))}
@@ -491,10 +500,10 @@ export default function AdminAnalyticsPage() {
 
           <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-6">
             <Link href="/admin/dashboard" className={`${btnOutline} min-h-[44px] px-5`}>
-              ← Dashboard ringkas
+              {t("admin.analytics.dashboardSummaryLink")}
             </Link>
             <Link href="/admin/audit-logs" className={`${btnOutline} min-h-[44px] px-5`}>
-              Audit log
+              {t("admin.dashboard.auditLog")}
             </Link>
           </div>
         </div>

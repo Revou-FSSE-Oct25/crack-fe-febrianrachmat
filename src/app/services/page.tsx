@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import ServiceCard from "@/components/ServiceCard";
 import {
@@ -7,76 +9,77 @@ import {
   PageHeader,
   widePageShell,
 } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 
 export default function ServicesPage() {
+  const { t } = useLanguage();
+
   return (
     <main className={`${widePageShell} space-y-12 pb-16`}>
       <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
-          eyebrow="Layanan"
-          title="Solusi gerak & pemulihan"
-          description="Pilih layanan yang sesuai fase pemulihan Anda. Tarif visit dan konsultasi online mengikuti profil fisioterapis dan dicatat saat booking dibuat."
+          eyebrow={t("mkt.servicesEyebrow")}
+          title={t("mkt.servicesTitle")}
+          description={t("mkt.servicesDesc")}
         />
         <div className="flex shrink-0 flex-col gap-3 self-stretch sm:flex-row sm:items-center lg:self-auto">
           <Link
             href="/therapists"
             className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
           >
-            Cari fisioterapis
+            {t("mkt.findPhysio")}
           </Link>
           <Link
             href="/appointment"
             className={`${btnPrimary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
           >
-            Booking sekarang
+            {t("mkt.bookNow")}
           </Link>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 md:gap-8">
         <ServiceCard
-          title="Fisioterapi"
-          description="Terapi gerak dan rehabilitasi untuk mengembalikan fungsi dan mobilitas setelah cedera atau operasi."
+          title={t("mkt.serviceCard1Title")}
+          description={t("mkt.serviceCard1Desc")}
         />
         <ServiceCard
-          title="Sports massage"
-          description="Pijat olahraga untuk meredakan ketegangan otot dan mempercepat pemulihan pasca aktivitas."
+          title={t("mkt.serviceCard2Title")}
+          description={t("mkt.serviceCard2Desc")}
         />
         <ServiceCard
-          title="Performance training"
-          description="Program latihan bertahap agar Anda kembali beraktivitas dengan aman dan percaya diri."
+          title={t("mkt.serviceCard3Title")}
+          description={t("mkt.serviceCard3Desc")}
         />
       </div>
 
       <div className="mx-auto max-w-3xl">
         <div className={`${cardSurface} p-6 sm:p-8`}>
           <h3 className="text-center text-lg font-semibold tracking-tight text-slate-900 sm:text-left">
-            Setelah memilih layanan
+            {t("mkt.servicesAfterTitle")}
           </h3>
           <p className="mt-2 text-center text-sm leading-relaxed text-slate-600 sm:text-left">
-            Ingin diskusi singkat sebelum janji? Setelah masuk sebagai pasien,
-            buka menu{" "}
+            {t("mkt.servicesAfterBody1")}{" "}
             <Link
               href="/consultations"
               className="font-semibold text-teal-700 underline-offset-2 hover:underline"
             >
-              Konsultasi
+              {t("mkt.consultationLink")}
             </Link>{" "}
-            di pintasan atas. Atau lanjut ke booking untuk memilih slot dan
-            terapis.
+            {t("mkt.servicesAfterBody2")}
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
             <Link
               href="/appointment"
               className={`${btnPrimary} min-h-[44px] flex-1 justify-center text-center sm:flex-none sm:px-8`}
             >
-              Buat janji temu
+              {t("mkt.makeAppointment")}
             </Link>
             <Link
               href="/consultations"
               className={`${btnSecondary} min-h-[44px] flex-1 justify-center text-center sm:flex-none sm:px-8`}
             >
-              Menuju konsultasi
+              {t("mkt.goToConsultation")}
             </Link>
           </div>
         </div>

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/page-shell";
 import { LoadErrorCard } from "@/components/ui/load-error-card";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { actionSuccessWithNotify } from "@/lib/notifications/action-feedback";
 import { ApiRequestError } from "@/lib/api/client";
@@ -77,6 +78,7 @@ function formatIdDateTime(value: string): string {
 
 export default function BookingsPage() {
   const { user, isReady } = useAuth();
+  const { t, language } = useLanguage();
   const toast = useToast();
   const [rows, setRows] = useState<Booking[]>([]);
   const [openTxBookingIds, setOpenTxBookingIds] = useState<Set<string>>(
@@ -153,15 +155,17 @@ export default function BookingsPage() {
     try {
       await updateBookingStatus(id, { status });
       const labels: Record<string, string> = {
-        CONFIRMED: "Booking dikonfirmasi. Pasien dapat membayar kunjungan.",
-        IN_PROGRESS: "Sesi dimulai.",
-        COMPLETED: "Booking ditandai selesai.",
+        CONFIRMED: t("booking.bookings.toast.confirmed"),
+        IN_PROGRESS: t("booking.bookings.toast.started"),
+        COMPLETED: t("booking.bookings.toast.completed"),
       };
       if (labels[status]) actionSuccessWithNotify(toast, labels[status]);
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memperbarui booking.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.bookings.error.update"),
       );
     }
   }
@@ -173,11 +177,13 @@ export default function BookingsPage() {
     try {
       await updateBookingStatus(cancelConfirmId, { status: "CANCELLED" });
       setCancelConfirmId(null);
-      actionSuccessWithNotify(toast, "Booking dibatalkan.");
+      actionSuccessWithNotify(toast, t("booking.bookings.toast.cancelled"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal membatalkan booking.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.bookings.error.cancel"),
       );
     } finally {
       setActionLoading(false);
@@ -201,7 +207,7 @@ export default function BookingsPage() {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memuat slot reschedule.",
+          : t("booking.bookings.error.loadRescheduleSlots"),
       );
     } finally {
       setRescheduleSlotsLoading(false);
@@ -213,18 +219,18 @@ export default function BookingsPage() {
     setError(null);
     const selectedSlot = rescheduleSlots.find((s) => s.id === rescheduleSlotId);
     if (!selectedSlot && !rescheduleDateLocal) {
-      setError("Pilih slot baru atau isi waktu janji manual.");
+      setError(t("booking.bookings.error.pickSlotOrManual"));
       return;
     }
     let appointmentDate: string | undefined;
     if (!selectedSlot && rescheduleDateLocal) {
       const parsed = new Date(rescheduleDateLocal);
       if (Number.isNaN(parsed.getTime())) {
-        setError("Waktu reschedule tidak valid.");
+        setError(t("booking.bookings.error.invalidRescheduleTime"));
         return;
       }
       if (parsed <= new Date()) {
-        setError("Waktu reschedule harus di masa depan.");
+        setError(t("booking.bookings.error.rescheduleFuture"));
         return;
       }
       appointmentDate = parsed.toISOString();
@@ -236,7 +242,7 @@ export default function BookingsPage() {
         slotId: selectedSlot?.id,
         appointmentDate: selectedSlot ? undefined : appointmentDate,
       });
-      actionSuccessWithNotify(toast, "Booking berhasil di-reschedule.");
+      actionSuccessWithNotify(toast, t("booking.bookings.toast.rescheduled"));
       setRescheduleBookingId(null);
       setRescheduleSlotId("");
       setRescheduleDateLocal("");
@@ -244,7 +250,9 @@ export default function BookingsPage() {
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal reschedule booking.",
+        err instanceof ApiRequestError
+          ? err.message
+          : t("booking.bookings.error.reschedule"),
       );
     } finally {
       setRescheduleLoading(false);
@@ -256,9 +264,7 @@ export default function BookingsPage() {
   }
 
   if (!user) {
-    return (
-      <SignInRequired message="Silakan masuk untuk melihat booking Anda." />
-    );
+    return <SignInRequired message={t("booking.bookings.signIn")} />;
   }
 
   const terminal = new Set(["COMPLETED", "CANCELLED"]);
@@ -268,7 +274,7 @@ export default function BookingsPage() {
   const selectedRescheduleSlot =
     rescheduleSlots.find((slot) => slot.id === rescheduleSlotId) ?? null;
 
-  let rescheduleNextTimeLabel = "Belum dipilih";
+  let rescheduleNextTimeLabel = t("booking.bookings.reschedule.notChosen");
   if (selectedRescheduleSlot) {
     rescheduleNextTimeLabel = formatIdDateTime(selectedRescheduleSlot.startTime);
   } else if (rescheduleDateLocal) {
@@ -276,22 +282,22 @@ export default function BookingsPage() {
     if (!Number.isNaN(parsedManual.getTime())) {
       rescheduleNextTimeLabel = parsedManual.toLocaleString("id-ID");
     } else {
-      rescheduleNextTimeLabel = "Format waktu belum valid";
+      rescheduleNextTimeLabel = t("booking.bookings.reschedule.invalidFormat");
     }
   }
 
   const pageDescription = isPatient
-    ? "Alur kunjungan: buat janji → terapis konfirmasi → bayar dengan bukti di Transaksi → sesi kunjungan."
+    ? t("booking.bookings.desc.patient")
     : isPt
-      ? "Konfirmasi permintaan pasien, lalu kelola sesi kunjungan. Pasien membayar setelah Anda mengonfirmasi."
-      : "Kelola janji temu. Pasien dapat membatalkan sebelum selesai; fisioterapis memperbarui alur sesi.";
+      ? t("booking.bookings.desc.pt")
+      : t("booking.bookings.desc.admin");
 
   return (
     <main className={`${widePageShell} space-y-6 pb-16`}>
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <PageHeader
-          eyebrow="Janji temu"
-          title="Booking"
+          eyebrow={t("booking.bookings.eyebrow")}
+          title={t("booking.bookings.title")}
           description={pageDescription}
         />
         <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
@@ -299,7 +305,7 @@ export default function BookingsPage() {
             href="/calendar"
             className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[10rem]`}
           >
-            Kalender
+            {t("booking.bookings.link.calendar")}
           </Link>
           {isPatient ? (
             <>
@@ -307,19 +313,19 @@ export default function BookingsPage() {
                 href="/appointment"
                 className={`${btnPrimary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
               >
-                Janji baru
+                {t("booking.bookings.link.newAppointment")}
               </Link>
               <Link
                 href="/transactions"
                 className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[11rem]`}
               >
-                Transaksi
+                {t("booking.bookings.link.transactions")}
               </Link>
               <Link
                 href="/therapists"
                 className={`${btnOutline} min-h-[44px] justify-center px-5 text-center sm:min-w-[11rem]`}
               >
-                Cari terapis
+                {t("booking.bookings.link.findTherapist")}
               </Link>
             </>
           ) : isPt ? (
@@ -327,7 +333,7 @@ export default function BookingsPage() {
               href="/physiotherapist/availability"
               className={`${btnSecondary} min-h-[44px] justify-center text-center sm:min-w-[12rem]`}
             >
-              Kelola jadwal slot
+              {t("booking.bookings.link.manageSlots")}
             </Link>
           ) : null}
         </div>
@@ -343,26 +349,29 @@ export default function BookingsPage() {
         <ListSkeleton rows={4} />
       ) : loadError ? null : rows.length === 0 ? (
         <EmptyState
-          title="Belum ada booking"
+          title={t("booking.bookings.empty.title")}
           hint={
             isPatient
-              ? "Buat janji temu baru atau cari fisioterapis yang sesuai kebutuhan Anda."
-              : "Booking baru akan muncul ketika pasien menyelesaikan alur janji temu."
+              ? t("booking.bookings.empty.hintPatient")
+              : t("booking.bookings.empty.hintPt")
           }
           actions={
             isPatient
               ? [
-                  { href: "/appointment", label: "Buat janji baru" },
+                  {
+                    href: "/appointment",
+                    label: t("booking.bookings.action.newAppointment"),
+                  },
                   {
                     href: "/therapists",
-                    label: "Cari fisioterapis",
+                    label: t("booking.bookings.action.findTherapist"),
                     variant: "secondary",
                   },
                 ]
               : [
                   {
                     href: "/physiotherapist/availability",
-                    label: "Kelola jadwal slot",
+                    label: t("booking.bookings.action.manageSlots"),
                   },
                 ]
           }
@@ -372,9 +381,11 @@ export default function BookingsPage() {
           {rows.map((b) => {
             const hasOpenTx = openTxBookingIds.has(b.id);
             const patientHint = isPatient
-              ? bookingPatientActionHint(b.status, hasOpenTx)
+              ? bookingPatientActionHint(b.status, hasOpenTx, language)
               : null;
-            const ptHint = isPt ? bookingTherapistActionHint(b.status) : null;
+            const ptHint = isPt
+              ? bookingTherapistActionHint(b.status, language)
+              : null;
             const address = bookingVisitAddress(b);
             const canPatientPay =
               isPatient &&
@@ -387,8 +398,8 @@ export default function BookingsPage() {
               <li key={b.id} className={`${cardSurface} space-y-3`}>
                 <div className="flex flex-wrap justify-between gap-3 items-start">
                   <StatusChip
-                    label={bookingStatusMeta(b.status).label}
-                    tone={bookingStatusMeta(b.status).tone}
+                    label={bookingStatusMeta(b.status, language).label}
+                    tone={bookingStatusMeta(b.status, language).tone}
                   />
                   <time
                     dateTime={b.appointmentDate}
@@ -398,7 +409,7 @@ export default function BookingsPage() {
                   </time>
                 </div>
                 <p className="text-sm text-slate-700">
-                  {formatAppointmentType(b.appointmentType)}
+                  {formatAppointmentType(b.appointmentType, language)}
                   <span className="text-slate-500">
                     {" "}
                     · {formatIdr(b.visitFeeSnapshot)}
@@ -406,13 +417,17 @@ export default function BookingsPage() {
                 </p>
                 {address ? (
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    <span className="font-medium text-slate-700">Lokasi: </span>
+                    <span className="font-medium text-slate-700">
+                      {t("booking.bookings.label.location")}
+                    </span>
                     {address}
                   </p>
                 ) : null}
                 {b.notes ? (
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    <span className="font-medium text-slate-700">Catatan: </span>
+                    <span className="font-medium text-slate-700">
+                      {t("booking.bookings.label.notes")}
+                    </span>
                     {b.notes}
                   </p>
                 ) : null}
@@ -429,7 +444,7 @@ export default function BookingsPage() {
                       onClick={() => setCancelConfirmId(b.id)}
                       className={`${btnOutline} min-h-[44px] justify-center px-4`}
                     >
-                      Batalkan booking
+                      {t("booking.bookings.btn.cancel")}
                     </button>
                   )}
                   {canReschedule && (
@@ -438,15 +453,14 @@ export default function BookingsPage() {
                       onClick={() => void startReschedule(b)}
                       className={`${btnOutline} min-h-[44px] justify-center px-4`}
                     >
-                      Reschedule
+                      {t("booking.bookings.btn.reschedule")}
                     </button>
                   )}
                   {isPatient &&
                     (b.status === "PENDING" || b.status === "CONFIRMED") &&
                     hasOpenTx && (
                       <p className="text-xs text-amber-700 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
-                        Reschedule dinonaktifkan karena transaksi booking ini masih
-                        aktif.
+                        {t("booking.bookings.rescheduleDisabled")}
                       </p>
                     )}
                   {canPatientPay && (
@@ -454,7 +468,7 @@ export default function BookingsPage() {
                       href={`/transactions?bookingId=${encodeURIComponent(b.id)}`}
                       className={`${btnPrimary} min-h-[44px] justify-center px-5 text-center`}
                     >
-                      Bayar kunjungan
+                      {t("booking.bookings.btn.payVisit")}
                     </Link>
                   )}
                   {isPatient && hasOpenTx && b.status === "CONFIRMED" && (
@@ -462,7 +476,7 @@ export default function BookingsPage() {
                       href="/transactions"
                       className={`${btnSecondary} min-h-[44px] justify-center px-4 text-center`}
                     >
-                      Lihat status pembayaran
+                      {t("booking.bookings.btn.viewPayment")}
                     </Link>
                   )}
                   {isPt && b.status === "PENDING" && (
@@ -471,7 +485,7 @@ export default function BookingsPage() {
                       onClick={() => void patchStatus(b.id, "CONFIRMED")}
                       className={btnTealSoft}
                     >
-                      Konfirmasi
+                      {t("booking.bookings.btn.confirm")}
                     </button>
                   )}
                   {isPt && b.status === "CONFIRMED" && (
@@ -480,7 +494,7 @@ export default function BookingsPage() {
                       onClick={() => void patchStatus(b.id, "IN_PROGRESS")}
                       className={btnSkySoft}
                     >
-                      Mulai sesi
+                      {t("booking.bookings.btn.startSession")}
                     </button>
                   )}
                   {isPt && b.status === "IN_PROGRESS" && (
@@ -489,7 +503,7 @@ export default function BookingsPage() {
                       onClick={() => void patchStatus(b.id, "COMPLETED")}
                       className={`${btnOutline} min-h-[44px] justify-center bg-slate-50 px-4`}
                     >
-                      Selesai
+                      {t("booking.bookings.btn.complete")}
                     </button>
                   )}
                 </div>
@@ -501,10 +515,10 @@ export default function BookingsPage() {
 
       <ConfirmDialog
         open={cancelConfirmId !== null}
-        title="Batalkan booking?"
-        description="Janji temu akan dibatalkan. Anda tidak bisa mengembalikan status ini setelah dibatalkan."
-        confirmLabel="Ya, batalkan"
-        cancelLabel="Tidak jadi"
+        title={t("booking.bookings.confirm.title")}
+        description={t("booking.bookings.confirm.desc")}
+        confirmLabel={t("booking.bookings.confirm.yes")}
+        cancelLabel={t("booking.bookings.confirm.no")}
         variant="danger"
         loading={actionLoading}
         onConfirm={() => void confirmCancelBooking()}
@@ -520,7 +534,7 @@ export default function BookingsPage() {
           <button
             type="button"
             className="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
-            aria-label="Tutup reschedule"
+            aria-label={t("booking.bookings.reschedule.closeAria")}
             disabled={rescheduleLoading}
             onClick={() => setRescheduleBookingId(null)}
           />
@@ -531,22 +545,22 @@ export default function BookingsPage() {
             className="relative z-10 w-full max-w-lg rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xl ring-1 ring-slate-900/5"
           >
             <h2 id="reschedule-title" className="text-lg font-semibold text-slate-900">
-              Reschedule booking
+              {t("booking.bookings.reschedule.title")}
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Pilih slot baru atau atur waktu manual.
+              {t("booking.bookings.reschedule.subtitle")}
             </p>
             <div className="mt-4 space-y-3">
               {activeRescheduleBooking ? (
                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
                   <p className="text-slate-600">
-                    Jadwal lama:{" "}
+                    {t("booking.bookings.reschedule.oldSchedule")}{" "}
                     <span className="font-medium text-slate-900">
                       {formatIdDateTime(activeRescheduleBooking.appointmentDate)}
                     </span>
                   </p>
                   <p className="mt-1 text-slate-600">
-                    Jadwal baru:{" "}
+                    {t("booking.bookings.reschedule.newSchedule")}{" "}
                     <span className="font-medium text-slate-900">
                       {rescheduleNextTimeLabel}
                     </span>
@@ -554,14 +568,16 @@ export default function BookingsPage() {
                 </div>
               ) : null}
               {rescheduleSlotsLoading ? (
-                <p className="text-sm text-slate-500">Memuat slot terbaru…</p>
+                <p className="text-sm text-slate-500">
+                  {t("booking.bookings.reschedule.loadingSlots")}
+                </p>
               ) : (
                 <select
                   value={rescheduleSlotId}
                   onChange={(e) => setRescheduleSlotId(e.target.value)}
                   className={inputBase}
                 >
-                  <option value="">Tanpa slot (isi waktu manual)</option>
+                  <option value="">{t("booking.bookings.reschedule.noSlot")}</option>
                   {rescheduleSlots.map((slot) => (
                     <option key={slot.id} value={slot.id}>
                       {new Date(slot.startTime).toLocaleString("id-ID")} -{" "}
@@ -585,7 +601,7 @@ export default function BookingsPage() {
                 disabled={rescheduleLoading}
                 className={`${btnSecondary} min-h-[44px] justify-center px-5`}
               >
-                Batal
+                {t("booking.bookings.reschedule.cancel")}
               </button>
               <button
                 type="button"
@@ -593,7 +609,9 @@ export default function BookingsPage() {
                 disabled={rescheduleLoading}
                 className={`${btnPrimary} min-h-[44px] justify-center px-5`}
               >
-                {rescheduleLoading ? "Menyimpan..." : "Simpan jadwal baru"}
+                {rescheduleLoading
+                  ? t("booking.bookings.reschedule.saving")
+                  : t("booking.bookings.reschedule.save")}
               </button>
             </div>
           </section>

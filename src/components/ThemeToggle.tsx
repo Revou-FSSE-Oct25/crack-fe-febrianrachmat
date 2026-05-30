@@ -1,6 +1,7 @@
 "use client";
 
 import { IconMoon, IconSun } from "@/components/nav-icons";
+import { useLanguage } from "@/contexts/language-context";
 import { useTheme } from "@/contexts/theme-context";
 
 const btnClass =
@@ -8,18 +9,20 @@ const btnClass =
 
 export default function ThemeToggle() {
   const { resolvedDark, toggle } = useTheme();
+  const { t } = useLanguage();
+  const label = resolvedDark ? t("theme.toLight") : t("theme.toDark");
 
   return (
     <button
       type="button"
       className={btnClass}
       onClick={toggle}
-      aria-label={resolvedDark ? "Mode terang" : "Mode gelap"}
-      title={resolvedDark ? "Mode terang" : "Mode gelap"}
+      aria-label={label}
+      title={label}
     >
       {resolvedDark ? <IconSun /> : <IconMoon />}
       <span className="sr-only">
-        {resolvedDark ? "Aktifkan mode terang" : "Aktifkan mode gelap"}
+        {resolvedDark ? t("theme.enableLight") : t("theme.enableDark")}
       </span>
     </button>
   );

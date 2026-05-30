@@ -1,5 +1,6 @@
 import { notifyUnauthorized } from "@/lib/auth/session";
 import { getStoredAccessToken } from "@/lib/auth/storage";
+import { getActiveLanguage } from "@/lib/i18n/storage";
 import { fetchWithTimeout } from "./fetch-reliable";
 import { getApiBaseUrl } from "./config";
 import type { PaginationMeta } from "./types";
@@ -63,6 +64,9 @@ function buildAuthHeaders(options: ApiFetchOptions): {
     typeof FormData !== "undefined" && rest.body instanceof FormData;
   if (!headers.has("Content-Type") && !isFormData) {
     headers.set("Content-Type", "application/json");
+  }
+  if (!headers.has("x-lang")) {
+    headers.set("x-lang", getActiveLanguage());
   }
   if (!skipAuth) {
     const token = getStoredAccessToken();

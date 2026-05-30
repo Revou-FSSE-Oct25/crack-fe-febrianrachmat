@@ -1,6 +1,7 @@
 "use client";
 
 import { FieldError, inputWithFieldError } from "@/components/ui/field-error";
+import { useLanguage } from "@/contexts/language-context";
 import { useId, useState } from "react";
 
 type PasswordInputProps = {
@@ -71,6 +72,7 @@ export function PasswordInput({
   errorMessage,
   hint,
 }: PasswordInputProps) {
+  const { t } = useLanguage();
   const generatedId = useId();
   const id = idProp ?? generatedId;
   const [visible, setVisible] = useState(false);
@@ -92,7 +94,7 @@ export function PasswordInput({
           type="button"
           onClick={() => setVisible((v) => !v)}
           className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-slate-500 hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-          aria-label={visible ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+          aria-label={visible ? t("auth.password.hide") : t("auth.password.show")}
           aria-pressed={visible}
           tabIndex={0}
         >

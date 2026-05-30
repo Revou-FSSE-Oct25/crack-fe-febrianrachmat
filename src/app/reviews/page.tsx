@@ -16,6 +16,7 @@ import {
   widePageShell,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
@@ -31,6 +32,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export default function MyReviewsPage() {
   const { user, isReady } = useAuth();
+  const { t, language } = useLanguage();
   const toast = useToast();
   const [rows, setRows] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,12 +53,12 @@ export default function MyReviewsPage() {
     } catch (err) {
       setRows([]);
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal memuat ulasan.",
+        err instanceof ApiRequestError ? err.message : t("review.loadError"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "PATIENT") return;
@@ -104,14 +106,14 @@ export default function MyReviewsPage() {
     setError(null);
     try {
       await updateMyReview(rev.id, body);
-      toast.success("Ulasan diperbarui.");
+      toast.success(t("review.updateSuccess"));
       setEditingId(null);
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memperbarui ulasan.",
+          : t("review.updateError"),
       );
     } finally {
       setSavingId(null);
@@ -126,11 +128,11 @@ export default function MyReviewsPage() {
       await deleteMyReview(deleteConfirmId);
       setDeleteConfirmId(null);
       if (editingId === deleteConfirmId) setEditingId(null);
-      toast.success("Ulasan dihapus.");
+      toast.success(t("review.deleteSuccess"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal menghapus ulasan.",
+        err instanceof ApiRequestError ? err.message : t("review.deleteError"),
       );
     } finally {
       setDeletingId(null);
@@ -143,7 +145,7 @@ export default function MyReviewsPage() {
 
   if (!user) {
     return (
-      <SignInRequired message="Masuk untuk melihat ulasan Anda." />
+      <SignInRequired message={t("review.signInToView")} />
     );
   }
 
@@ -151,13 +153,13 @@ export default function MyReviewsPage() {
     return (
       <main className={`${widePageShell} space-y-6 pb-16`}>
         <PageHeader
-          eyebrow="Ulasan"
-          title="Ulasan saya"
-          description="Halaman ini hanya untuk akun pasien."
+          eyebrow={t("review.eyebrow")}
+          title={t("review.myReviewsTitle")}
+          description={t("review.patientOnlyDesc")}
         />
         <div className={cardSurface}>
           <Link href="/profile" className={`${btnSecondary} min-h-[44px]`}>
-            Kembali ke profil
+            {t("review.backToProfile")}
           </Link>
         </div>
       </main>
@@ -168,15 +170,15 @@ export default function MyReviewsPage() {
     <main className={`${widePageShell} space-y-8 pb-16`}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <PageHeader
-          eyebrow="Ulasan"
-          title="Ulasan saya"
-          description="Kelola ulasan setelah kunjungan atau konsultasi online selesai. Ulasan dapat diubah/hapus maksimal 72 jam setelah dikirim."
+          eyebrow={t("review.eyebrow")}
+          title={t("review.myReviewsTitle")}
+          description={t("review.myReviewsDesc")}
         />
         <Link
           href="/reviews/write"
           className={`${btnPrimary} min-h-[44px] justify-center text-center sm:min-w-[10rem]`}
         >
-          Tulis ulasan baru
+          {t("review.writeNew")}
         </Link>
       </div>
 
@@ -186,11 +188,15 @@ export default function MyReviewsPage() {
         <ListSkeleton rows={2} />
       ) : rows.length === 0 ? (
         <EmptyState
-          title="Belum ada ulasan"
-          hint="Setelah booking selesai, Anda dapat menulis ulasan dari menu Tulis ulasan."
+          title={t("review.emptyTitle")}
+          hint={t("review.emptyHint")}
           actions={[
-            { href: "/reviews/write", label: "Tulis ulasan" },
-            { href: "/bookings", label: "Lihat booking", variant: "secondary" },
+            { href: "/reviews/write", label: t("review.writeReview") },
+            {
+              href: "/bookings",
+              label: t("review.viewBookings"),
+              variant: "secondary",
+            },
           ]}
         />
       ) : (
@@ -209,7 +215,7 @@ export default function MyReviewsPage() {
                   >
                     <div>
                       <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                        Rating (1–5)
+                        {t("review.ratingLabel")}
                       </label>
                       <select
                         className={inputBase}
@@ -225,13 +231,13 @@ export default function MyReviewsPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-800 mb-1.5">
-                        Komentar (opsional)
+                        {t("review.commentOptional")}
                       </label>
                       <textarea
                         className={`${inputBase} min-h-[100px] resize-y`}
                         value={editComment}
                         onChange={(e) => setEditComment(e.target.value)}
-                        placeholder="Kosongkan untuk menghapus komentar."
+                        placeholder={t("review.clearToRemoveComment")}
                       />
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -240,7 +246,9 @@ export default function MyReviewsPage() {
                         disabled={savingId === rev.id}
                         className={`${btnPrimary} min-h-[44px] px-5`}
                       >
-                        {savingId === rev.id ? "Menyimpan…" : "Simpan perubahan"}
+                        {savingId === rev.id
+                          ? t("review.saving")
+                          : t("review.saveChanges")}
                       </button>
                       <button
                         type="button"
@@ -248,7 +256,7 @@ export default function MyReviewsPage() {
                         disabled={savingId === rev.id}
                         className={`${btnOutline} min-h-[44px] px-5`}
                       >
-                        Batal
+                        {t("review.cancel")}
                       </button>
                     </div>
                   </form>
@@ -257,32 +265,32 @@ export default function MyReviewsPage() {
                     <div className="flex flex-wrap justify-between gap-2">
                       <div>
                         <p className="text-amber-700 font-semibold">
-                          Rating: {rev.rating}/5
+                          {`${t("review.ratingValueLabel")}: ${rev.rating}/5`}
                         </p>
                         <p className="text-xs text-teal-800 font-medium mt-0.5">
-                          {reviewSourceLabel(rev.sourceType)}
+                          {reviewSourceLabel(rev.sourceType, language)}
                         </p>
                       </div>
                       <span className="text-xs text-slate-500">
                         {new Date(rev.createdAt).toLocaleString("id-ID")}
                         {rev.updatedAt !== rev.createdAt
-                          ? ` · diubah ${new Date(rev.updatedAt).toLocaleString("id-ID")}`
+                          ? ` · ${t("review.editedAt")} ${new Date(rev.updatedAt).toLocaleString("id-ID")}`
                           : ""}
                       </span>
                     </div>
                     {rev.isHidden ? (
                       <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200/80 rounded-lg px-3 py-2">
-                        Ulasan disembunyikan oleh admin moderasi.
+                        {t("review.hiddenByModeration")}
                         {rev.moderationNote
-                          ? ` Catatan: ${rev.moderationNote}`
+                          ? ` ${t("review.note")}: ${rev.moderationNote}`
                           : ""}
                       </p>
                     ) : null}
                     <p className="text-xs text-slate-500">
-                      Batas ubah/hapus:{" "}
+                      {t("review.editDeadline")}{" "}
                       {new Date(rev.editableUntil).toLocaleString("id-ID")}
                       {!rev.isEditableByPatient
-                        ? " (periode edit sudah berakhir atau sedang dimoderasi)"
+                        ? ` ${t("review.editPeriodEnded")}`
                         : ""}
                     </p>
                     {rev.comment ? (
@@ -291,13 +299,13 @@ export default function MyReviewsPage() {
                       </p>
                     ) : (
                       <p className="text-sm text-slate-500 italic">
-                        Tanpa komentar.
+                        {t("review.noComment")}
                       </p>
                     )}
                     <p className="text-xs text-slate-500 font-mono break-all">
                       {rev.sourceType === "CONSULTATION"
-                        ? `Konsultasi: ${rev.consultationId}`
-                        : `Booking: ${rev.bookingId}`}
+                        ? `${t("review.consultationLabel")}: ${rev.consultationId}`
+                        : `${t("review.bookingLabel")}: ${rev.bookingId}`}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -306,7 +314,7 @@ export default function MyReviewsPage() {
                         disabled={!rev.isEditableByPatient}
                         className={`${btnSecondary} min-h-[44px] text-sm`}
                       >
-                        Edit ulasan
+                        {t("review.editReview")}
                       </button>
                       <button
                         type="button"
@@ -314,7 +322,7 @@ export default function MyReviewsPage() {
                         disabled={deletingId === rev.id || !rev.isEditableByPatient}
                         className={`${btnOutline} min-h-[44px] text-sm text-red-800 border-red-200 hover:bg-red-50`}
                       >
-                        Hapus ulasan
+                        {t("review.deleteReview")}
                       </button>
                     </div>
                   </>
@@ -327,10 +335,10 @@ export default function MyReviewsPage() {
 
       <ConfirmDialog
         open={deleteConfirmId !== null}
-        title="Hapus ulasan?"
-        description="Ulasan akan dihapus permanen. Anda masih bisa menulis ulasan baru untuk booking lain yang memenuhi syarat."
-        confirmLabel="Ya, hapus"
-        cancelLabel="Tidak jadi"
+        title={t("review.deleteConfirmTitle")}
+        description={t("review.deleteConfirmDesc")}
+        confirmLabel={t("review.deleteConfirmYes")}
+        cancelLabel={t("review.deleteConfirmCancel")}
         variant="danger"
         loading={deleteConfirmId !== null && deletingId === deleteConfirmId}
         onConfirm={() => void confirmDelete()}

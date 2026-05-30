@@ -5,6 +5,7 @@ import {
   fetchOAuthProviders,
   type OAuthProviderId,
 } from "@/lib/api/oauth";
+import { useLanguage } from "@/contexts/language-context";
 import { useEffect, useState } from "react";
 
 const PROVIDER_LABELS: Record<OAuthProviderId, string> = {
@@ -23,6 +24,7 @@ type OAuthButtonsProps = {
 };
 
 export function OAuthButtons({ role, nextPath }: OAuthButtonsProps) {
+  const { t } = useLanguage();
   const [providers, setProviders] = useState<OAuthProviderId[] | null>(null);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function OAuthButtons({ role, nextPath }: OAuthButtonsProps) {
           <div className="w-full border-t border-slate-200" />
         </div>
         <span className="relative mx-auto block w-fit bg-white px-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-          atau lanjut dengan
+          {t("auth.oauth.divider")}
         </span>
       </div>
       <div className="grid gap-2.5">

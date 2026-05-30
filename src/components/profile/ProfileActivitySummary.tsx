@@ -1,6 +1,7 @@
 "use client";
 
 import { cardSurface } from "@/components/ui/page-shell";
+import { useLanguage } from "@/contexts/language-context";
 import { ApiRequestError } from "@/lib/api/client";
 import { getMyActivitySummary } from "@/lib/api/users";
 import type { UserActivitySummary, UserRole } from "@/lib/api/types";
@@ -29,8 +30,11 @@ function Stat({
   );
 }
 
-function formatLastActivity(iso: string | null | undefined): string {
-  if (!iso) return "Belum ada aktivitas";
+function formatLastActivity(
+  iso: string | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (!iso) return t("profile.activity.noActivity");
   return new Intl.DateTimeFormat("id-ID", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -47,37 +51,47 @@ function PatientTherapistSummary({
   >;
   role: UserRole;
 }) {
+  const { t } = useLanguage();
   return (
     <>
       <dl className="grid gap-3 sm:grid-cols-2">
-        <Stat label="Total booking" value={data.bookings.total} />
         <Stat
-          label="Booking aktif"
-          value={data.bookings.pending}
-          hint="Menunggu / berlangsung"
+          label={t("profile.activity.totalBookings")}
+          value={data.bookings.total}
         />
-        <Stat label="Booking selesai" value={data.bookings.completed} />
-        <Stat label="Total konsultasi" value={data.consultations.total} />
         <Stat
-          label="Konsultasi aktif"
+          label={t("profile.activity.activeBookings")}
+          value={data.bookings.pending}
+          hint={t("profile.activity.activeBookingsHint")}
+        />
+        <Stat
+          label={t("profile.activity.completedBookings")}
+          value={data.bookings.completed}
+        />
+        <Stat
+          label={t("profile.activity.totalConsultations")}
+          value={data.consultations.total}
+        />
+        <Stat
+          label={t("profile.activity.activeConsultations")}
           value={data.consultations.active}
         />
         <Stat
-          label="Konsultasi selesai"
+          label={t("profile.activity.completedConsultations")}
           value={data.consultations.completed}
         />
         {"transactionsPending" in data ? (
           <Stat
-            label="Pembayaran menunggu"
+            label={t("profile.activity.pendingPayments")}
             value={data.transactionsPending}
           />
         ) : null}
-        <Stat label="Ulasan" value={data.reviews} />
+        <Stat label={t("profile.activity.reviews")} value={data.reviews} />
       </dl>
       <p className="text-sm text-slate-600">
-        Aktivitas terakhir:{" "}
+        {t("profile.activity.lastActivity")}{" "}
         <span className="font-medium text-slate-800">
-          {formatLastActivity(data.lastActivityAt)}
+          {formatLastActivity(data.lastActivityAt, t)}
         </span>
       </p>
       <div className="flex flex-wrap gap-2 pt-1">
@@ -85,20 +99,20 @@ function PatientTherapistSummary({
           href="/bookings"
           className="text-sm font-medium text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline"
         >
-          Lihat booking
+          {t("profile.activity.viewBookings")}
         </Link>
         <Link
           href="/consultations"
           className="text-sm font-medium text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline"
         >
-          Lihat konsultasi
+          {t("profile.activity.viewConsultations")}
         </Link>
         {role === "PATIENT" ? (
           <Link
             href="/transactions"
             className="text-sm font-medium text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline"
           >
-            Lihat transaksi
+            {t("profile.activity.viewTransactions")}
           </Link>
         ) : null}
       </div>
@@ -111,6 +125,7 @@ type ProfileActivitySummaryProps = {
 };
 
 export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<UserActivitySummary | null>(null);
@@ -132,7 +147,7 @@ export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps)
           setError(
             err instanceof ApiRequestError
               ? err.message
-              : "Gagal memuat ringkasan aktivitas.",
+              : t("profile.activity.loadError"),
           );
         }
       })
@@ -142,7 +157,7 @@ export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps)
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [enabled, t]);
 
   if (!enabled) return null;
 
@@ -150,10 +165,10 @@ export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps)
     <div className={`${cardSurface} mx-auto max-w-lg space-y-4`}>
       <div>
         <h2 className="text-sm font-semibold tracking-tight text-slate-900">
-          Ringkasan aktivitas
+          {t("profile.activity.title")}
         </h2>
         <p className="mt-1 text-xs text-slate-500 leading-relaxed">
-          Statistik singkat dari booking, konsultasi, dan transaksi Anda.
+          {t("profile.activity.desc")}
         </p>
       </div>
 
@@ -170,15 +185,15 @@ export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps)
         <>
           <dl className="grid gap-3 sm:grid-cols-2">
             <Stat
-              label="Verifikasi PT menunggu"
+              label={t("profile.activity.admin.pendingVerifications")}
               value={summary.pendingVerifications}
             />
             <Stat
-              label="Transaksi menunggu"
+              label={t("profile.activity.admin.pendingTransactions")}
               value={summary.transactionsPending}
             />
             <Stat
-              label="Konsultasi terbuka"
+              label={t("profile.activity.admin.openConsultations")}
               value={summary.consultationsActive}
             />
           </dl>
@@ -186,7 +201,7 @@ export function ProfileActivitySummary({ enabled }: ProfileActivitySummaryProps)
             href="/admin/dashboard"
             className="inline-flex text-sm font-medium text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline"
           >
-            Buka dashboard admin
+            {t("profile.activity.admin.openDashboard")}
           </Link>
         </>
       ) : summary &&

@@ -20,6 +20,7 @@ import {
   StatusChip,
 } from "@/components/ui/page-shell";
 import { useAuth } from "@/contexts/auth-context";
+import { useLanguage } from "@/contexts/language-context";
 import { useToast } from "@/contexts/toast-context";
 import {
   adminOperationReferenceLabel,
@@ -87,6 +88,7 @@ function QueueCard({
 
 export default function AdminOperationsPage() {
   const { user, isReady } = useAuth();
+  const { t } = useLanguage();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("payments");
   const [queue, setQueue] = useState<AdminOperationsQueue | null>(null);
@@ -135,12 +137,12 @@ export default function AdminOperationsPage() {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal memuat data operasional.",
+          : t("admin.operations.errLoad"),
       );
     } finally {
       setLoading(false);
     }
-  }, [txStatus, bookingStatus]);
+  }, [txStatus, bookingStatus, t]);
 
   useEffect(() => {
     if (!isReady || user?.role !== "ADMIN") return;
@@ -152,13 +154,13 @@ export default function AdminOperationsPage() {
     setError(null);
     try {
       await confirmTransactionPaidByAdmin(id);
-      toast.success("Pembayaran dikonfirmasi.");
+      toast.success(t("admin.operations.toastPaymentConfirmed"));
       await load();
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengonfirmasi pembayaran.",
+          : t("admin.operations.errConfirmPayment"),
       );
     } finally {
       setConfirmingPayId(null);
@@ -183,12 +185,12 @@ export default function AdminOperationsPage() {
       await downloadAdminTransactionsCsv({
         status: txStatus || undefined,
       });
-      toast.success("CSV transaksi diunduh.");
+      toast.success(t("admin.operations.toastCsvTx"));
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengunduh CSV transaksi.",
+          : t("admin.operations.errCsvTx"),
       );
     } finally {
       setExportingTx(false);
@@ -202,12 +204,12 @@ export default function AdminOperationsPage() {
       await downloadAdminBookingsCsv({
         status: bookingStatus || undefined,
       });
-      toast.success("CSV booking diunduh.");
+      toast.success(t("admin.operations.toastCsvBooking"));
     } catch (err) {
       setError(
         err instanceof ApiRequestError
           ? err.message
-          : "Gagal mengunduh CSV booking.",
+          : t("admin.operations.errCsvBooking"),
       );
     } finally {
       setExportingBk(false);
@@ -223,11 +225,11 @@ export default function AdminOperationsPage() {
     try {
       await refundTransaction(id, { reason });
       setRefundConfirmId(null);
-      toast.success("Refund berhasil diproses (dummy).");
+      toast.success(t("admin.operations.toastRefund"));
       await load();
     } catch (err) {
       setError(
-        err instanceof ApiRequestError ? err.message : "Gagal refund.",
+        err instanceof ApiRequestError ? err.message : t("admin.operations.errRefund"),
       );
     } finally {
       setRefundingId(null);
@@ -235,12 +237,12 @@ export default function AdminOperationsPage() {
   }
 
   if (!isReady) {
-    return <PageLoading label="Memuat operasional…" />;
+    return <PageLoading label={t("admin.operations.loading")} />;
   }
 
   if (!user) {
     return (
-      <SignInRequired message="Silakan masuk sebagai admin untuk mengelola operasional." />
+      <SignInRequired message={t("admin.operations.signIn")} />
     );
   }
 
@@ -250,11 +252,11 @@ export default function AdminOperationsPage() {
         <div className={`${cardSurface} max-w-lg space-y-4`}>
           <PageHeader
             eyebrow="Admin"
-            title="Akses ditolak"
-            description="Halaman operasional hanya untuk peran Admin."
+            title={t("admin.common.accessDenied")}
+            description={t("admin.operations.adminOnly")}
           />
           <Link href="/" className="text-sm font-semibold text-teal-700">
-            Kembali ke beranda
+            {t("admin.common.backHome")}
           </Link>
         </div>
       </main>
@@ -269,8 +271,8 @@ export default function AdminOperationsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageHeader
           eyebrow="Admin"
-          title="Operasional"
-          description="Antrian pembayaran, monitoring booking, dan pintasan ke tugas verifikasi. Konfirmasi bayar hanya jika bukti terlampir."
+          title={t("admin.operations.title")}
+          description={t("admin.operations.description")}
         />
         <button
           type="button"
@@ -278,7 +280,7 @@ export default function AdminOperationsPage() {
           disabled={loading}
           className={`${btnOutline} min-h-[44px] px-5`}
         >
-          {loading ? "Memuat…" : "Muat ulang"}
+          {loading ? t("admin.common.loading") : t("admin.common.reload")}
         </button>
       </div>
 
@@ -287,30 +289,30 @@ export default function AdminOperationsPage() {
       {counts ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <QueueCard
-            label="Transaksi menunggu konfirmasi"
+            label={t("admin.operations.queueTxAwaiting")}
             value={counts.pendingTransactions}
             tone="urgent"
           />
           <QueueCard
-            label="Bayar booking (PENDING)"
+            label={t("admin.operations.queueBookingPayment")}
             value={counts.pendingBookingPayments}
           />
           <QueueCard
-            label="Bayar konsultasi (PENDING)"
+            label={t("admin.operations.queueConsultationPayment")}
             value={counts.pendingConsultationPayments}
           />
           <QueueCard
-            label="Booking menunggu PT"
+            label={t("admin.operations.queueBookingAwaitingPt")}
             value={counts.pendingBookings}
           />
           <QueueCard
-            label="Verifikasi PT"
+            label={t("admin.operations.queuePtVerification")}
             value={counts.pendingPhysiotherapistVerifications}
             href="/admin/physiotherapists"
             tone="urgent"
           />
           <QueueCard
-            label="Konsultasi diterima, belum lunas"
+            label={t("admin.operations.queueConsultationAccepted")}
             value={counts.consultationsAcceptedAwaitingPayment}
           />
         </div>
@@ -328,7 +330,7 @@ export default function AdminOperationsPage() {
               : "bg-white text-slate-700 ring-1 ring-slate-200"
           }`}
         >
-          Antrian pembayaran
+          {t("admin.operations.tabPayments")}
         </button>
         <button
           type="button"
@@ -339,13 +341,13 @@ export default function AdminOperationsPage() {
               : "bg-white text-slate-700 ring-1 ring-slate-200"
           }`}
         >
-          Monitoring booking
+          {t("admin.operations.tabBookings")}
         </button>
         <Link
           href="/transactions"
           className={`${btnOutline} min-h-[44px] items-center px-4 text-sm`}
         >
-          Semua transaksi →
+          {t("admin.operations.allTransactions")}
         </Link>
       </div>
 
@@ -353,7 +355,7 @@ export default function AdminOperationsPage() {
         <section className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <label className="text-sm text-slate-700">
-              Filter status
+              {t("admin.operations.filterStatus")}
               <select
                 className={`${inputBase} ml-2 mt-1 min-h-[40px]`}
                 value={txStatus}
@@ -366,7 +368,7 @@ export default function AdminOperationsPage() {
                 <option value="PENDING">PENDING</option>
                 <option value="PAID">PAID</option>
                 <option value="REFUNDED">REFUNDED</option>
-                <option value="">Semua</option>
+                <option value="">{t("admin.operations.all")}</option>
               </select>
             </label>
             <button
@@ -375,95 +377,94 @@ export default function AdminOperationsPage() {
               onClick={() => void handleExportTransactions()}
               className={`${btnOutline} min-h-[40px] px-4 text-sm`}
             >
-              {exportingTx ? "Mengekspor…" : "Unduh CSV"}
+              {exportingTx ? t("admin.operations.exporting") : t("admin.operations.downloadCsv")}
             </button>
           </div>
           <p className="text-xs text-slate-500">
-            CSV mengikuti filter status (maks. 10.000 baris). Cocok untuk laporan
-            demo di Excel/Sheets.
+            {t("admin.operations.csvHintTx")}
           </p>
 
           {loading ? (
             <ListSkeleton rows={4} />
           ) : transactions.length === 0 ? (
             <EmptyState
-              title="Tidak ada transaksi pada filter ini"
-              hint="Ubah filter status atau tunggu pasien mengunggah bukti bayar."
+              title={t("admin.operations.noTransactions")}
+              hint={t("admin.operations.noTransactionsHint")}
             />
           ) : (
             <ul className="space-y-4">
-              {transactions.map((t) => (
-                <li key={t.id} className={`${cardSurface} space-y-3`}>
+              {transactions.map((tx) => (
+                <li key={tx.id} className={`${cardSurface} space-y-3`}>
                   <div className="flex flex-wrap justify-between gap-3">
                     <div className="min-w-0 space-y-2">
                       <StatusChip
-                        label={transactionStatusMeta(t.status).label}
-                        tone={transactionStatusMeta(t.status).tone}
+                        label={transactionStatusMeta(tx.status).label}
+                        tone={transactionStatusMeta(tx.status).tone}
                       />
                       <p className="text-sm font-medium text-slate-900">
-                        {t.patient.fullName}
+                        {tx.patient.fullName}
                         <span className="font-normal text-slate-500">
                           {" "}
-                          · {t.patient.email}
+                          · {tx.patient.email}
                         </span>
                       </p>
                       <p className="text-sm text-slate-600">
-                        {t.paymentMethod} · {formatIdr(t.amount)}
+                        {tx.paymentMethod} · {formatIdr(tx.amount)}
                       </p>
                       <p className="text-xs text-slate-600">
-                        {adminOperationReferenceLabel(t)}
+                        {adminOperationReferenceLabel(tx)}
                       </p>
                       <p className="text-xs text-slate-500">
-                        Dibuat{" "}
-                        {new Date(t.createdAt).toLocaleString("id-ID")}
+                        {t("admin.operations.createdWord")}{" "}
+                        {new Date(tx.createdAt).toLocaleString("id-ID")}
                       </p>
                       <PaymentProofLink
-                        transactionId={t.id}
-                        paymentProofUrl={t.paymentProofUrl}
+                        transactionId={tx.id}
+                        paymentProofUrl={tx.paymentProofUrl}
                       />
                     </div>
                   </div>
-                  {t.status === "PENDING" ? (
+                  {tx.status === "PENDING" ? (
                     <div className="border-t border-slate-100 pt-3 space-y-2">
-                      {!t.hasPaymentProof ? (
+                      {!tx.hasPaymentProof ? (
                         <p className="text-sm text-amber-900 bg-amber-50 border border-amber-200/80 px-3 py-2 rounded-xl">
-                          Tunggu bukti bayar dari pasien sebelum konfirmasi.
+                          {t("admin.operations.waitPaymentProof")}
                         </p>
                       ) : null}
                       <button
                         type="button"
                         disabled={
-                          confirmingPayId === t.id || !t.hasPaymentProof
+                          confirmingPayId === tx.id || !tx.hasPaymentProof
                         }
-                        onClick={() => void confirmPayment(t.id)}
+                        onClick={() => void confirmPayment(tx.id)}
                         className={`${btnPrimary} min-h-[44px] text-sm disabled:opacity-50`}
                       >
-                        {confirmingPayId === t.id
-                          ? "Memproses…"
-                          : "Konfirmasi pembayaran"}
+                        {confirmingPayId === tx.id
+                          ? t("admin.operations.processing")
+                          : t("admin.operations.confirmPayment")}
                       </button>
                     </div>
                   ) : null}
-                  {t.status === "PAID" ? (
+                  {tx.status === "PAID" ? (
                     <div className="border-t border-slate-100 pt-3 space-y-2">
                       <textarea
                         className={`${inputBase} min-h-[72px]`}
-                        placeholder="Alasan refund (min. 5 karakter)"
-                        value={refundReasonById[t.id] ?? ""}
+                        placeholder={t("admin.operations.refundReasonPlaceholder")}
+                        value={refundReasonById[tx.id] ?? ""}
                         onChange={(e) =>
                           setRefundReasonById((prev) => ({
                             ...prev,
-                            [t.id]: e.target.value,
+                            [tx.id]: e.target.value,
                           }))
                         }
                       />
                       <button
                         type="button"
-                        disabled={refundingId === t.id}
-                        onClick={() => requestRefund(t.id)}
+                        disabled={refundingId === tx.id}
+                        onClick={() => requestRefund(tx.id)}
                         className={`${btnDanger} min-h-[44px] text-sm`}
                       >
-                        Refund (dummy)
+                        {t("admin.operations.refundDummy")}
                       </button>
                     </div>
                   ) : null}
@@ -476,7 +477,7 @@ export default function AdminOperationsPage() {
         <section className="space-y-4">
           <div className="flex flex-wrap items-center gap-3">
             <label className="text-sm text-slate-700">
-              Filter status booking
+              {t("admin.operations.filterBookingStatus")}
               <select
                 className={`${inputBase} ml-2 mt-1 min-h-[40px]`}
                 value={bookingStatus}
@@ -486,9 +487,9 @@ export default function AdminOperationsPage() {
                   )
                 }
               >
-                <option value="PENDING">PENDING (menunggu PT)</option>
+                <option value="PENDING">{t("admin.operations.bookingStatusPending")}</option>
                 <option value="CONFIRMED">CONFIRMED</option>
-                <option value="">Semua</option>
+                <option value="">{t("admin.operations.all")}</option>
               </select>
             </label>
             <button
@@ -497,28 +498,26 @@ export default function AdminOperationsPage() {
               onClick={() => void handleExportBookings()}
               className={`${btnOutline} min-h-[40px] px-4 text-sm`}
             >
-              {exportingBk ? "Mengekspor…" : "Unduh CSV"}
+              {exportingBk ? t("admin.operations.exporting") : t("admin.operations.downloadCsv")}
             </button>
           </div>
           <p className="text-sm text-slate-600">
-            Admin memantau alur; konfirmasi booking dilakukan oleh fisioterapis di
-            halaman Daftar booking. CSV mengikuti filter status di atas (maks. 10.000
-            baris).
+            {t("admin.operations.bookingMonitorHint")}
           </p>
           {loading ? (
             <ListSkeleton rows={4} />
           ) : bookings.length === 0 ? (
-            <EmptyState title="Tidak ada booking pada filter ini" />
+            <EmptyState title={t("admin.operations.noBookings")} />
           ) : (
             <div className={adminScrollWrap}>
               <table className="w-full min-w-[640px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                    <th className="py-2 pr-4">Waktu</th>
-                    <th className="py-2 pr-4">Pasien</th>
-                    <th className="py-2 pr-4">Fisioterapis</th>
-                    <th className="py-2 pr-4">Status</th>
-                    <th className="py-2 pr-4">Tarif</th>
+                    <th className="py-2 pr-4">{t("admin.operations.colTime")}</th>
+                    <th className="py-2 pr-4">{t("admin.operations.colPatient")}</th>
+                    <th className="py-2 pr-4">{t("admin.operations.colPhysio")}</th>
+                    <th className="py-2 pr-4">{t("admin.operations.colStatus")}</th>
+                    <th className="py-2 pr-4">{t("admin.operations.colFee")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -564,10 +563,10 @@ export default function AdminOperationsPage() {
 
       <ConfirmDialog
         open={refundConfirmId !== null}
-        title="Proses refund?"
-        description="Transaksi akan ditandai refund (dummy)."
-        confirmLabel="Ya, refund"
-        cancelLabel="Batal"
+        title={t("admin.operations.refundConfirmTitle")}
+        description={t("admin.operations.refundConfirmDesc")}
+        confirmLabel={t("admin.operations.refundConfirmYes")}
+        cancelLabel={t("admin.common.cancel")}
         variant="danger"
         loading={refundConfirmId !== null && refundingId === refundConfirmId}
         onConfirm={() => void confirmRefund()}
