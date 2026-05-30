@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-build:
+  build-and-test:
     runs-on: ubuntu-latest
     env:
       NEXT_PUBLIC_API_URL: https://crack-be-febrianrachmat-production.up.railway.app
@@ -18,28 +18,24 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "24"
-          check-latest: true
+          node-version-file: .nvmrc
+          cache: npm
 
       - name: Install dependencies
-        run: |
-          node -v
-          npm -v
-          npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci
 
       - name: Lint
         run: npm run lint
 
       - name: Unit tests with coverage
-        id: unit_tests
         run: npm run test:cov
 
       - name: Publish coverage summary
-        if: steps.unit_tests.outcome == 'success'
+        if: success() || failure()
         run: node scripts/print-coverage-summary.mjs
 
       - name: Upload coverage report
-        if: steps.unit_tests.outcome == 'success'
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
@@ -47,6 +43,7 @@ jobs:
             coverage/lcov.info
             coverage/coverage-summary.json
           retention-days: 14
+          if-no-files-found: ignore
 
       - name: Build
         run: npm run build
