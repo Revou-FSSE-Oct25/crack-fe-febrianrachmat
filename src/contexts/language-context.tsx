@@ -72,10 +72,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Fallback ketika dipakai di luar `LanguageProvider` (mis. unit test yang
+ * merender komponen secara terisolasi). Mengembalikan bahasa default tanpa
+ * melempar error sehingga komponen tetap dapat dirender.
+ */
+const fallbackLanguageContext: LanguageContextValue = {
+  language: DEFAULT_LANGUAGE,
+  setLanguage: () => {},
+  toggle: () => {},
+  t: (key: string) => translate(DEFAULT_LANGUAGE, key),
+};
+
 export function useLanguage(): LanguageContextValue {
-  const ctx = useContext(LanguageContext);
-  if (!ctx) {
-    throw new Error("useLanguage harus dipakai di dalam LanguageProvider.");
-  }
-  return ctx;
+  return useContext(LanguageContext) ?? fallbackLanguageContext;
 }
