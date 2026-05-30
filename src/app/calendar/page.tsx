@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { ApiRequestError } from "@/lib/api/client";
 import {
+  downloadCalendarIcsExport,
   listCalendarBookings,
   type CalendarBookingItem,
 } from "@/lib/api/bookings-calendar";
@@ -57,6 +58,7 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [items, setItems] = useState<CalendarBookingItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -92,6 +94,23 @@ export default function CalendarPage() {
     const next = shiftMonth(year, month, delta);
     setYear(next.year);
     setMonth(next.month);
+  }
+
+  async function handleExportIcs() {
+    setExporting(true);
+    setError(null);
+    try {
+      const bounds = monthBoundsIso(year, month);
+      await downloadCalendarIcsExport(bounds);
+    } catch (err) {
+      setError(
+        err instanceof ApiRequestError
+          ? err.message
+          : "Gagal mengekspor kalender.",
+      );
+    } finally {
+      setExporting(false);
+    }
   }
 
   if (!isReady) {
@@ -166,7 +185,19 @@ export default function CalendarPage() {
         >
           Hari ini
         </button>
+        <button
+          type="button"
+          disabled={exporting || loading}
+          className={`${btnOutline} min-h-[40px] px-3 text-sm`}
+          onClick={() => void handleExportIcs()}
+        >
+          {exporting ? "Mengekspor…" : "Unduh .ics"}
+        </button>
       </div>
+      <p className="text-xs text-slate-500">
+        File .ics berisi janji temu bulan ini (kecuali dibatalkan). Impor ke Google
+        Calendar, Apple Calendar, atau Outlook.
+      </p>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
